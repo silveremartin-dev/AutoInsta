@@ -1,0 +1,49 @@
+# AutoInsta Configuration File
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  storage_dir: "data/captures"
+  db_path: "data/autoinsta.db"
+  client_api_key: "autoinsta_device_secret_token_123"
+
+vlm:
+  # Model to use: "gemini-1.5-flash" (or "gemini-2.0-flash", "gemini-1.5-pro")
+  model: "gemini-1.5-flash"
+  temperature: 0.7
+  
+  # Evaluation thresholds
+  min_social_score: 7.0 # Score between 0.0 and 10.0 required to trigger auto-posting
+  require_safety_pass: true # Must pass private screen, intimate scene, and sensitive data check
+  require_quality_pass: true # Must not be heavily blurred, dark pocket, or obstructed
+
+  # Persona style for generated captions
+  # Options: spontaneous_chic, witty_minimalist, candid_existential, poetic_flaneur, tech_nomad
+  persona: "spontaneous_chic"
+
+  # Language for captions (e.g., 'en', 'fr', 'es')
+  language: "en"
+
+  # Custom prompt guidance
+  persona_instructions: |
+    You are writing natural, authentic-sounding Instagram captions from a first-person POV lifelogging stream.
+    Never sound like an obvious bot or corporate marketer.
+    Keep captions punchy, stylish, and context-aware.
+    Include 2-4 subtle, relevant hashtags at the end.
+
+publisher:
+  # Mode: "dry_run" (preview only, no actual post), "instagrapi", or "meta_graph"
+  mode: "dry_run"
+  
+  # Target publish type: "feed" or "story"
+  target_type: "feed"
+  
+  # Post rate limiting & cooldown
+  min_interval_minutes: 60 # Minimum time between automatic posts
+  max_daily_posts: 4 # Maximum auto-posts per 24 hours
+
+client:
+  # Capture settings for phone / camera client
+  capture_interval_seconds: 30
+  motion_threshold: 0.25 # Only capture if motion detected (if supported by client)
+  darkness_threshold: 15 # Avoid capturing in dark pockets

@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Environment and Secrets
+.env
+*.env
+config.local.yaml
+*.session
+session.json
+
+# Storage & Captures
+data/
+uploads/
+captures/
+logs/
+*.sqlite3
+*.db
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Android build
+client/android/app/build/
+client/android/.gradle/
+*.apk
+*.aab
