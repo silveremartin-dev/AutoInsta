@@ -71,14 +71,18 @@ async def dashboard_view(request: Request):
     pending_approvals = [c for c in captures if c.get("status") == "PENDING_APPROVAL"]
     stats = db.get_stats()
     alerts = db.list_emergency_alerts(limit=5)
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "captures": captures,
-        "pending_approvals": pending_approvals,
-        "stats": stats,
-        "settings": settings,
-        "alerts": alerts
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "request": request,
+            "captures": captures,
+            "pending_approvals": pending_approvals,
+            "stats": stats,
+            "settings": settings,
+            "alerts": alerts
+        }
+    )
 
 @app.post("/api/capture/upload")
 async def upload_capture(

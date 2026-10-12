@@ -80,6 +80,41 @@
         </div>
     </div>
 
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
+
+        <!-- Direct Webcam & Sensor Capture Component -->
+        <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-4 sm:p-5 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4 w-full md:w-auto">
+                <div class="relative w-28 h-20 bg-black/60 rounded-xl overflow-hidden border border-gray-700 flex items-center justify-center shrink-0">
+                    <video id="webcamPreview" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+                    <canvas id="webcamCanvas" class="hidden"></canvas>
+                    <div id="webcamPlaceholder" class="text-gray-500 text-xs flex flex-col items-center">
+                        <i class="fa-solid fa-video-slash text-xl mb-1 text-gray-600"></i>
+                        <span>Webcam OFF</span>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-sm sm:text-base flex items-center gap-2">
+                        <span>Caméra Intégrée (Webcam PC & Smartphone)</span>
+                        <span id="camStatusBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700">Inactive</span>
+                    </h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Capture automatiquement des clichés et transmet les capteurs depuis ce navigateur.</p>
+                    <p id="camNextCountdown" class="text-xs text-fuchsia-400 font-mono mt-1 hidden">
+                        <i class="fa-solid fa-spinner fa-spin mr-1"></i> Prochaine capture automatique dans : <strong id="camSecLeft">30s</strong>
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                <button id="btnToggleCam" onclick="toggleWebcamCapture()" class="px-4 py-2 rounded-xl text-xs font-bold bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-600/20 transition flex items-center gap-2">
+                    <i class="fa-solid fa-camera"></i> Activer la Caméra
+                </button>
+                <button id="btnSnapNow" onclick="snapWebcamNow()" disabled class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-gray-800 text-gray-400 border border-gray-700 transition flex items-center gap-1.5 opacity-50 cursor-not-allowed">
+                    <i class="fa-solid fa-camera-retro"></i> Prendre un cliché
+                </button>
+            </div>
+        </div>
+
         <!-- Top Metrics Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
@@ -840,6 +875,138 @@
                     else card.classList.add('hidden');
                 }
             });
+        // ==========================================
+        // WEBCAM DIRECT CONTROLLER (BROWSER CAPTURE)
+        // ==========================================
+        let webcamStream = null;
+        let webcamCountdown = null;
+        let secRemaining = 30;
+        const CAPTURE_INTERVAL_SEC = 30;
+
+        async function toggleWebcamCapture() {
+            const video = document.getElementById('webcamPreview');
+            const placeholder = document.getElementById('webcamPlaceholder');
+            const badge = document.getElementById('camStatusBadge');
+            const btn = document.getElementById('btnToggleCam');
+            const snapBtn = document.getElementById('btnSnapNow');
+            const countEl = document.getElementById('camNextCountdown');
+
+            if (webcamStream) {
+                // Stop webcam
+                webcamStream.getTracks().forEach(t => t.stop());
+                webcamStream = null;
+                if (webcamCountdown) clearInterval(webcamCountdown);
+                video.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                countEl.classList.add('hidden');
+                badge.textContent = 'Inactive';
+                badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700';
+                btn.innerHTML = '<i class="fa-solid fa-camera"></i> Activer la Caméra';
+                btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-lg transition flex items-center gap-2';
+                snapBtn.disabled = true;
+                snapBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
+                });
+                video.srcObject = webcamStream;
+                video.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                badge.textContent = 'Active (Capture auto 30s)';
+                badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800';
+                btn.innerHTML = '<i class="fa-solid fa-stop"></i> Arrêter la Caméra';
+                btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg transition flex items-center gap-2';
+                snapBtn.disabled = false;
+                snapBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                countEl.classList.remove('hidden');
+
+                // Initial capture after stream warms up
+                video.onloadedmetadata = () => {
+                    setTimeout(snapWebcamNow, 1500);
+                };
+
+                // Continuous timer
+                secRemaining = CAPTURE_INTERVAL_SEC;
+                document.getElementById('camSecLeft').textContent = secRemaining + 's';
+                if (webcamCountdown) clearInterval(webcamCountdown);
+                webcamCountdown = setInterval(() => {
+                    secRemaining--;
+                    if (secRemaining <= 0) {
+                        secRemaining = CAPTURE_INTERVAL_SEC;
+                        snapWebcamNow();
+                    }
+                    document.getElementById('camSecLeft').textContent = secRemaining + 's';
+                }, 1000);
+
+            } catch (err) {
+                alert('Impossible d\'accéder à la webcam : ' + err.message + '\nAssurez-vous d\'autoriser l\'accès dans les paramètres du navigateur.');
+            }
+        }
+
+        async function snapWebcamNow() {
+            const video = document.getElementById('webcamPreview');
+            const canvas = document.getElementById('webcamCanvas');
+            if (!webcamStream || !video.videoWidth) return;
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(async (blob) => {
+                if (!blob) return;
+                const formData = new FormData();
+                formData.append('file', blob, 'webcam_' + Date.now() + '.jpg');
+                formData.append('source', 'webcam_browser');
+
+                const sensors = {};
+                if (navigator.getBattery) {
+                    try {
+                        const b = await navigator.getBattery();
+                        sensors.battery_pct = Math.round(b.level * 100);
+                    } catch (e) {}
+                }
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            sensors.latitude = pos.coords.latitude;
+                            sensors.longitude = pos.coords.longitude;
+                            formData.append('sensors', JSON.stringify(sensors));
+                            sendCapturePayload(formData);
+                        },
+                        () => {
+                            formData.append('sensors', JSON.stringify(sensors));
+                            sendCapturePayload(formData);
+                        },
+                        { timeout: 1500 }
+                    );
+                } else {
+                    formData.append('sensors', JSON.stringify(sensors));
+                    sendCapturePayload(formData);
+                }
+            }, 'image/jpeg', 0.85);
+        }
+
+        async function sendCapturePayload(formData) {
+            try {
+                const res = await fetch('/api/capture/upload', {
+                    method: 'POST',
+                    headers: { 'X-Device-Token': 'autoinsta_device_secret_token_123' },
+                    body: formData
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    console.log('[AutoInsta] Cliché envoyé avec succès :', data);
+                    // Reload after 3s to reflect new evaluation in dashboard
+                    setTimeout(() => location.reload(), 3000);
+                }
+            } catch (err) {
+                console.error('[AutoInsta] Erreur transmission capture:', err);
+            }
         }
     </script>
 </body>

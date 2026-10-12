@@ -196,13 +196,37 @@ def run_demo_simulation(port: int = 8000):
     except KeyboardInterrupt:
         print("\n[*] Arret du Mode Demo.")
 
+def run_all_in_one(port: int = 8000):
+    """Starts both Server and background Webcam capture in a single process."""
+    check_and_install_dependencies()
+    print("\n" + "=" * 68)
+    print(" 📷 DEMARRAGE TOUT-EN-UN : SERVEUR + WEBCAM PC ")
+    print("=" * 68)
+    print("  Le serveur et la capture webcam locale sont lances ensemble.")
+    print("=" * 68 + "\n")
+    
+    import uvicorn
+    server_thread = threading.Thread(
+        target=lambda: uvicorn.run("server.app:app", host="0.0.0.0", port=port, log_level="warning"),
+        daemon=True
+    )
+    server_thread.start()
+    time.sleep(2)
+    open_browser_delayed(f"http://localhost:{port}")
+    
+    try:
+        from client.python_cam.cam_client import run_cam_client
+        run_cam_client(server_url=f"http://127.0.0.1:{port}/api/capture/upload")
+    except KeyboardInterrupt:
+        print("\n[*] Arret du mode Tout-en-Un.")
+
 def run_tests():
     """Runs the complete test suite."""
     test_script = PROJECT_ROOT / "scripts" / "test" / "run_all_tests.py"
     subprocess.run([sys.executable, str(test_script)])
 
 def run_cam():
-    """Runs PC webcam client."""
+    """Runs standalone PC webcam client."""
     cam_script = PROJECT_ROOT / "client" / "python_cam" / "cam_client.py"
     subprocess.run([sys.executable, str(cam_script)])
 
@@ -218,9 +242,9 @@ def interactive_menu():
         print("\n" + "=" * 68)
         print("          AUTOINSTA - MENU PRINCIPAL DE DEMARRAGE")
         print("=" * 68)
-        print("  [1] Demarrer le Serveur Web & Ouvrir le Tableau de bord (Recommande)")
-        print("  [2] Demarrer le Serveur en Mode Demo (Simulation photos & capteurs)")
-        print("  [3] Lancer le Client Camera PC (Webcam locale)")
+        print("  [1] Demarrer AutoInsta (Serveur + Interface Web avec Camera Integree) [Recommande]")
+        print("  [2] Demarrer AutoInsta Tout-en-Un (Serveur + Webcam locale en arriere-plan)")
+        print("  [3] Mode Demo (Simulation photos & capteurs de test)")
         print("  [4] Executer la Suite de Tests Complete")
         print("  [5] Installer ou Mettre a jour les dependances requises")
         print("  [6] Activer l'Autodemarrage au Boot (Windows / macOS / Linux)")
@@ -238,11 +262,11 @@ def interactive_menu():
             run_server(auto_open=True)
             break
         elif choice == "2":
-            check_and_install_dependencies()
-            run_demo_simulation()
+            run_all_in_one()
             break
         elif choice == "3":
-            run_cam()
+            check_and_install_dependencies()
+            run_demo_simulation()
             break
         elif choice == "4":
             run_tests()
