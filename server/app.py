@@ -285,6 +285,25 @@ async def cancel_alert(alert_id: int):
         return {"success": True, "message": f"Alerte #{alert_id} annulée avec succès."}
     return {"success": False, "message": "Alerte introuvable ou déjà exécutée."}
 
+class HealthTelemetryRequest(BaseModel):
+    heart_rate: int
+    location: Optional[str] = "Wearable Sync"
+    steps: Optional[int] = None
+
+@app.post("/api/sensors/health")
+async def receive_health_telemetry(req: HealthTelemetryRequest):
+    """Direct telemetry ingestion from Smartwatches, Fitness Trackers, and Wearable clients."""
+    alert_id = None
+    if settings.enable_heart_rate and settings.hr_alert_enabled:
+        alert_id = evaluator.check_emergency_heart_rate(req.heart_rate, req.location)
+    return {
+        "success": True,
+        "heart_rate": req.heart_rate,
+        "alert_triggered": alert_id is not None,
+        "alert_id": alert_id
+    }
+
+
 @app.get("/api/config")
 async def get_config():
     return {

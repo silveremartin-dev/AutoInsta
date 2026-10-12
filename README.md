@@ -86,42 +86,43 @@ In evolutionary sociology, **Zahavi's Costly Signaling Theory** posits that auth
 
 ## 🚀 Quick Start
 
-### 1. Installation on PC (Windows, macOS, Linux)
+### 1. Installation & Start on PC (Windows, macOS, Linux)
 
+AutoInsta provides **1-click installation and startup scripts**:
+
+#### Windows:
+- **Installation** : Double-cliquez sur [`install.bat`](file:///c:/Silvere/Encours/Developpement/AutoInsta/install.bat) ou lancez `install.bat`
+- **Démarrage** : Double-cliquez sur [`start.bat`](file:///c:/Silvere/Encours/Developpement/AutoInsta/start.bat) ou tapez `start.bat`
+- **Menu interactif** : Propose le démarrage du serveur, le mode démo, le client webcam PC, la suite de tests, et l'autodémarrage.
+
+#### macOS & Linux:
 ```bash
-git clone https://github.com/silveremartin-dev/AutoInsta.git
-cd AutoInsta
-
-# Create & activate virtual environment
-python -m venv venv
-# Windows:
-.\venv\Scripts\activate
-# macOS/Linux:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
+chmod +x install.sh start.sh
+./install.sh       # Installe les dépendances Python
+./start.sh         # Lance le serveur et ouvre l'interface web
 ```
 
-### 2. Configure Credentials (`.env`)
-
+#### Lanceur Python Universel (Multi-plateforme):
 ```bash
-cp .env.example .env
+# Lancement direct (ouvre automatiquement votre navigateur sur http://localhost:8000)
+python start.py
+
+# Lancement en mode Démo / Simulation (injecte des photos et métriques de test toutes les 25s)
+python start.py --mode demo
+
+# Lancement du client webcam PC (prise de photos via la caméra de votre ordinateur)
+python start.py --mode cam
+
+# Lancement de la suite complète de tests de validation
+python start.py --mode test
 ```
 
-Edit `.env`:
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-PUBLISH_MODE=dry_run
-```
+### 2. Accès à l'Interface Web & Dashboard
 
-### 3. Launch the Server & Dashboard
+Une fois le serveur démarré :
+- **Sur votre PC** : Ouvrez **`http://localhost:8000`**
+- **Sur votre smartphone / montre (même Wi-Fi)** : Ouvrez **`http://<IP_DU_PC>:8000`** (l'IP locale est automatiquement affichée au lancement du serveur).
 
-```bash
-uvicorn server.app:app --host 0.0.0.0 --port 8000 --reload
-```
-
-Open your browser at **`http://localhost:8000`** to access the control center.
 
 ---
 

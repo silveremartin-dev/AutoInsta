@@ -2,10 +2,18 @@ import time
 import argparse
 import requests
 import io
-import cv2
 import json
-import numpy as np
 from pathlib import Path
+
+try:
+    import cv2
+    import numpy as np
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+    cv2 = None
+    np = None
+
 
 def get_approx_location():
     """Gets approximate geographic location via IP geolocation for PC version."""
@@ -48,6 +56,12 @@ def run_cam_client(
     print(f"[*] Caméra Source : {cam_index}")
     print(f"[*] Intervalle    : {interval_seconds}s")
     
+    if not CV2_AVAILABLE:
+        print("[!] OpenCV n'est pas installé sur ce système.")
+        print("[!] Pour utiliser la webcam de votre PC, installez OpenCV via :")
+        print("    pip install opencv-python numpy")
+        return
+
     cap = cv2.VideoCapture(cam_index)
     if not cap.isOpened():
         print(f"[!] Erreur : Impossible d'ouvrir la caméra {cam_index}")
