@@ -54,64 +54,107 @@ class VLMEvaluator:
     def __init__(self):
         self.api_key = settings.gemini_api_key
         self.model_name = settings.vlm_model
+        self.active_sos_alerts = {} # alert_id -> {"timer": Thread/Timer, "cancelled": bool}
         self._init_client()
 
-    def _init_client(self):
-        self.client = None
-        if not self.api_key:
-            logger.warning("GEMINI_API_KEY is not set. VLM will run in mock/simulation mode.")
+    def cancel_emergency_alert(self, alert_id: int) -> bool:
+        """User aborted the emergency countdown (Dead Man's Switch interrupted)."""
+        if alert_id in self.active_sos_alerts:
+            self.active_sos_alerts[alert_id]["cancelled"] = True
+            from server.database import db
+            db.log_event("WARNING", f"Emergency SOS #{alert_id} CANCELLED by user within grace period.")
+            logger.info(f"Emergency alert #{alert_id} successfully cancelled by user.")
+            return True
+        return False
+
+    def _execute_sos_dispatch(self, alert_id: int, bpm: int, alert_type: str, location_str: str):
+        """Dispatches actual SOS across SMS, Telegram, and Webhook if not cancelled."""
+        if alert_id in self.active_sos_alerts and self.active_sos_alerts[alert_id].get("cancelled"):
+            logger.info(f"SOS #{alert_id} dispatch suppressed (was cancelled).")
             return
 
-        try:
-            # Try new google-genai SDK first
-            from google import genai
-            self.client = genai.Client(api_key=self.api_key)
-            self.sdk_type = "google-genai"
-            logger.info("Initialized Google GenAI client.")
-        except Exception as e:
+        logger.critical(f"DEAD MAN'S SWITCH EXPIRED: Dispatching real SOS for {bpm} BPM!")
+        dispatched_channels = []
+
+        # 1. Telegram Dispatch
+        if settings.telegram_bot_token and settings.telegram_chat_id:
             try:
-                # Fallback to google-generativeai
-                import google.generativeai as gai
-                gai.configure(api_key=self.api_key)
-                self.legacy_model = gai.GenerativeModel(self.model_name)
-                self.sdk_type = "google-generativeai"
-                logger.info("Initialized legacy google.generativeai client.")
-            except Exception as e2:
-                logger.error(f"Failed to initialize Gemini SDK: {e2}")
-                self.client = None
+                import requests
+                tg_msg = (
+                    f"🚨 [URGENCE VITAL AUTOINSTA]\n"
+                    f"Alerte : {alert_type}\n"
+                    f"Rythme cardiaque : {bpm} BPM\n"
+                    f"Lieu : {location_str or 'Inconnu'}\n"
+                    f"Compte à rebours de 10s expiré sans annulation."
+                )
+                tg_url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
+                r = requests.post(tg_url, json={"chat_id": settings.telegram_chat_id, "text": tg_msg}, timeout=5)
+                if r.status_code == 200:
+                    dispatched_channels.append("Telegram")
+            except Exception as e:
+                logger.error(f"Failed to send Telegram SOS: {e}")
 
-    def check_emergency_heart_rate(self, bpm: Optional[int], location_str: str = ""):
-        """Trigger emergency alert if heart rate exceeds safe thresholds."""
+        # 2. Emergency Webhook
+        if settings.emergency_webhook_url:
+            try:
+                import requests
+                requests.post(
+                    settings.emergency_webhook_url,
+                    json={
+                        "alert": alert_type,
+                        "bpm": bpm,
+                        "location": location_str,
+                        "timestamp": time.time(),
+                        "status": "SOS_DISPATCHED"
+                    },
+                    timeout=5
+                )
+                dispatched_channels.append("Webhook")
+            except Exception as e:
+                logger.error(f"Failed to post emergency webhook: {e}")
+
+        # 3. Termux SMS on Android (if running locally or invoked)
+        if settings.emergency_phone:
+            try:
+                import subprocess
+                sms_text = f"[URGENCE AUTOINSTA] Rythme cardiaque {bpm} BPM critique. Lieu: {location_str}"
+                subprocess.run(["termux-sms-send", "-n", settings.emergency_phone, sms_text], timeout=5)
+                dispatched_channels.append("SMS")
+            except Exception:
+                pass
+
+        status_str = f"DISPATCHED via {', '.join(dispatched_channels) if dispatched_channels else 'None'}"
+        from server.database import db
+        db.record_emergency_alert(bpm, alert_type, location_str, status_str, f"Dispatched: {status_str}")
+
+    def check_emergency_heart_rate(self, bpm: Optional[int], location_str: str = "") -> Optional[int]:
+        """Initiate Dead Man's Switch countdown if heart rate is outside safe bounds."""
         if not settings.hr_alert_enabled or bpm is None or bpm <= 0:
-            return
+            return None
 
         alert_type = None
         if bpm < settings.hr_min_bpm:
-            alert_type = f"BRADYCARDIA_ALERT (Low: {bpm} BPM < {settings.hr_min_bpm})"
+            alert_type = f"BRADYCARDIA_ALERT (Rythme lent: {bpm} BPM < {settings.hr_min_bpm})"
         elif bpm > settings.hr_max_bpm:
-            alert_type = f"TACHYCARDIA_ALERT (High: {bpm} BPM > {settings.hr_max_bpm})"
+            alert_type = f"TACHYCARDIA_ALERT (Rythme rapide: {bpm} BPM > {settings.hr_max_bpm})"
 
         if alert_type:
-            logger.warning(f"EMERGENCY HEALTH TRIGGERED: {alert_type} at {location_str}")
-            # Dispatch alert
-            details = f"Detected {bpm} BPM. Location: {location_str or 'Unknown'}"
-            status = "SENT"
-            
-            # Send to webhook if configured
-            if settings.hr_webhook_url:
-                try:
-                    import requests
-                    requests.post(
-                        settings.hr_webhook_url,
-                        json={"alert": alert_type, "bpm": bpm, "location": location_str, "timestamp": time.time()},
-                        timeout=5
-                    )
-                except Exception as e:
-                    logger.error(f"Failed to post emergency webhook: {e}")
-                    status = f"FAILED: {e}"
-
+            logger.warning(f"EMERGENCY HEALTH DETECTED: {alert_type}. Starting {settings.hr_countdown_seconds}s Dead Man countdown.")
             from server.database import db
-            db.record_emergency_alert(bpm, alert_type, location_str, status, details)
+            alert_id = db.record_emergency_alert(bpm, alert_type, location_str, "COUNTDOWN_ACTIVE", f"Grace period: {settings.hr_countdown_seconds}s")
+
+            # Schedule execution after grace countdown
+            import threading
+            self.active_sos_alerts[alert_id] = {"cancelled": False}
+            timer = threading.Timer(
+                float(settings.hr_countdown_seconds),
+                self._execute_sos_dispatch,
+                args=[alert_id, bpm, alert_type, location_str]
+            )
+            timer.daemon = True
+            timer.start()
+            return alert_id
+        return None
 
     def evaluate_image(self, image_path: Path, sensor_metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         if not image_path.exists():
@@ -129,13 +172,13 @@ class VLMEvaluator:
 
         sensor_metadata = sensor_metadata or {}
         
-        # Check emergency heart rate if enabled
+        # Check emergency heart rate (Dead Man's Switch)
         bpm = sensor_metadata.get("heart_rate_bpm")
         loc_display = sensor_metadata.get("city") or sensor_metadata.get("location_name") or ""
         if bpm:
             self.check_emergency_heart_rate(int(bpm), loc_display)
 
-        # Build sensor context string for Gemini prompt
+        # Build rich sensor context for Gemini
         context_lines = []
         if settings.enable_gps:
             if sensor_metadata.get("city"):
@@ -149,7 +192,19 @@ class VLMEvaluator:
             context_lines.append(f"- Current Heart Rate: {bpm} BPM")
 
         if settings.enable_accelerometer and sensor_metadata.get("activity_state"):
-            context_lines.append(f"- Activity State: {sensor_metadata.get('activity_state')}")
+            context_lines.append(f"- Movement State: {sensor_metadata.get('activity_state')}")
+
+        if settings.enable_microphone and sensor_metadata.get("ambient_noise_db") is not None:
+            context_lines.append(f"- Sound Environment: {sensor_metadata.get('ambient_noise_db')} dB ({sensor_metadata.get('audio_tag', 'Ambiance sonore')})")
+
+        if settings.enable_barometer and sensor_metadata.get("altitude_meters") is not None:
+            context_lines.append(f"- Altitude / Elevation: {sensor_metadata.get('altitude_meters')}m")
+
+        if settings.enable_pedometer and sensor_metadata.get("steps_today") is not None:
+            context_lines.append(f"- Steps Walked Today: {sensor_metadata.get('steps_today')} steps")
+
+        if settings.enable_battery and sensor_metadata.get("battery_pct") is not None:
+            context_lines.append(f"- Device Battery: {sensor_metadata.get('battery_pct')}%")
 
         sensor_context = "\n".join(context_lines) if context_lines else "None provided."
 

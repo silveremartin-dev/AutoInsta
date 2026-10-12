@@ -39,16 +39,28 @@ class Config:
         self.enable_gps = bool(sensors_cfg.get("enable_gps", True))
         self.enable_accelerometer = bool(sensors_cfg.get("enable_accelerometer", True))
         self.enable_light_sensor = bool(sensors_cfg.get("enable_light_sensor", True))
+        self.enable_microphone = bool(sensors_cfg.get("enable_microphone", False))
+        self.enable_barometer = bool(sensors_cfg.get("enable_barometer", False))
+        self.enable_battery = bool(sensors_cfg.get("enable_battery", True))
+        self.enable_pedometer = bool(sensors_cfg.get("enable_pedometer", False))
         self.enable_heart_rate = bool(sensors_cfg.get("enable_heart_rate", False))
 
-        # Heart rate emergency alert
+        # Heart rate emergency alert & Dead Man's Switch
         hr_alert_cfg = sensors_cfg.get("heart_rate_alert", {})
         self.hr_alert_enabled = bool(hr_alert_cfg.get("enabled", False))
         self.hr_min_bpm = int(hr_alert_cfg.get("min_bpm", 45))
         self.hr_max_bpm = int(hr_alert_cfg.get("max_bpm", 145))
-        self.hr_alert_channel = hr_alert_cfg.get("alert_channel", "webhook")
-        self.hr_emergency_contact = hr_alert_cfg.get("emergency_contact", "")
-        self.hr_webhook_url = hr_alert_cfg.get("webhook_url", "")
+        self.hr_countdown_seconds = int(hr_alert_cfg.get("countdown_seconds", 10))
+        self.hr_sound_alarm = bool(hr_alert_cfg.get("sound_alarm", True))
+        self.hr_vibration_alarm = bool(hr_alert_cfg.get("vibration_alarm", True))
+        self.hr_channels = hr_alert_cfg.get("channels", ["sms", "telegram", "webhook"])
+
+        # SOS Secrets (From .env)
+        self.emergency_phone = os.getenv("EMERGENCY_PHONE", "")
+        self.telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+        self.telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
+        self.emergency_webhook_url = os.getenv("EMERGENCY_WEBHOOK_URL", hr_alert_cfg.get("webhook_url", ""))
+        self.facebook_page_id = os.getenv("FACEBOOK_PAGE_ID", "")
 
         # Gemini / VLM
         vlm_cfg = self.raw_data.get("vlm", {})

@@ -13,16 +13,24 @@ sensors:
   enable_gps: true                  # GPS coordinates, reverse-geocoding city/neighborhood
   enable_accelerometer: true        # Motion detection (pauses capture when completely still)
   enable_light_sensor: true         # Avoids taking pictures inside dark pockets or bags
+  enable_microphone: false          # Ambient decibel / acoustic environment (dB level)
+  enable_barometer: false           # Elevation, floor climbing & atmospheric pressure
+  enable_battery: true              # Battery level & charging state (pauses capture if < 15%)
+  enable_pedometer: false           # Daily step counter integration
   enable_heart_rate: false          # Physiological wearable / BLE heart rate monitoring
   
-  # Heart Rate Emergency Alert (Experimental / Non-medical)
+  # Heart Rate Emergency Alert & Dead Man's Switch (Homme Mort)
   heart_rate_alert:
     enabled: false
     min_bpm: 45                     # Low heart rate threshold (Bradycardia alert)
     max_bpm: 145                    # High heart rate threshold (Tachycardia alert)
-    alert_channel: "webhook"        # "sms" (via Termux), "telegram", or "webhook"
-    emergency_contact: ""           # Phone number for SMS or recipient ID
-    webhook_url: ""                 # Emergency webhook URL (e.g. Home Assistant, Discord, IFTTT)
+    countdown_seconds: 10           # 10s grace period with sound & vibration before sending SOS
+    sound_alarm: true               # Audible warning beeps during countdown
+    vibration_alarm: true           # Continuous vibration during countdown
+    channels:                       # Active alert destinations
+      - "sms"
+      - "telegram"
+      - "webhook"
 
 vlm:
   model: "gemini-1.5-flash"

@@ -61,8 +61,24 @@
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <!-- Emergency Dead Man Banner (Hidden by default, shown during countdown) -->
+    <div id="deadManBanner" class="hidden bg-rose-600 text-white px-4 py-3 sticky top-16 z-40 border-b border-rose-700 shadow-2xl animate-pulse">
+        <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-triangle-exclamation text-2xl text-yellow-300 animate-bounce"></i>
+                <div>
+                    <h3 class="font-extrabold text-sm sm:text-base tracking-wide flex items-center gap-2">
+                        ALERTE RYTHME CARDIAQUE CRITIQUE !
+                        <span id="countdownTimer" class="px-2 py-0.5 rounded-lg bg-black/40 font-mono text-yellow-300 font-bold">10s</span>
+                    </h3>
+                    <p class="text-xs text-rose-100">Bouton de l'homme mort actif : un SMS & SOS Telegram seront envoyés automatiquement si vous n'annulez pas.</p>
+                </div>
+            </div>
+            <button onclick="abortEmergencySOS()" class="px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold text-xs shadow-lg transition flex items-center gap-2 transform active:scale-95">
+                <i class="fa-solid fa-hand"></i> J'AI LE CONTRÔLE - ANNULER L'ALERTE
+            </button>
+        </div>
+    </div>
 
         <!-- Top Metrics Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -358,9 +374,29 @@
                         <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-sun text-amber-400 mr-2"></i> Luminosité (Poche)</span>
                         <input type="checkbox" id="sensor_light" class="accent-fuchsia-500 w-4 h-4" {{ 'checked' if settings.enable_light_sensor }}>
                     </label>
+
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-microphone text-teal-400 mr-2"></i> Microphone (dB Ambiance)</span>
+                        <input type="checkbox" id="sensor_mic" class="accent-teal-500 w-4 h-4" {{ 'checked' if settings.enable_microphone }}>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-mountain text-indigo-400 mr-2"></i> Baromètre (Altitude)</span>
+                        <input type="checkbox" id="sensor_baro" class="accent-indigo-500 w-4 h-4" {{ 'checked' if settings.enable_barometer }}>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-battery-half text-green-400 mr-2"></i> Batterie (Pause si &lt; 15%)</span>
+                        <input type="checkbox" id="sensor_bat" class="accent-green-500 w-4 h-4" {{ 'checked' if settings.enable_battery }}>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-shoe-prints text-orange-400 mr-2"></i> Podomètre (Pas du jour)</span>
+                        <input type="checkbox" id="sensor_step" class="accent-orange-500 w-4 h-4" {{ 'checked' if settings.enable_pedometer }}>
+                    </label>
                 </div>
 
-                <!-- Capteur Cardiaque & Alerte Corporelle -->
+                <!-- Capteur Cardiaque & Alerte Corporelle (Homme Mort) -->
                 <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-3">
                     <div class="flex items-center justify-between">
                         <div>
@@ -374,25 +410,99 @@
 
                     <div class="pt-3 border-t border-gray-800 space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs text-rose-300 font-medium">Alerte d'urgence en cas de BPM anormal</span>
+                            <span class="text-xs text-rose-300 font-medium">Bouton de l'homme mort (Alerte si BPM anormal)</span>
                             <input type="checkbox" id="hr_alert_active" class="accent-rose-500 w-4 h-4" {{ 'checked' if settings.hr_alert_enabled }}>
                         </div>
-                        <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="grid grid-cols-3 gap-2 text-xs">
                             <div>
-                                <label class="text-[10px] text-gray-400 block mb-1">Seuil Bas (BPM &lt;)</label>
+                                <label class="text-[10px] text-gray-400 block mb-1">Seuil Bas (&lt; BPM)</label>
                                 <input type="number" id="hr_min" value="{{ settings.hr_min_bpm }}" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
                             </div>
                             <div>
-                                <label class="text-[10px] text-gray-400 block mb-1">Seuil Haut (BPM &gt;)</label>
+                                <label class="text-[10px] text-gray-400 block mb-1">Seuil Haut (&gt; BPM)</label>
                                 <input type="number" id="hr_max" value="{{ settings.hr_max_bpm }}" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 block mb-1">Délai Homme Mort</label>
+                                <input type="number" id="hr_countdown" value="{{ settings.hr_countdown_seconds }}" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
                             </div>
                         </div>
                         <div>
                             <label class="text-[10px] text-gray-400 block mb-1">Webhook URL d'urgence (Optionnel)</label>
                             <input type="text" id="hr_webhook" value="{{ settings.hr_webhook_url }}" placeholder="https://..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-white">
                         </div>
-                        <button onclick="testEmergencyAlert()" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-xs">
-                            Tester l'alerte d'urgence maintenant
+                        <button onclick="testEmergencyAlert()" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-semibold">
+                            Simuler l'alerte Homme Mort (Compte à rebours 10s)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statut de sécurité & Configuration des Secrets (.env) -->
+                <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-gray-200 flex items-center gap-2">
+                            <i class="fa-solid fa-lock text-emerald-400"></i> Coffre-fort des Identifiants & Secrets (.env)
+                        </span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">100% Local & Sécurisé</span>
+                    </div>
+                    <p class="text-[11px] text-gray-400">Vous pouvez renseigner ou modifier vos clés ici sans toucher aux fichiers. Si aucun compte Instagram n'est renseigné, le mode <strong>Coffre Privé Local</strong> s'applique automatiquement.</p>
+
+                    <div class="space-y-3 pt-2 text-xs">
+                        <div>
+                            <label class="text-[10px] text-gray-400 block mb-1">Mode de Diffusion :</label>
+                            <select id="cred_mode" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
+                                <option value="local_only" {{ 'selected' if settings.publish_mode == 'local_only' }}>Coffre Privé Local (Aucun compte requis, stockage sécurisé)</option>
+                                <option value="dry_run" {{ 'selected' if settings.publish_mode == 'dry_run' }}>Simulation Dry-Run (Aperçu virtuel sans envoi)</option>
+                                <option value="instagrapi" {{ 'selected' if settings.publish_mode == 'instagrapi' }}>Instagram Mobile (Instagrapi)</option>
+                                <option value="meta_graph" {{ 'selected' if settings.publish_mode == 'meta_graph' }}>Meta Graph API (Compte Pro / Facebook)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] text-gray-400 block mb-1">Clé API Google Gemini (Vision 1.5 Flash) :</label>
+                            <input type="password" id="cred_gemini" value="{{ settings.gemini_api_key }}" placeholder="AIzaSy..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white font-mono">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] text-gray-400 block mb-1">Nom d'utilisateur Instagram (Optionnel) :</label>
+                                <input type="text" id="cred_ig_user" value="{{ settings.instagram_username }}" placeholder="laisser vide pour mode local" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 block mb-1">Mot de passe Instagram (Optionnel) :</label>
+                                <input type="password" id="cred_ig_pass" value="{{ settings.instagram_password }}" placeholder="••••••••" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] text-gray-400 block mb-1">Téléphone Destinataire SMS SOS :</label>
+                                <input type="text" id="cred_phone" value="{{ settings.emergency_phone }}" placeholder="+33612345678" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 block mb-1">Telegram Chat ID SOS (Optionnel) :</label>
+                                <input type="text" id="cred_tg_chat" value="{{ settings.telegram_chat_id }}" placeholder="987654321" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] text-gray-400 block mb-1">Telegram Bot Token SOS (Optionnel) :</label>
+                            <input type="password" id="cred_tg_token" value="{{ settings.telegram_bot_token }}" placeholder="123456:ABC-DEF..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white font-mono">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <label class="text-[10px] text-amber-300 block mb-1">Code PIN Maître (Actuel) :</label>
+                                <input type="password" id="master_pin" placeholder="Si configuré" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-amber-300 block mb-1">Nouveau Code PIN Maître (Optionnel) :</label>
+                                <input type="password" id="new_master_pin" placeholder="Créer ou changer le PIN" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
+                            </div>
+                        </div>
+
+                        <button onclick="saveCredentials()" class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-md">
+                            <i class="fa-solid fa-floppy-disk"></i> Enregistrer les Identifiants en Sécurité
                         </button>
                     </div>
                 </div>
@@ -550,16 +660,40 @@
             }
         }
 
+        let countdownInterval = null;
+        let activeEmergencyAlertId = null;
+        let audioContext = null;
+
+        function playWarningBeep() {
+            try {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(880, audioContext.currentTime); // High pitch alarm
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.15);
+            } catch (e) {}
+        }
+
         async function saveSensorConfig() {
             const payload = {
                 enable_camera: document.getElementById('sensor_cam').checked,
                 enable_gps: document.getElementById('sensor_gps').checked,
                 enable_accelerometer: document.getElementById('sensor_accel').checked,
                 enable_light_sensor: document.getElementById('sensor_light').checked,
+                enable_microphone: document.getElementById('sensor_mic').checked,
+                enable_barometer: document.getElementById('sensor_baro').checked,
+                enable_battery: document.getElementById('sensor_bat').checked,
+                enable_pedometer: document.getElementById('sensor_step').checked,
                 enable_heart_rate: document.getElementById('sensor_hr').checked,
                 hr_alert_enabled: document.getElementById('hr_alert_active').checked,
-                hr_min_bpm: parseInt(document.getElementById('hr_min').value),
-                hr_max_bpm: parseInt(document.getElementById('hr_max').value),
+                hr_min_bpm: parseInt(document.getElementById('hr_min').value) || 45,
+                hr_max_bpm: parseInt(document.getElementById('hr_max').value) || 145,
+                hr_countdown_seconds: parseInt(document.getElementById('hr_countdown').value) || 10,
                 hr_webhook_url: document.getElementById('hr_webhook').value,
                 require_manual_confirmation: document.getElementById('require_approval').checked
             };
@@ -580,18 +714,85 @@
             }
         }
 
+        async function saveCredentials() {
+            const payload = {
+                master_pin: document.getElementById('master_pin').value,
+                new_master_pin: document.getElementById('new_master_pin').value || null,
+                gemini_api_key: document.getElementById('cred_gemini').value,
+                publish_mode: document.getElementById('cred_mode').value,
+                instagram_username: document.getElementById('cred_ig_user').value,
+                instagram_password: document.getElementById('cred_ig_pass').value,
+                emergency_phone: document.getElementById('cred_phone').value,
+                telegram_chat_id: document.getElementById('cred_tg_chat').value,
+                telegram_bot_token: document.getElementById('cred_tg_token').value
+            };
+
+            try {
+                const res = await fetch('/api/settings/credentials', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message || 'Identifiants enregistrés avec succès.');
+                    window.location.reload();
+                } else {
+                    alert('Erreur: ' + (data.detail || JSON.stringify(data)));
+                }
+            } catch (err) {
+                alert('Erreur de sauvegarde: ' + err);
+            }
+        }
+
         async function testEmergencyAlert() {
             try {
                 const res = await fetch('/api/health/test-alert', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ bpm: 155, location: 'Local Test Location' })
+                    body: JSON.stringify({ bpm: 155, location: 'Localisation Active (PC/Bureau)' })
                 });
                 const data = await res.json();
-                alert('Résultat alerte : ' + JSON.stringify(data));
+                if (data.success) {
+                    activeEmergencyAlertId = data.alert_id;
+                    startDeadManCountdown(data.countdown_seconds || 10);
+                }
             } catch (err) {
                 alert('Erreur: ' + err);
             }
+        }
+
+        function startDeadManCountdown(seconds) {
+            const banner = document.getElementById('deadManBanner');
+            const timerEl = document.getElementById('countdownTimer');
+            banner.classList.remove('hidden');
+            let remaining = seconds;
+            timerEl.textContent = remaining + 's';
+            playWarningBeep();
+
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                remaining--;
+                playWarningBeep();
+                if (navigator.vibrate) navigator.vibrate(200);
+                timerEl.textContent = remaining + 's';
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                    banner.classList.add('hidden');
+                    alert('COMPTE À REBOURS EXPIRÉ : Alerte SOS et coordonnées GPS transmises (SMS / Telegram / Webhook).');
+                }
+            }, 1000);
+        }
+
+        async function abortEmergencySOS() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            document.getElementById('deadManBanner').classList.add('hidden');
+            if (activeEmergencyAlertId) {
+                try {
+                    await fetch('/api/health/cancel-alert/' + activeEmergencyAlertId, { method: 'POST' });
+                } catch (e) {}
+            }
+            alert('ALERTE ANNULÉE PAR L\'UTILISATEUR (Faux positif évité).');
         }
 
         function filterCaptures(status) {

@@ -84,16 +84,31 @@ class InstagramPublisher:
             formatted_tags = " ".join([f"#{t.lstrip('#')}" for t in hashtags])
             full_caption += f"\n\n.\n.\n{formatted_tags}"
 
-        if self.mode == "dry_run":
+        if self.mode in ["local_only", "private_vault"]:
+            return self._publish_local_only(capture_id, full_caption)
+        elif self.mode == "dry_run":
             return self._publish_dry_run(capture_id, full_caption)
         elif self.mode == "instagrapi":
+            if not settings.instagram_username or not settings.instagram_password:
+                logger.info(f"No Instagram account configured. Defaulting capture #{capture_id} to local private archive.")
+                return self._publish_local_only(capture_id, full_caption)
             return self._publish_instagrapi(capture_id, image_path, full_caption)
         elif self.mode == "meta_graph":
             return self._publish_meta_graph(capture_id, image_path, full_caption)
         else:
-            err = f"Unknown publish mode: {self.mode}"
-            db.mark_publish_failed(capture_id, err)
-            return {"success": False, "error": err}
+            return self._publish_local_only(capture_id, full_caption)
+
+    def _publish_local_only(self, capture_id: int, full_caption: str) -> Dict[str, Any]:
+        local_post_id = f"local_vault_{int(time.time())}"
+        logger.info(f"[COFFRE-FORT LOCAL] Cliché #{capture_id} archivé en local sans diffusion externe.")
+        db.mark_published(capture_id, local_post_id, "local_only")
+        db.log_event("INFO", f"Cliché #{capture_id} conservé dans le coffre privé local (mode 100% hors-ligne/local).")
+        return {
+            "success": True,
+            "mode": "local_only",
+            "post_id": local_post_id,
+            "caption": full_caption
+        }
 
     def _publish_dry_run(self, capture_id: int, full_caption: str) -> Dict[str, Any]:
         simulated_post_id = f"sim_{int(time.time())}"
