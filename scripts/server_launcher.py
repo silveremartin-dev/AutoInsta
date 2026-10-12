@@ -329,10 +329,7 @@ def main():
         check_and_install_dependencies()
         return
 
-    if args.mode == "server":
-        check_and_install_dependencies()
-        run_server(host=args.host, port=args.port, auto_open=not args.no_browser)
-    elif args.mode == "demo":
+    if args.mode == "demo":
         check_and_install_dependencies()
         run_demo_simulation(port=args.port)
     elif args.mode == "test":
@@ -344,7 +341,9 @@ def main():
     elif args.mode == "autostart-disable":
         manage_autostart(False)
     else:
-        interactive_menu()
+        # Default behavior: directly start the application and open browser!
+        check_and_install_dependencies()
+        run_server(host=args.host, port=args.port, auto_open=not args.no_browser)
 
 if __name__ == "__main__":
     main()
