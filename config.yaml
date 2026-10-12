@@ -27,7 +27,13 @@ sensors:
     countdown_seconds: 10           # 10s grace period with sound & vibration before sending SOS
     sound_alarm: true               # Audible warning beeps during countdown
     vibration_alarm: true           # Continuous vibration during countdown
-    channels:                       # Active alert destinations
+    
+    # Explicit Emergency Overrides & Privacy Consent
+    allow_sms_dispatch: false       # Explicit consent required before sending SMS via mobile plan
+    allow_gps_emergency_override: true # Allow fetching GPS ONLY for rescue, even if GPS is OFF for photos
+    local_alarm_only: false         # If true: zero external messages. Audible siren & local alert only (pure offline)
+    
+    channels:                       # Active alert destinations (if not local_alarm_only)
       - "sms"
       - "telegram"
       - "webhook"
@@ -54,8 +60,11 @@ vlm:
     Ajoute 2 à 4 hashtags discrets à la fin.
 
 publisher:
-  # Mode: "dry_run" (simulation & preview), "instagrapi", or "meta_graph"
-  mode: "dry_run"
+  # Mode: "local_only" (private vault), "google_photos" (local sync folder), "dry_run", "instagrapi", or "meta_graph"
+  mode: "local_only"
+  
+  # Private Local Export Target
+  export_directory: "data/my_private_photos" # Synced folder (e.g. Google Drive / Google Photos / Nextcloud)
   
   # Approval Workflow
   require_manual_confirmation: true # If true, never auto-posts without user clicking Accept/Approve

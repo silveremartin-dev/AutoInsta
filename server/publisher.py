@@ -84,7 +84,9 @@ class InstagramPublisher:
             formatted_tags = " ".join([f"#{t.lstrip('#')}" for t in hashtags])
             full_caption += f"\n\n.\n.\n{formatted_tags}"
 
-        if self.mode in ["local_only", "private_vault"]:
+        if self.mode in ["google_photos", "folder_sync"]:
+            return self._publish_google_photos(capture_id, image_path, full_caption)
+        elif self.mode in ["local_only", "private_vault"]:
             return self._publish_local_only(capture_id, full_caption)
         elif self.mode == "dry_run":
             return self._publish_dry_run(capture_id, full_caption)
@@ -97,6 +99,31 @@ class InstagramPublisher:
             return self._publish_meta_graph(capture_id, image_path, full_caption)
         else:
             return self._publish_local_only(capture_id, full_caption)
+
+    def _publish_google_photos(self, capture_id: int, image_path: Path, full_caption: str) -> Dict[str, Any]:
+        """Copies photo into a user-specified synced folder (Google Photos / Drive / Nextcloud)."""
+        import shutil
+        target_dir = settings.export_directory
+        target_dir.mkdir(parents=True, exist_ok=True)
+        dest_filename = f"POV_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{image_path.name}"
+        dest_path = target_dir / dest_filename
+        shutil.copy2(image_path, dest_path)
+
+        # Write sidecar description
+        sidecar = target_dir / f"{dest_filename}.txt"
+        sidecar.write_text(full_caption, encoding="utf-8")
+
+        post_id = f"gphotos_{dest_filename}"
+        logger.info(f"[SYNCHRO PRIVÉE] Cliché #{capture_id} exporté vers le dossier synchronisé : {dest_path}")
+        db.mark_published(capture_id, post_id, "google_photos")
+        db.log_event("INFO", f"Cliché exporté vers le dossier privé synchronisé ({dest_filename})")
+        return {
+            "success": True,
+            "mode": "google_photos",
+            "post_id": post_id,
+            "exported_to": str(dest_path),
+            "caption": full_caption
+        }
 
     def _publish_local_only(self, capture_id: int, full_caption: str) -> Dict[str, Any]:
         local_post_id = f"local_vault_{int(time.time())}"

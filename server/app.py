@@ -218,6 +218,9 @@ class SensorConfigUpdate(BaseModel):
     hr_min_bpm: Optional[int] = None
     hr_max_bpm: Optional[int] = None
     hr_countdown_seconds: Optional[int] = None
+    hr_allow_sms_dispatch: Optional[bool] = None
+    hr_allow_gps_override: Optional[bool] = None
+    hr_local_alarm_only: Optional[bool] = None
     hr_webhook_url: Optional[str] = None
     require_manual_confirmation: Optional[bool] = None
 
@@ -237,6 +240,9 @@ async def get_sensors_config():
         "hr_min_bpm": settings.hr_min_bpm,
         "hr_max_bpm": settings.hr_max_bpm,
         "hr_countdown_seconds": settings.hr_countdown_seconds,
+        "hr_allow_sms_dispatch": settings.hr_allow_sms_dispatch,
+        "hr_allow_gps_override": settings.hr_allow_gps_override,
+        "hr_local_alarm_only": settings.hr_local_alarm_only,
         "hr_webhook_url": settings.hr_webhook_url,
         "require_manual_confirmation": settings.require_manual_confirmation
     }
@@ -256,6 +262,9 @@ async def update_sensors_config(req: SensorConfigUpdate):
     if req.hr_min_bpm is not None: settings.hr_min_bpm = req.hr_min_bpm
     if req.hr_max_bpm is not None: settings.hr_max_bpm = req.hr_max_bpm
     if req.hr_countdown_seconds is not None: settings.hr_countdown_seconds = req.hr_countdown_seconds
+    if req.hr_allow_sms_dispatch is not None: settings.hr_allow_sms_dispatch = req.hr_allow_sms_dispatch
+    if req.hr_allow_gps_override is not None: settings.hr_allow_gps_override = req.hr_allow_gps_override
+    if req.hr_local_alarm_only is not None: settings.hr_local_alarm_only = req.hr_local_alarm_only
     if req.hr_webhook_url is not None: settings.hr_webhook_url = req.hr_webhook_url
     if req.require_manual_confirmation is not None: settings.require_manual_confirmation = req.require_manual_confirmation
     return {"success": True, "sensors": await get_sensors_config()}

@@ -1,10 +1,24 @@
 import os
-import yaml
 from pathlib import Path
 from typing import Any, Dict
-from dotenv import load_dotenv
 
-load_dotenv()
+try:
+    import yaml
+except ImportError:
+    yaml = None
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # Stdlib fallback for .env loading
+    env_file = Path(__file__).resolve().parent.parent / ".env"
+    if env_file.exists():
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip())
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -15,9 +29,12 @@ class Config:
         self.load()
 
     def load(self):
-        if self.config_path.exists():
-            with open(self.config_path, "r", encoding="utf-8") as f:
-                self.raw_data = yaml.safe_load(f) or {}
+        if self.config_path.exists() and yaml is not None:
+            try:
+                with open(self.config_path, "r", encoding="utf-8") as f:
+                    self.raw_data = yaml.safe_load(f) or {}
+            except Exception:
+                self.raw_data = {}
         else:
             self.raw_data = {}
 
@@ -53,6 +70,9 @@ class Config:
         self.hr_countdown_seconds = int(hr_alert_cfg.get("countdown_seconds", 10))
         self.hr_sound_alarm = bool(hr_alert_cfg.get("sound_alarm", True))
         self.hr_vibration_alarm = bool(hr_alert_cfg.get("vibration_alarm", True))
+        self.hr_allow_sms_dispatch = bool(hr_alert_cfg.get("allow_sms_dispatch", False))
+        self.hr_allow_gps_override = bool(hr_alert_cfg.get("allow_gps_emergency_override", True))
+        self.hr_local_alarm_only = bool(hr_alert_cfg.get("local_alarm_only", False))
         self.hr_channels = hr_alert_cfg.get("channels", ["sms", "telegram", "webhook"])
 
         # SOS Secrets (From .env)
@@ -74,9 +94,11 @@ class Config:
         self.language = vlm_cfg.get("language", "fr")
         self.persona_instructions = vlm_cfg.get("persona_instructions", "")
 
-        # Publisher
+        # Publisher & Private Export
         pub_cfg = self.raw_data.get("publisher", {})
-        self.publish_mode = os.getenv("PUBLISH_MODE", pub_cfg.get("mode", "dry_run"))
+        self.publish_mode = os.getenv("PUBLISH_MODE", pub_cfg.get("mode", "local_only"))
+        self.export_directory = BASE_DIR / pub_cfg.get("export_directory", "data/my_private_photos")
+        self.export_directory.mkdir(parents=True, exist_ok=True)
         self.require_manual_confirmation = bool(pub_cfg.get("require_manual_confirmation", True))
         self.target_type = pub_cfg.get("target_type", "feed")
         self.min_interval_minutes = int(pub_cfg.get("min_interval_minutes", 60))

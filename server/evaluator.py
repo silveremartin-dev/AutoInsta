@@ -57,6 +57,28 @@ class VLMEvaluator:
         self.active_sos_alerts = {} # alert_id -> {"timer": Thread/Timer, "cancelled": bool}
         self._init_client()
 
+    def _init_client(self):
+        self.client = None
+        if not self.api_key or self.api_key.startswith("your_"):
+            logger.info("GEMINI_API_KEY absente ou placeholder. Mode simulation locale actif.")
+            return
+
+        try:
+            from google import genai
+            self.client = genai.Client(api_key=self.api_key)
+            self.sdk_type = "google-genai"
+            logger.info("Client Google GenAI initialisé.")
+        except Exception:
+            try:
+                import google.generativeai as gai
+                gai.configure(api_key=self.api_key)
+                self.legacy_model = gai.GenerativeModel(self.model_name)
+                self.sdk_type = "google-generativeai"
+                logger.info("Client legacy google.generativeai initialisé.")
+            except Exception as e2:
+                logger.warning(f"SDK Gemini non disponible ({e2}). Mode simulation actif.")
+                self.client = None
+
     def cancel_emergency_alert(self, alert_id: int) -> bool:
         """User aborted the emergency countdown (Dead Man's Switch interrupted)."""
         if alert_id in self.active_sos_alerts:
@@ -73,8 +95,15 @@ class VLMEvaluator:
             logger.info(f"SOS #{alert_id} dispatch suppressed (was cancelled).")
             return
 
-        logger.critical(f"DEAD MAN'S SWITCH EXPIRED: Dispatching real SOS for {bpm} BPM!")
+        logger.critical(f"DEAD MAN'S SWITCH EXPIRED: Handling SOS for {bpm} BPM!")
         dispatched_channels = []
+
+        # Pure Local Alarm Only Check
+        if settings.hr_local_alarm_only:
+            logger.warning("SOS triggered in LOCAL-ONLY mode (zero external messages sent). Audible siren only.")
+            from server.database import db
+            db.record_emergency_alert(bpm, alert_type, location_str, "LOCAL_ALARM_ONLY", "Siren activated locally, no external dispatch.")
+            return
 
         # 1. Telegram Dispatch
         if settings.telegram_bot_token and settings.telegram_chat_id:
@@ -84,8 +113,8 @@ class VLMEvaluator:
                     f"🚨 [URGENCE VITAL AUTOINSTA]\n"
                     f"Alerte : {alert_type}\n"
                     f"Rythme cardiaque : {bpm} BPM\n"
-                    f"Lieu : {location_str or 'Inconnu'}\n"
-                    f"Compte à rebours de 10s expiré sans annulation."
+                    f"Localisation de secours : {location_str or 'Inconnue'}\n"
+                    f"Compte à rebours homme mort expiré."
                 )
                 tg_url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
                 r = requests.post(tg_url, json={"chat_id": settings.telegram_chat_id, "text": tg_msg}, timeout=5)
@@ -113,17 +142,20 @@ class VLMEvaluator:
             except Exception as e:
                 logger.error(f"Failed to post emergency webhook: {e}")
 
-        # 3. Termux SMS on Android (if running locally or invoked)
+        # 3. Mobile SMS Dispatch (Requires explicit allow_sms_dispatch permission)
         if settings.emergency_phone:
-            try:
-                import subprocess
-                sms_text = f"[URGENCE AUTOINSTA] Rythme cardiaque {bpm} BPM critique. Lieu: {location_str}"
-                subprocess.run(["termux-sms-send", "-n", settings.emergency_phone, sms_text], timeout=5)
-                dispatched_channels.append("SMS")
-            except Exception:
-                pass
+            if settings.hr_allow_sms_dispatch:
+                try:
+                    import subprocess
+                    sms_text = f"[URGENCE AUTOINSTA] Rythme cardiaque {bpm} BPM critique. Lieu: {location_str}"
+                    subprocess.run(["termux-sms-send", "-n", settings.emergency_phone, sms_text], timeout=5)
+                    dispatched_channels.append("SMS")
+                except Exception as e:
+                    logger.error(f"SMS dispatch failed: {e}")
+            else:
+                logger.info("SMS dispatch skipped: allow_sms_dispatch permission is false.")
 
-        status_str = f"DISPATCHED via {', '.join(dispatched_channels) if dispatched_channels else 'None'}"
+        status_str = f"DISPATCHED via {', '.join(dispatched_channels) if dispatched_channels else 'None (Local Alarm)'}"
         from server.database import db
         db.record_emergency_alert(bpm, alert_type, location_str, status_str, f"Dispatched: {status_str}")
 
@@ -209,7 +241,7 @@ class VLMEvaluator:
         sensor_context = "\n".join(context_lines) if context_lines else "None provided."
 
         persona_style = PERSONA_GUIDES.get(settings.persona, PERSONA_GUIDES["spontaneous_chic"])
-        system_instruction = EVALUATION_SYSTEM_PROMPT.format(language=settings.language)
+        system_instruction = EVALUATION_SYSTEM_PROMPT.replace("{language}", settings.language)
         
         prompt_text = f"""
 Analyze this POV image taken from the user's perspective.
@@ -227,7 +259,7 @@ Important:
 - Output valid JSON strictly following the schema.
 """
 
-        if not self.api_key:
+        if not self.api_key or self.api_key.startswith("your_") or not self.client:
             return self._mock_evaluation(image_path, sensor_metadata)
 
         try:

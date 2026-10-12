@@ -431,6 +431,27 @@
                             <label class="text-[10px] text-gray-400 block mb-1">Webhook URL d'urgence (Optionnel)</label>
                             <input type="text" id="hr_webhook" value="{{ settings.hr_webhook_url }}" placeholder="https://..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-white">
                         </div>
+
+                        <!-- Consentements et Overrides d'Urgence explicites -->
+                        <div class="space-y-2 pt-2 border-t border-gray-800/80">
+                            <span class="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">Consentements d'Urgence & Sécurité :</span>
+
+                            <label class="flex items-start gap-2 p-2 rounded-lg bg-gray-900 border border-gray-800 text-[11px] text-gray-300 cursor-pointer">
+                                <input type="checkbox" id="hr_override_gps" class="accent-emerald-500 mt-0.5" {{ 'checked' if settings.hr_allow_gps_override }}>
+                                <span><strong>Override d'Urgence GPS :</strong> Autoriser la localisation GPS <em>exclusivement</em> pour secourir si rythme critique, même si le GPS est désactivé pour les photos.</span>
+                            </label>
+
+                            <label class="flex items-start gap-2 p-2 rounded-lg bg-gray-900 border border-gray-800 text-[11px] text-gray-300 cursor-pointer">
+                                <input type="checkbox" id="hr_allow_sms" class="accent-rose-500 mt-0.5" {{ 'checked' if settings.hr_allow_sms_dispatch }}>
+                                <span><strong>Consentement envoi SMS :</strong> Autoriser formellement l'envoi de SMS payant/mobile vers mon contact de secours en cas de détresse.</span>
+                            </label>
+
+                            <label class="flex items-start gap-2 p-2 rounded-lg bg-gray-900 border border-gray-800 text-[11px] text-gray-300 cursor-pointer">
+                                <input type="checkbox" id="hr_local_alarm" class="accent-yellow-500 mt-0.5" {{ 'checked' if settings.hr_local_alarm_only }}>
+                                <span><strong>Alarme 100% Locale (Purement hors-ligne) :</strong> Zéro message vers l'extérieur. Sonnerie, sirène sonore et notification locale uniquement.</span>
+                            </label>
+                        </div>
+
                         <button onclick="testEmergencyAlert()" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-semibold">
                             Simuler l'alerte Homme Mort (Compte à rebours 10s)
                         </button>
@@ -452,7 +473,12 @@
                             <label class="text-[10px] text-gray-400 block mb-1">Mode de Diffusion :</label>
                             <select id="cred_mode" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
                                 <option value="local_only" {{ 'selected' if settings.publish_mode == 'local_only' }}>Coffre Privé Local (Aucun compte requis, stockage sécurisé)</option>
+                                <option value="google_photos" {{ 'selected' if settings.publish_mode == 'google_photos' }}>Synchronisation Privée (Google Photos / Drive / Dossier local)</option>
                                 <option value="dry_run" {{ 'selected' if settings.publish_mode == 'dry_run' }}>Simulation Dry-Run (Aperçu virtuel sans envoi)</option>
+                                <option value="instagrapi" {{ 'selected' if settings.publish_mode == 'instagrapi' }}>Instagram Mobile (Instagrapi)</option>
+                                <option value="meta_graph" {{ 'selected' if settings.publish_mode == 'meta_graph' }}>Meta Graph API (Compte Pro / Facebook)</option>
+                            </select>
+                        </div>
                                 <option value="instagrapi" {{ 'selected' if settings.publish_mode == 'instagrapi' }}>Instagram Mobile (Instagrapi)</option>
                                 <option value="meta_graph" {{ 'selected' if settings.publish_mode == 'meta_graph' }}>Meta Graph API (Compte Pro / Facebook)</option>
                             </select>
