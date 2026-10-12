@@ -47,15 +47,12 @@
             </div>
 
             <div class="flex items-center space-x-3">
-                <div class="hidden sm:flex items-center space-x-2 text-xs bg-gray-800/80 px-3 py-1.5 rounded-lg border border-gray-700">
-                    <span class="w-2 h-2 rounded-full {{ 'bg-amber-400' if settings.require_manual_confirmation else 'bg-emerald-400' }} animate-pulse"></span>
-                    <span>Validation : <strong class="{{ 'text-amber-300' if settings.require_manual_confirmation else 'text-emerald-300' }}">{{ 'Manuelle' if settings.require_manual_confirmation else 'Automatique' }}</strong></span>
-                </div>
-                <button onclick="document.getElementById('settingsModal').classList.remove('hidden')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-sliders text-fuchsia-400"></i> Capteurs & Options
+                <button id="validationToggleBtn" onclick="toggleValidationMode()" class="flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition {{ 'bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60' if settings.require_manual_confirmation else 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60' }}">
+                    <span id="validationDot" class="w-2 h-2 rounded-full {{ 'bg-amber-400' if settings.require_manual_confirmation else 'bg-emerald-400' }} animate-pulse"></span>
+                    <span>Validation : <strong id="validationToggleLabel">{{ 'Manuelle (Cliquer pour changer)' if settings.require_manual_confirmation else 'Automatique (Cliquer pour changer)' }}</strong></span>
                 </button>
-                <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white shadow-md shadow-fuchsia-600/30 transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-upload"></i> Tester un cliché
+                <button onclick="document.getElementById('settingsModal').classList.remove('hidden')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-sliders text-fuchsia-400"></i> Capteurs & Options
                 </button>
             </div>
         </div>
@@ -238,12 +235,19 @@
                     <p class="text-xs text-gray-400">Clichés ordonnés du plus récent au plus ancien avec statut et données de capteurs</p>
                 </div>
 
-                <!-- Filtres -->
-                <div class="flex items-center gap-1.5 text-xs bg-gray-900 border border-gray-800 p-1 rounded-xl">
-                    <button onclick="filterCaptures('all')" class="px-3 py-1 rounded-lg bg-gray-800 text-white font-medium filter-btn" data-filter="all">Tous</button>
-                    <button onclick="filterCaptures('PUBLISHED')" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="PUBLISHED">Publiés</button>
-                    <button onclick="filterCaptures('PENDING_APPROVAL')" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="PENDING_APPROVAL">En attente</button>
-                    <button onclick="filterCaptures('REJECTED')" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="REJECTED">Rejetés</button>
+                <!-- Filtres et Nettoyage -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    <div class="flex items-center gap-1.5 text-xs bg-gray-900 border border-gray-800 p-1 rounded-xl">
+                        <button onclick="filterCaptures('all', this)" class="px-3 py-1 rounded-lg bg-gray-800 text-white font-medium filter-btn" data-filter="all">Tous</button>
+                        <button onclick="filterCaptures('PUBLISHED', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="PUBLISHED">Publiés</button>
+                        <button onclick="filterCaptures('PENDING_APPROVAL', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="PENDING_APPROVAL">En attente</button>
+                        <button onclick="filterCaptures('REJECTED', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="REJECTED">Rejetés</button>
+                    </div>
+                    {% if captures %}
+                    <button onclick="clearHistory()" class="px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 text-xs font-semibold flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-trash-can text-rose-400"></i> Vider les données de test
+                    </button>
+                    {% endif %}
                 </div>
             </div>
 
@@ -390,45 +394,115 @@
                 <h4 class="text-xs uppercase font-bold tracking-wider text-gray-400">Capteurs actifs un par un</h4>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Caméra POV -->
                     <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
-                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-camera text-fuchsia-400 mr-2"></i> Caméra POV</span>
-                        <input type="checkbox" id="sensor_cam" class="accent-fuchsia-500 w-4 h-4" {{ 'checked' if settings.enable_camera }}>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-camera text-fuchsia-400 mr-2"></i> Caméra POV</span>
+                            <span class="text-[10px] text-emerald-400 ml-6">✓ Détectée (Webcam / Navigateur)</span>
+                        </div>
+                        <input type="checkbox" id="sensor_cam" onchange="autoSaveSensorConfig()" class="accent-fuchsia-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_camera }}>
                     </label>
 
+                    <!-- GPS & Vitesse -->
                     <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
-                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-location-dot text-emerald-400 mr-2"></i> GPS & Vitesse</span>
-                        <input type="checkbox" id="sensor_gps" class="accent-fuchsia-500 w-4 h-4" {{ 'checked' if settings.enable_gps }}>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-location-dot text-emerald-400 mr-2"></i> GPS & Vitesse</span>
+                            <span class="text-[10px] text-emerald-400 ml-6">✓ Détecté (Réseau IP / Navigateur)</span>
+                        </div>
+                        <input type="checkbox" id="sensor_gps" onchange="autoSaveSensorConfig()" class="accent-fuchsia-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_gps }}>
                     </label>
 
+                    <!-- Accéléromètre -->
+                    {% if hardware.accelerometer %}
                     <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-person-walking text-blue-400 mr-2"></i> Accéléromètre</span>
-                        <input type="checkbox" id="sensor_accel" class="accent-fuchsia-500 w-4 h-4" {{ 'checked' if settings.enable_accelerometer }}>
+                        <input type="checkbox" id="sensor_accel" onchange="autoSaveSensorConfig()" class="accent-fuchsia-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_accelerometer }}>
                     </label>
+                    {% else %}
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="Non disponible sur ce PC (Capteur physique présent sur smartphone)">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-person-walking text-gray-600 mr-2"></i> Accéléromètre</span>
+                            <span class="text-[9px] text-gray-500 italic ml-6">Non détecté sur ce PC (Requis mobile)</span>
+                        </div>
+                        <input type="checkbox" id="sensor_accel" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
+                    </div>
+                    {% endif %}
 
+                    <!-- Luminosité -->
+                    {% if hardware.light_sensor %}
                     <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-sun text-amber-400 mr-2"></i> Luminosité (Poche)</span>
-                        <input type="checkbox" id="sensor_light" class="accent-fuchsia-500 w-4 h-4" {{ 'checked' if settings.enable_light_sensor }}>
+                        <input type="checkbox" id="sensor_light" onchange="autoSaveSensorConfig()" class="accent-fuchsia-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_light_sensor }}>
                     </label>
+                    {% else %}
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="Non disponible sur ce PC (Photodiode présente sur smartphone)">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-sun text-gray-600 mr-2"></i> Luminosité (Poche)</span>
+                            <span class="text-[9px] text-gray-500 italic ml-6">Non détecté sur ce PC (Requis mobile)</span>
+                        </div>
+                        <input type="checkbox" id="sensor_light" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
+                    </div>
+                    {% endif %}
 
+                    <!-- Microphone -->
                     <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
-                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-microphone text-teal-400 mr-2"></i> Microphone (dB Ambiance)</span>
-                        <input type="checkbox" id="sensor_mic" class="accent-teal-500 w-4 h-4" {{ 'checked' if settings.enable_microphone }}>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-microphone text-teal-400 mr-2"></i> Microphone (dB Ambiance)</span>
+                            <span class="text-[10px] text-emerald-400 ml-6">✓ Détecté (Entrée audio disponible)</span>
+                        </div>
+                        <input type="checkbox" id="sensor_mic" onchange="autoSaveSensorConfig()" class="accent-teal-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_microphone }}>
                     </label>
 
+                    <!-- Baromètre -->
+                    {% if hardware.barometer %}
                     <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-mountain text-indigo-400 mr-2"></i> Baromètre (Altitude)</span>
-                        <input type="checkbox" id="sensor_baro" class="accent-indigo-500 w-4 h-4" {{ 'checked' if settings.enable_barometer }}>
+                        <input type="checkbox" id="sensor_baro" onchange="autoSaveSensorConfig()" class="accent-indigo-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_barometer }}>
                     </label>
+                    {% else %}
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="Non disponible sur ce PC">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-mountain text-gray-600 mr-2"></i> Baromètre (Altitude)</span>
+                            <span class="text-[9px] text-gray-500 italic ml-6">Non détecté sur ce PC (Requis montre)</span>
+                        </div>
+                        <input type="checkbox" id="sensor_baro" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
+                    </div>
+                    {% endif %}
 
+                    <!-- Batterie -->
+                    {% if hardware.battery %}
                     <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
-                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-battery-half text-green-400 mr-2"></i> Batterie (Pause si &lt; 15%)</span>
-                        <input type="checkbox" id="sensor_bat" class="accent-green-500 w-4 h-4" {{ 'checked' if settings.enable_battery }}>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-battery-half text-green-400 mr-2"></i> Batterie (Pause si &lt; 15%)</span>
+                            <span class="text-[10px] text-emerald-400 ml-6">✓ Détectée</span>
+                        </div>
+                        <input type="checkbox" id="sensor_bat" onchange="autoSaveSensorConfig()" class="accent-green-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_battery }}>
                     </label>
+                    {% else %}
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="PC fixe branché sur secteur (Aucune batterie)">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-battery-half text-gray-600 mr-2"></i> Batterie (Alimentation)</span>
+                            <span class="text-[9px] text-gray-500 italic ml-6">PC sur secteur (Pas de batterie)</span>
+                        </div>
+                        <input type="checkbox" id="sensor_bat" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
+                    </div>
+                    {% endif %}
 
+                    <!-- Podomètre -->
+                    {% if hardware.pedometer %}
                     <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-shoe-prints text-orange-400 mr-2"></i> Podomètre (Pas du jour)</span>
-                        <input type="checkbox" id="sensor_step" class="accent-orange-500 w-4 h-4" {{ 'checked' if settings.enable_pedometer }}>
+                        <input type="checkbox" id="sensor_step" onchange="autoSaveSensorConfig()" class="accent-orange-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_pedometer }}>
                     </label>
+                    {% else %}
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="Non disponible sur PC (Requis smartphone dans la poche ou montre connectée)">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-shoe-prints text-gray-600 mr-2"></i> Podomètre (Pas du jour)</span>
+                            <span class="text-[9px] text-gray-500 italic ml-6">Non détecté sur ce PC (Requis smartphone/montre)</span>
+                        </div>
+                        <input type="checkbox" id="sensor_step" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
+                    </div>
+                    {% endif %}
                 </div>
 
                 <!-- Capteur Cardiaque & Alerte Corporelle (Homme Mort) -->
@@ -514,10 +588,6 @@
                                 <option value="meta_graph" {{ 'selected' if settings.publish_mode == 'meta_graph' }}>Meta Graph API (Compte Pro / Facebook)</option>
                             </select>
                         </div>
-                                <option value="instagrapi" {{ 'selected' if settings.publish_mode == 'instagrapi' }}>Instagram Mobile (Instagrapi)</option>
-                                <option value="meta_graph" {{ 'selected' if settings.publish_mode == 'meta_graph' }}>Meta Graph API (Compte Pro / Facebook)</option>
-                            </select>
-                        </div>
 
                         <div>
                             <label class="text-[10px] text-gray-400 block mb-1">Clé API Google Gemini (Vision 1.5 Flash) :</label>
@@ -562,7 +632,7 @@
                             </div>
                         </div>
 
-                        <button onclick="saveCredentials()" class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-md">
+                        <button onclick="saveCredentials()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-md">
                             <i class="fa-solid fa-floppy-disk"></i> Enregistrer les Identifiants en Sécurité
                         </button>
                     </div>
@@ -572,97 +642,112 @@
                 <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 flex items-center justify-between">
                     <div>
                         <span class="text-xs font-bold text-amber-300">Validation manuelle obligatoire avant envoi</span>
-                        <p class="text-[11px] text-gray-400">Si activé, l'IA attend votre clic sur [Accepter & Publier] avant tout envoi.</p>
+                        <p class="text-[11px] text-gray-400">Si activé, l'IA attend votre accord avant publication. Si désactivé, l'envoi est 100% automatique si la note &gt;= 7.0.</p>
                     </div>
-                    <input type="checkbox" id="require_approval" class="accent-amber-500 w-5 h-5" {{ 'checked' if settings.require_manual_confirmation }}>
+                    <input type="checkbox" id="require_approval" onchange="autoSaveSensorConfig()" class="accent-amber-500 w-5 h-5 cursor-pointer" {{ 'checked' if settings.require_manual_confirmation }}>
                 </div>
             </div>
 
-            <div class="flex justify-end gap-2 pt-2 border-t border-gray-800">
-                <button onclick="saveSensorConfig()" class="px-4 py-2 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs font-bold transition">
-                    Enregistrer les options
+            <div class="flex items-center justify-between pt-3 border-t border-gray-800">
+                <span id="saveToast" class="text-xs text-emerald-400 font-semibold opacity-0 transition-opacity duration-300 flex items-center gap-1.5"><i class="fa-solid fa-check"></i> Options sauvegardées automatiquement</span>
+                <button onclick="document.getElementById('settingsModal').classList.add('hidden')" class="px-5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-xmark"></i> Fermer
                 </button>
             </div>
-        </div>
-    </div>
-
-    <!-- MODAL TEST UPLOAD -->
-    <div id="uploadModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-gray-900 border border-gray-800 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <div class="flex items-center justify-between">
-                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-cloud-arrow-up text-fuchsia-400"></i> Tester un cliché avec capteurs
-                </h3>
-                <button onclick="document.getElementById('uploadModal').classList.add('hidden')" class="text-gray-400 hover:text-white">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <form id="uploadForm" class="space-y-4" onsubmit="handleUpload(event)">
-                <div class="border-2 border-dashed border-gray-700 hover:border-fuchsia-500/60 rounded-2xl p-6 text-center cursor-pointer transition">
-                    <input type="file" id="fileInput" name="file" accept="image/*" required class="hidden" onchange="previewFile(this)">
-                    <label for="fileInput" class="cursor-pointer space-y-2 block">
-                        <i class="fa-solid fa-image text-3xl text-gray-500"></i>
-                        <p class="text-xs text-gray-300" id="fileLabel">Cliquez pour choisir une photo</p>
-                    </label>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 text-xs">
-                    <div>
-                        <label class="text-gray-400 block mb-1">Ville de test</label>
-                        <input type="text" id="testCity" value="Paris" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2 text-white">
-                    </div>
-                    <div>
-                        <label class="text-gray-400 block mb-1">Vitesse (km/h)</label>
-                        <input type="number" id="testSpeed" value="5" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2 text-white">
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="submit" id="submitBtn" class="px-4 py-2 text-xs font-semibold rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white transition">
-                        Envoyer & Analyser
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 
     <script>
-        function previewFile(input) {
-            if (input.files && input.files[0]) {
-                document.getElementById('fileLabel').textContent = input.files[0].name;
+        // ==========================================
+        // 1. GESTION DU MODE DE VALIDATION (TOGGLE 1-CLIC)
+        // ==========================================
+        async function toggleValidationMode() {
+            try {
+                const res = await fetch('/api/settings/toggle-validation', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    const btn = document.getElementById('validationToggleBtn');
+                    const dot = document.getElementById('validationDot');
+                    const label = document.getElementById('validationToggleLabel');
+                    const isManual = data.require_manual_confirmation;
+
+                    if (isManual) {
+                        btn.className = 'flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60';
+                        dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+                        label.textContent = 'Manuelle (Cliquer pour changer)';
+                    } else {
+                        btn.className = 'flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60';
+                        dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+                        label.textContent = 'Automatique (Cliquer pour changer)';
+                    }
+                    const chk = document.getElementById('require_approval');
+                    if (chk) chk.checked = isManual;
+                }
+            } catch (err) {
+                console.error('Erreur toggle validation:', err);
             }
         }
 
-        async function handleUpload(e) {
-            e.preventDefault();
-            const fileInput = document.getElementById('fileInput');
-            if (!fileInput.files[0]) return;
+        // ==========================================
+        // 2. SAUVEGARDE AUTOMATIQUE DES CAPTEURS & OPTIONS
+        // ==========================================
+        let autoSaveTimer = null;
+        async function autoSaveSensorConfig() {
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(async () => {
+                const payload = {
+                    enable_camera: document.getElementById('sensor_cam') ? document.getElementById('sensor_cam').checked : true,
+                    enable_gps: document.getElementById('sensor_gps') ? document.getElementById('sensor_gps').checked : true,
+                    enable_accelerometer: document.getElementById('sensor_accel') ? document.getElementById('sensor_accel').checked : false,
+                    enable_light_sensor: document.getElementById('sensor_light') ? document.getElementById('sensor_light').checked : false,
+                    enable_microphone: document.getElementById('sensor_mic') ? document.getElementById('sensor_mic').checked : false,
+                    enable_barometer: document.getElementById('sensor_baro') ? document.getElementById('sensor_baro').checked : false,
+                    enable_battery: document.getElementById('sensor_bat') ? document.getElementById('sensor_bat').checked : true,
+                    enable_pedometer: document.getElementById('sensor_step') ? document.getElementById('sensor_step').checked : false,
+                    enable_heart_rate: document.getElementById('sensor_hr') ? document.getElementById('sensor_hr').checked : false,
+                    hr_alert_enabled: document.getElementById('hr_alert_active') ? document.getElementById('hr_alert_active').checked : false,
+                    hr_min_bpm: parseInt(document.getElementById('hr_min').value) || 45,
+                    hr_max_bpm: parseInt(document.getElementById('hr_max').value) || 145,
+                    hr_countdown_seconds: parseInt(document.getElementById('hr_countdown').value) || 10,
+                    hr_webhook_url: document.getElementById('hr_webhook').value,
+                    hr_allow_gps_override: document.getElementById('hr_override_gps') ? document.getElementById('hr_override_gps').checked : true,
+                    hr_allow_sms_dispatch: document.getElementById('hr_allow_sms') ? document.getElementById('hr_allow_sms').checked : false,
+                    hr_local_alarm_only: document.getElementById('hr_local_alarm') ? document.getElementById('hr_local_alarm').checked : false,
+                    require_manual_confirmation: document.getElementById('require_approval') ? document.getElementById('require_approval').checked : true
+                };
 
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Évaluation en cours...';
+                try {
+                    const res = await fetch('/api/sensors/config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        const toast = document.getElementById('saveToast');
+                        if (toast) {
+                            toast.classList.remove('opacity-0');
+                            setTimeout(() => toast.classList.add('opacity-0'), 2000);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Erreur auto-save:', e);
+                }
+            }, 300);
+        }
 
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            formData.append('source', 'manual_test');
-            formData.append('sensors', JSON.stringify({
-                city: document.getElementById('testCity').value,
-                speed_kmh: parseFloat(document.getElementById('testSpeed').value) || 0
-            }));
-
+        // ==========================================
+        // 3. ACTIONS HISTORIQUE & CLICHÉS
+        // ==========================================
+        async function clearHistory() {
+            if (!confirm('Voulez-vous réinitialiser et supprimer tous les clichés de test de l\'historique ?')) return;
             try {
-                const res = await fetch('/api/capture/upload', { method: 'POST', body: formData });
+                const res = await fetch('/api/captures/clear', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    alert('Erreur: ' + JSON.stringify(data));
+                    window.location.reload();
                 }
             } catch (err) {
-                alert('Erreur réseau: ' + err);
-            } finally {
-                submitBtn.disabled = false;
+                alert('Erreur: ' + err);
             }
         }
 
@@ -671,7 +756,6 @@
                 const res = await fetch('/api/captures/' + id + '/approve', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    alert('Publication validée et exécutée !');
                     window.location.reload();
                 } else {
                     alert('Information: ' + (data.reason || data.error || JSON.stringify(data)));
@@ -702,7 +786,7 @@
                     body: JSON.stringify({ caption: textarea.value })
                 });
                 const data = await res.json();
-                if (data.success) alert('Légende enregistrée avec succès.');
+                if (data.success) alert('Légende mise à jour.');
             } catch (err) {
                 alert('Erreur: ' + err);
             }
@@ -713,155 +797,23 @@
                 const res = await fetch('/api/captures/' + id + '/reevaluate', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    alert('Ré-évaluation lancée.');
-                    setTimeout(() => window.location.reload(), 2000);
+                    alert('Ré-évaluation Gemini demandée...');
+                    setTimeout(() => window.location.reload(), 2500);
                 }
             } catch (err) {
                 alert('Erreur: ' + err);
             }
         }
 
-        let countdownInterval = null;
-        let activeEmergencyAlertId = null;
-        let audioContext = null;
-
-        function playWarningBeep() {
-            try {
-                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioContext.createOscillator();
-                const gain = audioContext.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(880, audioContext.currentTime); // High pitch alarm
-                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
-                osc.connect(gain);
-                gain.connect(audioContext.destination);
-                osc.start();
-                osc.stop(audioContext.currentTime + 0.15);
-            } catch (e) {}
-        }
-
-        async function saveSensorConfig() {
-            const payload = {
-                enable_camera: document.getElementById('sensor_cam').checked,
-                enable_gps: document.getElementById('sensor_gps').checked,
-                enable_accelerometer: document.getElementById('sensor_accel').checked,
-                enable_light_sensor: document.getElementById('sensor_light').checked,
-                enable_microphone: document.getElementById('sensor_mic').checked,
-                enable_barometer: document.getElementById('sensor_baro').checked,
-                enable_battery: document.getElementById('sensor_bat').checked,
-                enable_pedometer: document.getElementById('sensor_step').checked,
-                enable_heart_rate: document.getElementById('sensor_hr').checked,
-                hr_alert_enabled: document.getElementById('hr_alert_active').checked,
-                hr_min_bpm: parseInt(document.getElementById('hr_min').value) || 45,
-                hr_max_bpm: parseInt(document.getElementById('hr_max').value) || 145,
-                hr_countdown_seconds: parseInt(document.getElementById('hr_countdown').value) || 10,
-                hr_webhook_url: document.getElementById('hr_webhook').value,
-                require_manual_confirmation: document.getElementById('require_approval').checked
-            };
-
-            try {
-                const res = await fetch('/api/sensors/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (data.success) {
-                    alert('Options et capteurs enregistrés.');
-                    window.location.reload();
-                }
-            } catch (err) {
-                alert('Erreur: ' + err);
-            }
-        }
-
-        async function saveCredentials() {
-            const payload = {
-                master_pin: document.getElementById('master_pin').value,
-                new_master_pin: document.getElementById('new_master_pin').value || null,
-                gemini_api_key: document.getElementById('cred_gemini').value,
-                publish_mode: document.getElementById('cred_mode').value,
-                instagram_username: document.getElementById('cred_ig_user').value,
-                instagram_password: document.getElementById('cred_ig_pass').value,
-                emergency_phone: document.getElementById('cred_phone').value,
-                telegram_chat_id: document.getElementById('cred_tg_chat').value,
-                telegram_bot_token: document.getElementById('cred_tg_token').value
-            };
-
-            try {
-                const res = await fetch('/api/settings/credentials', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (data.success) {
-                    alert(data.message || 'Identifiants enregistrés avec succès.');
-                    window.location.reload();
-                } else {
-                    alert('Erreur: ' + (data.detail || JSON.stringify(data)));
-                }
-            } catch (err) {
-                alert('Erreur de sauvegarde: ' + err);
-            }
-        }
-
-        async function testEmergencyAlert() {
-            try {
-                const res = await fetch('/api/health/test-alert', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ bpm: 155, location: 'Localisation Active (PC/Bureau)' })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    activeEmergencyAlertId = data.alert_id;
-                    startDeadManCountdown(data.countdown_seconds || 10);
-                }
-            } catch (err) {
-                alert('Erreur: ' + err);
-            }
-        }
-
-        function startDeadManCountdown(seconds) {
-            const banner = document.getElementById('deadManBanner');
-            const timerEl = document.getElementById('countdownTimer');
-            banner.classList.remove('hidden');
-            let remaining = seconds;
-            timerEl.textContent = remaining + 's';
-            playWarningBeep();
-
-            if (countdownInterval) clearInterval(countdownInterval);
-            countdownInterval = setInterval(() => {
-                remaining--;
-                playWarningBeep();
-                if (navigator.vibrate) navigator.vibrate(200);
-                timerEl.textContent = remaining + 's';
-                if (remaining <= 0) {
-                    clearInterval(countdownInterval);
-                    banner.classList.add('hidden');
-                    alert('COMPTE À REBOURS EXPIRÉ : Alerte SOS et coordonnées GPS transmises (SMS / Telegram / Webhook).');
-                }
-            }, 1000);
-        }
-
-        async function abortEmergencySOS() {
-            if (countdownInterval) clearInterval(countdownInterval);
-            document.getElementById('deadManBanner').classList.add('hidden');
-            if (activeEmergencyAlertId) {
-                try {
-                    await fetch('/api/health/cancel-alert/' + activeEmergencyAlertId, { method: 'POST' });
-                } catch (e) {}
-            }
-            alert('ALERTE ANNULÉE PAR L\'UTILISATEUR (Faux positif évité).');
-        }
-
-        function filterCaptures(status) {
+        function filterCaptures(status, clickedBtn) {
             document.querySelectorAll('.filter-btn').forEach(b => {
                 b.classList.remove('bg-gray-800', 'text-white');
                 b.classList.add('text-gray-400');
             });
-            event.target.classList.add('bg-gray-800', 'text-white');
+            if (clickedBtn) {
+                clickedBtn.classList.remove('text-gray-400');
+                clickedBtn.classList.add('bg-gray-800', 'text-white');
+            }
 
             document.querySelectorAll('.capture-card').forEach(card => {
                 const cardStatus = card.dataset.status;
@@ -875,8 +827,10 @@
                     else card.classList.add('hidden');
                 }
             });
+        }
+
         // ==========================================
-        // WEBCAM DIRECT CONTROLLER (BROWSER CAPTURE)
+        // 4. WEBCAM DIRECTE DANS LE NAVIGATEUR
         // ==========================================
         let webcamStream = null;
         let webcamCountdown = null;
@@ -892,7 +846,6 @@
             const countEl = document.getElementById('camNextCountdown');
 
             if (webcamStream) {
-                // Stop webcam
                 webcamStream.getTracks().forEach(t => t.stop());
                 webcamStream = null;
                 if (webcamCountdown) clearInterval(webcamCountdown);
@@ -923,12 +876,10 @@
                 snapBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 countEl.classList.remove('hidden');
 
-                // Initial capture after stream warms up
                 video.onloadedmetadata = () => {
                     setTimeout(snapWebcamNow, 1500);
                 };
 
-                // Continuous timer
                 secRemaining = CAPTURE_INTERVAL_SEC;
                 document.getElementById('camSecLeft').textContent = secRemaining + 's';
                 if (webcamCountdown) clearInterval(webcamCountdown);
@@ -1001,12 +952,117 @@
                 if (res.ok) {
                     const data = await res.json();
                     console.log('[AutoInsta] Cliché envoyé avec succès :', data);
-                    // Reload after 3s to reflect new evaluation in dashboard
                     setTimeout(() => location.reload(), 3000);
                 }
             } catch (err) {
                 console.error('[AutoInsta] Erreur transmission capture:', err);
             }
+        }
+
+        // ==========================================
+        // 5. IDENTIFIANTS (.ENV) & SÉCURITÉ
+        // ==========================================
+        async function saveCredentials() {
+            const payload = {
+                master_pin: document.getElementById('master_pin').value,
+                new_master_pin: document.getElementById('new_master_pin').value || null,
+                gemini_api_key: document.getElementById('cred_gemini').value,
+                publish_mode: document.getElementById('cred_mode').value,
+                instagram_username: document.getElementById('cred_ig_user').value,
+                instagram_password: document.getElementById('cred_ig_pass').value,
+                emergency_phone: document.getElementById('cred_phone').value,
+                telegram_chat_id: document.getElementById('cred_tg_chat').value,
+                telegram_bot_token: document.getElementById('cred_tg_token').value
+            };
+
+            try {
+                const res = await fetch('/api/settings/credentials', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message || 'Identifiants enregistrés avec succès.');
+                    window.location.reload();
+                } else {
+                    alert('Erreur: ' + (data.detail || JSON.stringify(data)));
+                }
+            } catch (err) {
+                alert('Erreur: ' + err);
+            }
+        }
+
+        // ==========================================
+        // 6. SÉCURITÉ CARDIAQUE & BOUTON HOMME MORT
+        // ==========================================
+        let countdownInterval = null;
+        let activeEmergencyAlertId = null;
+        let audioContext = null;
+
+        function playWarningBeep() {
+            try {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(880, audioContext.currentTime);
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.15);
+            } catch (e) {}
+        }
+
+        async function testEmergencyAlert() {
+            try {
+                const res = await fetch('/api/health/test-alert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bpm: 155, location: 'Localisation Active (PC/Bureau)' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    activeEmergencyAlertId = data.alert_id;
+                    startDeadManCountdown(data.countdown_seconds || 10);
+                }
+            } catch (err) {
+                alert('Erreur: ' + err);
+            }
+        }
+
+        function startDeadManCountdown(seconds) {
+            const banner = document.getElementById('deadManBanner');
+            const timerEl = document.getElementById('countdownTimer');
+            banner.classList.remove('hidden');
+            let remaining = seconds;
+            timerEl.textContent = remaining + 's';
+            playWarningBeep();
+
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                remaining--;
+                playWarningBeep();
+                if (navigator.vibrate) navigator.vibrate(200);
+                timerEl.textContent = remaining + 's';
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                    banner.classList.add('hidden');
+                    alert('COMPTE À REBOURS EXPIRÉ : Alerte SOS et coordonnées GPS transmises (SMS / Telegram / Webhook).');
+                }
+            }, 1000);
+        }
+
+        async function abortEmergencySOS() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            document.getElementById('deadManBanner').classList.add('hidden');
+            if (activeEmergencyAlertId) {
+                try {
+                    await fetch('/api/health/cancel-alert/' + activeEmergencyAlertId, { method: 'POST' });
+                } catch (e) {}
+            }
+            alert('ALERTE ANNULÉE PAR L\'UTILISATEUR (Faux positif évité).');
         }
     </script>
 </body>

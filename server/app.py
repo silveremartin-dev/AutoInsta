@@ -64,6 +64,29 @@ def process_capture_pipeline(capture_id: int, image_path: Path, sensor_metadata:
     except Exception as e:
         db.log_event("ERROR", f"Pipeline error on capture #{capture_id}", str(e))
 
+def get_hardware_capabilities() -> dict:
+    """Detects physically available sensors on this host."""
+    import psutil
+    is_android = "com.termux" in os.environ.get("PREFIX", "") or os.path.exists("/data/data/com.termux")
+    has_battery = False
+    try:
+        batt = psutil.sensors_battery()
+        has_battery = batt is not None
+    except Exception:
+        has_battery = False
+
+    return {
+        "camera": True,
+        "gps": True,
+        "accelerometer": is_android,
+        "light_sensor": is_android,
+        "microphone": True,
+        "barometer": is_android,
+        "battery": has_battery or is_android,
+        "pedometer": is_android,
+        "heart_rate": True
+    }
+
 @app.get("/", response_class=HTMLResponse)
 async def dashboard_view(request: Request):
     """Render real-time AutoInsta web dashboard."""
@@ -71,6 +94,7 @@ async def dashboard_view(request: Request):
     pending_approvals = [c for c in captures if c.get("status") == "PENDING_APPROVAL"]
     stats = db.get_stats()
     alerts = db.list_emergency_alerts(limit=5)
+    hardware = get_hardware_capabilities()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -80,7 +104,8 @@ async def dashboard_view(request: Request):
             "pending_approvals": pending_approvals,
             "stats": stats,
             "settings": settings,
-            "alerts": alerts
+            "alerts": alerts,
+            "hardware": hardware
         }
     )
 
@@ -199,6 +224,22 @@ async def reevaluate_capture(capture_id: int, background_tasks: BackgroundTasks)
     sensor_meta = cap.get("sensor_metadata") or {}
     background_tasks.add_task(process_capture_pipeline, capture_id, image_path, sensor_meta)
     return {"success": True, "message": "Re-evaluation scheduled."}
+
+@app.post("/api/captures/clear")
+async def clear_captures():
+    """Clears all historical captures and alerts for a fresh start."""
+    db.clear_all_captures()
+    return {"success": True, "message": "Historique nettoyé avec succès."}
+
+@app.post("/api/settings/toggle-validation")
+async def toggle_validation_mode():
+    """Toggles manual confirmation mode ON or OFF directly."""
+    settings.require_manual_confirmation = not settings.require_manual_confirmation
+    return {
+        "success": True,
+        "require_manual_confirmation": settings.require_manual_confirmation,
+        "mode": "MANUAL" if settings.require_manual_confirmation else "AUTOMATIC"
+    }
 
 @app.get("/api/stats")
 async def get_stats():

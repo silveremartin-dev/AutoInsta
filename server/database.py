@@ -123,6 +123,14 @@ class Database:
             """, (post_id, mode, capture_id))
             conn.commit()
 
+    def clear_all_captures(self):
+        """Clears all historical test captures and alerts."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM captures")
+            cursor.execute("DELETE FROM emergency_alerts")
+            conn.commit()
+
     def mark_publish_failed(self, capture_id: int, error_msg: str):
         with self.get_connection() as conn:
             cursor = conn.cursor()
