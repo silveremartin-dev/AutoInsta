@@ -83,8 +83,39 @@ def open_browser_delayed(url: str, delay: float = 1.5):
     t = threading.Thread(target=_open, daemon=True)
     t.start()
 
+def ensure_port_is_free(port: int = 8000):
+    """Detects and terminates any stale process occupying the target port."""
+    if sys.platform == "win32":
+        try:
+            cmd = f'netstat -ano | findstr :{port}'
+            out = subprocess.check_output(cmd, shell=True).decode()
+            pids = set()
+            for line in out.strip().splitlines():
+                if "LISTENING" in line.upper():
+                    parts = line.strip().split()
+                    pids.add(parts[-1])
+            for pid in pids:
+                if pid != "0" and int(pid) != os.getpid():
+                    print(f"[*] Port {port} occupe par l'ancien processus #{pid}. Liberation automatique...")
+                    subprocess.run(f"taskkill /F /PID {pid}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    time.sleep(1)
+        except Exception:
+            pass
+    else:
+        try:
+            cmd = f"lsof -ti :{port}"
+            pids = subprocess.check_output(cmd, shell=True).decode().strip().splitlines()
+            for pid in pids:
+                if pid and int(pid) != os.getpid():
+                    print(f"[*] Liberation du port {port} (processus #{pid})...")
+                    subprocess.run(f"kill -9 {pid}", shell=True)
+                    time.sleep(1)
+        except Exception:
+            pass
+
 def run_server(host: str = "0.0.0.0", port: int = 8000, auto_open: bool = True):
     """Starts FastAPI/Uvicorn server."""
+    ensure_port_is_free(port)
     local_ip = get_local_ip()
     url_localhost = f"http://localhost:{port}"
     url_network = f"http://{local_ip}:{port}"
@@ -198,6 +229,7 @@ def run_demo_simulation(port: int = 8000):
 
 def run_all_in_one(port: int = 8000):
     """Starts both Server and background Webcam capture in a single process."""
+    ensure_port_is_free(port)
     check_and_install_dependencies()
     print("\n" + "=" * 68)
     print(" 📷 DEMARRAGE TOUT-EN-UN : SERVEUR + WEBCAM PC ")

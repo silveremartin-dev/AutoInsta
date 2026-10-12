@@ -80,6 +80,7 @@ class Config:
         self.telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
         self.telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
         self.emergency_webhook_url = os.getenv("EMERGENCY_WEBHOOK_URL", hr_alert_cfg.get("webhook_url", ""))
+        self.hr_webhook_url = self.emergency_webhook_url
         self.facebook_page_id = os.getenv("FACEBOOK_PAGE_ID", "")
 
         # Gemini / VLM
