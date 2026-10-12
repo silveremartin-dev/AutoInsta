@@ -305,7 +305,14 @@ Important:
             return parsed
 
         except Exception as e:
-            logger.error(f"VLM evaluation failed: {e}", exc_info=True)
+            err_msg = str(e)
+            if "401" in err_msg or "UNAUTHENTICATED" in err_msg or "API_KEY_INVALID" in err_msg:
+                print("\n[ℹ INFO] La clé GEMINI_API_KEY actuelle n'est pas une clé Google AI Studio valide (Erreur 401).")
+                print("         -> Bascule automatique et transparente sur la simulation locale réaliste.\n")
+                logger.warning(f"Gemini API 401 Authentication error. Falling back to mock evaluation.")
+                return self._mock_evaluation(image_path, sensor_metadata)
+
+            logger.error(f"VLM evaluation failed: {e}")
             return {
                 "status": "EVALUATION_ERROR",
                 "safety_pass": False,

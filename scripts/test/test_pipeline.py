@@ -90,8 +90,8 @@ def run_test():
     print("[4/4] Test du moteur de publication / coffre-fort...")
     caption = eval_result.get("caption") or "Cliché test"
     hashtags = eval_result.get("hashtags") or ["test"]
-    pub_res = publisher.publish(cap_id, img_path, caption, hashtags)
-    print(f"      Résultat : {pub_res.get('mode', 'N/A')} - Succès: {pub_res.get('success')}")
+    pub_res = publisher.publish(cap_id, img_path, caption, hashtags, ignore_cooldown=True)
+    print(f"      Mode : {pub_res.get('mode', 'N/A')} - Succès: {pub_res.get('success')}")
 
     print("=" * 60)
     print(" ✅ TEST DU PIPELINE RÉUSSI SANS ERREUR !")

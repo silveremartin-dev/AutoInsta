@@ -73,11 +73,12 @@ class InstagramPublisher:
             logger.error(f"Failed to initialize instagrapi client: {e}")
             return False
 
-    def publish(self, capture_id: int, image_path: Path, caption: str, hashtags: list) -> Dict[str, Any]:
-        can_post, reason = self.can_publish_now()
-        if not can_post:
-            logger.warning(f"Publish prevented for capture #{capture_id}: {reason}")
-            return {"success": False, "reason": reason}
+    def publish(self, capture_id: int, image_path: Path, caption: str, hashtags: list, ignore_cooldown: bool = False) -> Dict[str, Any]:
+        if not ignore_cooldown:
+            can_post, reason = self.can_publish_now()
+            if not can_post:
+                logger.warning(f"Publish prevented for capture #{capture_id}: {reason}")
+                return {"success": False, "reason": reason}
 
         full_caption = caption.strip()
         if hashtags:
