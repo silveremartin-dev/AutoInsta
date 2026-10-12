@@ -9,26 +9,37 @@ from server.config import settings
 logger = logging.getLogger("autoinsta.evaluator")
 
 EVALUATION_SYSTEM_PROMPT = """
-You are AutoInsta's Egocentric VLM Evaluator & Social Content Generator.
-Your purpose is to inspect raw first-person point-of-view (POV) images captured passively from a smartphone or smart glasses, evaluate their privacy safety and aesthetic interest, and generate engaging Instagram captions.
+You are AutoInsta's Strict Egocentric VLM Evaluator & Social Narrative Generator.
+Your purpose is to inspect raw first-person point-of-view (POV) images captured passively from a smartphone, wearable, or PC camera, enforce absolute privacy standards, evaluate social interest, and compose authentic captions.
 
-You must output valid JSON ONLY matching the following schema:
+STRICT PRIVACY RULES (CRITICAL):
+You MUST set "safety_pass": false and "recommended_action": "REJECT_PRIVATE" if ANY of the following is present:
+1. Nudity, naked bodies, underwear, erotic/intimate exposure, or revealing intimate reflections in mirrors.
+2. Intimate spaces: bathrooms, toilets, locker rooms, or disheveled private bedrooms.
+3. Private or sensitive screens: open emails, WhatsApp/chat windows, computer code, banking/financial accounts, passwords, medical portals.
+4. Personal identity items: credit cards, ID cards, driver's licenses, passports, postal mail showing addresses.
+5. Vulnerable or non-consenting individuals in close-up distress.
+
+QUALITY GATE:
+Set "quality_pass": false if the frame is completely black (inside pocket/bag), heavily occluded by fabric/fingers, or motion-blurred beyond recognition.
+
+SOCIAL INTEREST SCORE (0.0 to 10.0):
+0.0 - 4.9: Boring, empty floor, mundane wall, repetitive desk screenshot.
+5.0 - 6.9: Typical daily view, acceptable but unexciting.
+7.0 - 8.4: Good aesthetic composition, pleasant light, appetizing food, lively streetscape, intriguing architecture.
+8.5 - 10.0: Exceptional, striking POV photography, poetic timing, beautiful atmosphere.
+
+Output valid JSON ONLY matching the following schema:
 {
-  "safety_pass": boolean, // true if NO sensitive screens (passwords, banking, emails), NO credit cards, NO intimate/bathroom scenes, NO private identity docs.
-  "quality_pass": boolean, // true if the image is clear enough (not pure black pocket shot, not completely blinded or motion-blurred beyond recognition).
-  "social_score": number, // float from 0.0 to 10.0. 0=boring/empty floor, 5=ordinary everyday sight, 7.5+=captivating moment, aesthetic coffee, beautiful light, cool architecture, unique street scene, 9+=exceptional shot.
-  "scene_description": string, // 1-2 sentences describing what is seen from the wearer's POV.
-  "caption": string, // An authentic, first-person POV Instagram caption matching the requested persona and language. Do NOT sound like an AI assistant. Be spontaneous and natural.
-  "hashtags": [string], // Array of 2 to 4 relevant hashtags without the # symbol.
+  "safety_pass": boolean,
+  "quality_pass": boolean,
+  "social_score": number, // float 0.0 - 10.0
+  "scene_description": string, // 1-2 factual sentences describing the POV scene
+  "caption": string, // Natural first-person POV Instagram caption in {language} matching requested persona
+  "hashtags": [string], // 2-4 discreet hashtags without '#' symbol
   "recommended_action": "POST" | "REJECT_PRIVATE" | "REJECT_LOW_QUALITY" | "REJECT_BORING",
-  "reasoning": string // Brief explanation of the safety, score, and decision.
+  "reasoning": string // Detailed rationale for safety and score
 }
-
-Decision Rules:
-- If safety_pass is false -> recommended_action = "REJECT_PRIVATE"
-- Else if quality_pass is false -> recommended_action = "REJECT_LOW_QUALITY"
-- Else if social_score < {min_score} -> recommended_action = "REJECT_BORING"
-- Else -> recommended_action = "POST"
 """
 
 PERSONA_GUIDES = {
@@ -69,7 +80,40 @@ class VLMEvaluator:
                 logger.error(f"Failed to initialize Gemini SDK: {e2}")
                 self.client = None
 
-    def evaluate_image(self, image_path: Path) -> Dict[str, Any]:
+    def check_emergency_heart_rate(self, bpm: Optional[int], location_str: str = ""):
+        """Trigger emergency alert if heart rate exceeds safe thresholds."""
+        if not settings.hr_alert_enabled or bpm is None or bpm <= 0:
+            return
+
+        alert_type = None
+        if bpm < settings.hr_min_bpm:
+            alert_type = f"BRADYCARDIA_ALERT (Low: {bpm} BPM < {settings.hr_min_bpm})"
+        elif bpm > settings.hr_max_bpm:
+            alert_type = f"TACHYCARDIA_ALERT (High: {bpm} BPM > {settings.hr_max_bpm})"
+
+        if alert_type:
+            logger.warning(f"EMERGENCY HEALTH TRIGGERED: {alert_type} at {location_str}")
+            # Dispatch alert
+            details = f"Detected {bpm} BPM. Location: {location_str or 'Unknown'}"
+            status = "SENT"
+            
+            # Send to webhook if configured
+            if settings.hr_webhook_url:
+                try:
+                    import requests
+                    requests.post(
+                        settings.hr_webhook_url,
+                        json={"alert": alert_type, "bpm": bpm, "location": location_str, "timestamp": time.time()},
+                        timeout=5
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to post emergency webhook: {e}")
+                    status = f"FAILED: {e}"
+
+            from server.database import db
+            db.record_emergency_alert(bpm, alert_type, location_str, status, details)
+
+    def evaluate_image(self, image_path: Path, sensor_metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         if not image_path.exists():
             return {
                 "status": "REJECTED",
@@ -83,22 +127,53 @@ class VLMEvaluator:
                 "reasoning": f"Image file not found at {image_path}"
             }
 
+        sensor_metadata = sensor_metadata or {}
+        
+        # Check emergency heart rate if enabled
+        bpm = sensor_metadata.get("heart_rate_bpm")
+        loc_display = sensor_metadata.get("city") or sensor_metadata.get("location_name") or ""
+        if bpm:
+            self.check_emergency_heart_rate(int(bpm), loc_display)
+
+        # Build sensor context string for Gemini prompt
+        context_lines = []
+        if settings.enable_gps:
+            if sensor_metadata.get("city"):
+                context_lines.append(f"- Location: {sensor_metadata.get('city')} ({sensor_metadata.get('country', '')})")
+            elif sensor_metadata.get("latitude") and sensor_metadata.get("longitude"):
+                context_lines.append(f"- Coordinates: {sensor_metadata.get('latitude')}, {sensor_metadata.get('longitude')}")
+            if sensor_metadata.get("speed_kmh") is not None:
+                context_lines.append(f"- Moving Speed: {sensor_metadata.get('speed_kmh')} km/h")
+
+        if settings.enable_heart_rate and bpm:
+            context_lines.append(f"- Current Heart Rate: {bpm} BPM")
+
+        if settings.enable_accelerometer and sensor_metadata.get("activity_state"):
+            context_lines.append(f"- Activity State: {sensor_metadata.get('activity_state')}")
+
+        sensor_context = "\n".join(context_lines) if context_lines else "None provided."
+
         persona_style = PERSONA_GUIDES.get(settings.persona, PERSONA_GUIDES["spontaneous_chic"])
-        system_instruction = EVALUATION_SYSTEM_PROMPT.format(min_score=settings.min_social_score)
+        system_instruction = EVALUATION_SYSTEM_PROMPT.format(language=settings.language)
         
         prompt_text = f"""
 Analyze this POV image taken from the user's perspective.
 Target Language: {settings.language}
 Persona Profile: {settings.persona} ({persona_style})
-Additional instructions: {settings.persona_instructions}
-Min Score Threshold for posting: {settings.min_social_score}
+Additional persona guidance: {settings.persona_instructions}
+Min Score Threshold for posting candidate: {settings.min_social_score}
 
-Output the JSON evaluation following the specified schema strictly.
+Real-time Sensor Context:
+{sensor_context}
+
+Important:
+- If sensitive screens, private docs, bathrooms, or nudity are detected, you MUST set safety_pass=false and recommended_action="REJECT_PRIVATE".
+- If safe and aesthetic, subtly integrate the location or motion context into the caption if it elevates the authenticity.
+- Output valid JSON strictly following the schema.
 """
 
-        # If API key not set or SDK not available, use intelligent local heuristic fallback
         if not self.api_key:
-            return self._mock_evaluation(image_path)
+            return self._mock_evaluation(image_path, sensor_metadata)
 
         try:
             pil_image = Image.open(image_path)
@@ -156,16 +231,16 @@ Output the JSON evaluation following the specified schema strictly.
                 "reasoning": f"Error during Gemini inference: {str(e)}"
             }
 
-    def _mock_evaluation(self, image_path: Path) -> Dict[str, Any]:
+    def _mock_evaluation(self, image_path: Path, sensor_metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Offline simulation when GEMINI_API_KEY is omitted."""
         logger.info(f"Running mock evaluation for {image_path.name}")
+        sensor_metadata = sensor_metadata or {}
         
         # Check basic image size and brightness
         try:
             with Image.open(image_path) as img:
                 img_gray = img.convert('L')
                 stat = img_gray.getextrema()
-                # If pure dark
                 is_dark = stat[1] < 20
         except Exception:
             is_dark = False
@@ -176,23 +251,26 @@ Output the JSON evaluation following the specified schema strictly.
                 "safety_pass": True,
                 "quality_pass": False,
                 "social_score": 1.0,
-                "scene_description": "Dark or occluded frame (likely inside pocket or obscured).",
+                "scene_description": "Cadre obscur ou obstrué (probablement dans une poche).",
                 "caption": "",
                 "hashtags": [],
                 "recommended_action": "REJECT_LOW_QUALITY",
-                "reasoning": "Image is too dark or blocked."
+                "reasoning": "L'image est trop sombre ou bloquée."
             }
+
+        city = sensor_metadata.get("city") or "la ville"
+        bpm_mention = f" ({sensor_metadata.get('heart_rate_bpm')} bpm)" if sensor_metadata.get('heart_rate_bpm') else ""
 
         return {
             "status": "ACCEPTED",
             "safety_pass": True,
             "quality_pass": True,
-            "social_score": 8.2,
-            "scene_description": "POV perspective of the surrounding environment during daily activity.",
-            "caption": "Chasing the quiet light in between places. ✨",
-            "hashtags": ["pov", "dailylife", "moments", "streetstyle"],
+            "social_score": 8.4,
+            "scene_description": f"Perspective POV en déplacement dans {city}.",
+            "caption": f"Flânerie impromptue dans les rues de {city}. Lumière d'automne et tempo paisible{bpm_mention}. ✨",
+            "hashtags": ["pov", "dailylife", "streetphotography", "cityvibes"],
             "recommended_action": "POST",
-            "reasoning": "Mock mode: Composition is balanced, lighting is natural, no sensitive content detected."
+            "reasoning": "Simulation : Composition équilibrée, absence de données sensibles, conformité vie privée totale."
         }
 
 evaluator = VLMEvaluator()

@@ -7,43 +7,57 @@ server:
   db_path: "data/autoinsta.db"
   client_api_key: "autoinsta_device_secret_token_123"
 
+# Granular Sensor Settings
+sensors:
+  enable_camera: true
+  enable_gps: true                  # GPS coordinates, reverse-geocoding city/neighborhood
+  enable_accelerometer: true        # Motion detection (pauses capture when completely still)
+  enable_light_sensor: true         # Avoids taking pictures inside dark pockets or bags
+  enable_heart_rate: false          # Physiological wearable / BLE heart rate monitoring
+  
+  # Heart Rate Emergency Alert (Experimental / Non-medical)
+  heart_rate_alert:
+    enabled: false
+    min_bpm: 45                     # Low heart rate threshold (Bradycardia alert)
+    max_bpm: 145                    # High heart rate threshold (Tachycardia alert)
+    alert_channel: "webhook"        # "sms" (via Termux), "telegram", or "webhook"
+    emergency_contact: ""           # Phone number for SMS or recipient ID
+    webhook_url: ""                 # Emergency webhook URL (e.g. Home Assistant, Discord, IFTTT)
+
 vlm:
-  # Model to use: "gemini-1.5-flash" (or "gemini-2.0-flash", "gemini-1.5-pro")
   model: "gemini-1.5-flash"
   temperature: 0.7
+  min_social_score: 7.0             # Score between 0.0 and 10.0 required to propose posting
   
-  # Evaluation thresholds
-  min_social_score: 7.0 # Score between 0.0 and 10.0 required to trigger auto-posting
-  require_safety_pass: true # Must pass private screen, intimate scene, and sensitive data check
-  require_quality_pass: true # Must not be heavily blurred, dark pocket, or obstructed
+  # Strict Privacy & Safety Filters
+  strict_privacy: true              # Zero-tolerance for screens, banking, intimate spaces, nudity
+  require_quality_pass: true        # Avoid pure black, occluded, or severely motion-blurred shots
 
   # Persona style for generated captions
   # Options: spontaneous_chic, witty_minimalist, candid_existential, poetic_flaneur, tech_nomad
   persona: "spontaneous_chic"
-
-  # Language for captions (e.g., 'en', 'fr', 'es')
-  language: "en"
+  language: "fr"                     # Default caption language
 
   # Custom prompt guidance
   persona_instructions: |
-    You are writing natural, authentic-sounding Instagram captions from a first-person POV lifelogging stream.
-    Never sound like an obvious bot or corporate marketer.
-    Keep captions punchy, stylish, and context-aware.
-    Include 2-4 subtle, relevant hashtags at the end.
+    Tu rédiges des légendes Instagram naturelles, spontanées et élégantes à la première personne.
+    Ne sonne jamais comme un robot ou une marque.
+    Intègre subtilement le lieu et l'ambiance si des données GPS ou d'activité sont fournies.
+    Ajoute 2 à 4 hashtags discrets à la fin.
 
 publisher:
-  # Mode: "dry_run" (preview only, no actual post), "instagrapi", or "meta_graph"
+  # Mode: "dry_run" (simulation & preview), "instagrapi", or "meta_graph"
   mode: "dry_run"
   
-  # Target publish type: "feed" or "story"
-  target_type: "feed"
+  # Approval Workflow
+  require_manual_confirmation: true # If true, never auto-posts without user clicking Accept/Approve
   
-  # Post rate limiting & cooldown
-  min_interval_minutes: 60 # Minimum time between automatic posts
-  max_daily_posts: 4 # Maximum auto-posts per 24 hours
+  target_type: "feed"               # "feed" or "story"
+  min_interval_minutes: 60          # Minimum time between posts
+  max_daily_posts: 4                # Maximum posts per 24 hours
 
 client:
-  # Capture settings for phone / camera client
   capture_interval_seconds: 30
-  motion_threshold: 0.25 # Only capture if motion detected (if supported by client)
-  darkness_threshold: 15 # Avoid capturing in dark pockets
+  motion_threshold: 0.25
+  darkness_threshold: 15
+

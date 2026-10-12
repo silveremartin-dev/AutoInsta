@@ -1,7 +1,7 @@
 # AutoInsta (AutoInsta-POV)
 
-> **Zero-Cost Egocentric Lifelogging & Autonomous Social Ingestion Agent**  
-> Powered by **Gemini 1.5 Flash**, Multimodal Vision-Language Inference, and Automated Instagram Injection.
+> **Zero-Cost Egocentric Lifelogging, Multi-Sensor Agent & Instagram Ingestion**  
+> Powered by **Gemini 1.5 Flash**, Multimodal Vision-Language Inference, Sensor Fusion, and Human-in-the-Loop Approval.
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-silveremartin--dev%2FAutoInsta-blue?logo=github)](https://github.com/silveremartin-dev/AutoInsta)
 [![Python Version](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](https://python.org)
@@ -13,85 +13,97 @@
 
 ## 🌟 Concept: The Zahavi Bypass
 
-In evolutionary sociology, **Zahavi's Costly Signaling Theory** posits that social validation depends on finite attention and metabolic cost (curating moments, framing shots, drafting captions, managing social presence).
+In evolutionary sociology, **Zahavi's Costly Signaling Theory** posits that authentic social validation depends on finite attention and metabolic cost (framing shots, curating memories, drafting captions, maintaining social presence).
 
 **AutoInsta** short-circuits this transaction through **algorithmic Batesian mimicry**:
-1. **Passive Optical Capture**: Your Android smartphone (in a shirt pocket, chest harness, or lanyard) or smart glasses opportunistically capture first-person point-of-view (POV) images during your day.
-2. **Autonomous VLM Curation**: Google **Gemini 1.5 Flash** inspects the raw visual stream, eliminates private screens and blurry shots, rates social/aesthetic interest (0–10), and composes context-aware Instagram captions in your selected persona.
-3. **Automated Social Injection**: If the frame exceeds the aesthetic threshold and cooldown limits, AutoInsta seamlessly publishes it to Instagram—generating genuine social presence with **zero cognitive overhead**.
+1. **Passive Multi-Sensor Capture**: Your Android smartphone (in a shirt pocket, lanyard, or mount) or PC webcam opportunistically captures point-of-view (POV) images while monitoring GPS, motion, light, and optional wearable biometric metrics.
+2. **Autonomous VLM Curation**: Google **Gemini 1.5 Flash** inspects the visual stream with a **zero-tolerance privacy shield** (auto-rejecting private screens, banking, intimate spaces, and nudity), evaluates aesthetic interest (0–10), and composes context-aware Instagram captions tailored to your physical location and speed.
+3. **Human-in-the-Loop or Autonomous Injection**: Review proposed posts one by one with a single click, or let the agent post automatically according to strict cooldown protocols.
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture & Pipeline
 
 ```
-                                  [ Android Smartphone / POV Rig ]
-                                     (Termux / CameraX / Wearable)
-                                                 │
-                             1 frame / 30-60s    │  (Gated by Light & Motion sensors)
-                                                 ▼
-                                     [ AutoInsta Server (FastAPI) ]
-                                                 │
-                                                 ▼
-                                     [ Multimodal VLM (Gemini 1.5 Flash) ]
-                                     ├── Privacy / Safety Filter (Screens, IDs, Intimate scenes)
-                                     ├── Quality Gate (Clarity & Exposure)
-                                     ├── Aesthetic Scoring (0.0 to 10.0)
-                                     └── Persona Narrative & Hashtag Synthesis
-                                                 │
-                                  Score >= 7.0 & Safety Pass
-                                                 │
-                                                 ▼
-                                     [ Instagram Publisher ]
-                                     ├── Dry-Run Mode (Preview & Simulation)
-                                     ├── Instagrapi Engine (Direct Mobile Emulation)
-                                     └── Meta Graph API (Official Creator / Business)
-                                                 │
-                                                 ▼
-                                       [ Live Instagram Feed / Story ]
+               [ Android Phone / Wearable / PC Webcam ]
+               ├── Camera (POV image buffer)
+               ├── GPS & Speed (Neighborhood / City context)
+               ├── Accelerometer (Movement vs static desk)
+               ├── Light Sensor (Anti-pocket / bag dark filter)
+               └── Optional Heart Rate BLE (BPM / Health Alert)
+                                 │
+                                 ▼
+                     [ AutoInsta Server (FastAPI) ]
+                                 │
+                                 ▼
+                 [ Gemini 1.5 Flash Multimodal Ingestion ]
+                 ├── Strict Privacy Filter (Zero-tolerance screens & intimacy)
+                 ├── Quality Gate (Clarity, exposure, blur)
+                 ├── Aesthetic & Narrative Scoring (0.0 to 10.0)
+                 └── Context-Aware Caption Generation (Persona + Location)
+                                 │
+                 ┌───────────────┴───────────────┐
+                 ▼                               ▼
+    [ Require Approval: TRUE ]       [ Require Approval: FALSE ]
+      Stored in "Pending Queue"        Auto-posted if score >= 7.0
+      User clicks: [Approve / Reject]
+                 │                               │
+                 └───────────────┬───────────────┘
+                                 ▼
+                     [ Instagram Publisher ]
+                     ├── Dry-Run Mode (Safe local preview)
+                     ├── Instagrapi (Direct mobile API)
+                     └── Meta Graph API (Official Creator/Business)
 ```
 
 ---
 
-## ✨ Features
+## ✨ Features & Capabilities
 
-- 📸 **Multi-Source Ingestion**:
-  - **Android Phones**: Direct lifelogging via Termux / Termux:API (under 2-minute setup) or native Kotlin background service.
-  - **Smart Wearables / Glasses**: Brilliant Labs Frame, OpenGlass, ESP32-CAM, or RTSP feeds.
-  - **Python Camera Client**: Desktop webcams, OBS virtual cameras, or DroidCam streams with motion-difference filtering.
-- 🧠 **Gemini 1.5 Flash Multimodal Pipeline**:
-  - **Privacy Shield**: Auto-redacts screens with sensitive text, credit cards, banking info, and private rooms.
-  - **Aesthetic Scoring**: Evaluates composition, lighting, novelty, and urban/natural serendipity.
-  - **Persona-Calibrated Captions**: Choose between `spontaneous_chic`, `witty_minimalist`, `candid_existential`, `poetic_flaneur`, or `tech_nomad`.
-- 🚀 **Instagram Action Engine**:
-  - `dry_run` mode for risk-free local testing and UI review.
-  - `instagrapi` mobile API wrapper with session persistence and anti-ban delays.
-  - Official Meta Graph API support for Creator/Business accounts.
-  - Anti-spam cooldown rules (configurable post frequency and daily limits).
-- 🖥️ **Live Web Dashboard**:
-  - Real-time POV stream gallery, visual metrics, VLM reasoning breakdown, and manual one-click publishing.
+- 🔒 **Zero-Tolerance Privacy & Safety Gate**:
+  - Automatically rejects photos containing computer/phone screens with private chats, emails, banking information, or passwords.
+  - Automatically rejects nudity, swimwear, intimate reflections, bathrooms, and locker rooms.
+- 🎛️ **Granular Sensor Toggles (Individual ON/OFF)**:
+  - **Camera**: Enable or disable continuous image acquisition.
+  - **GPS & Location**: Toggle location-aware captions and Instagram geotagging.
+  - **Accelerometer**: Only shoot when actually moving; pauses when sitting still.
+  - **Light Sensor**: Skips dark shots inside pockets or bags to save battery.
+  - **Heart Rate & Wearable Sensor**: Optional physiological tracking (toggleable at any time).
+- 🚨 **Emergency Heart Rate Alert (Experimental / Non-Medical)**:
+  - Configurable high/low BPM thresholds (e.g. `< 45` or `> 145`).
+  - Sends immediate emergency distress alerts via Android SMS (`termux-sms-send`), Telegram, or Webhook containing live GPS Google Maps coordinates.
+- 📋 **Human-in-the-Loop Approval Queue**:
+  - Review candidates one by one on the dashboard before anything goes live.
+  - Edit captions inline before approving.
+  - Complete chronological history showing all past captures with status (`Published`, `Pending Approval`, `Manually Rejected`, `AI Rejected`).
+- 🔄 **Cross-Platform Autostart & Autostop**:
+  - Works on **Windows**, **macOS**, **Linux** (systemd user service), and **Android** (Termux:Boot).
+  - Single CLI command to activate, deactivate, or completely remove autostart.
+- 📱 **One-Tap Phone Launcher (Termux:Widget)**:
+  - Two buttons on your Android home screen: **"AutoInsta Start"** and **"AutoInsta Stop"** with instant toast feedback.
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Clone & Install Server
+### 1. Installation on PC (Windows, macOS, Linux)
 
 ```bash
 git clone https://github.com/silveremartin-dev/AutoInsta.git
 cd AutoInsta
 
-# Create and activate virtual environment
+# Create & activate virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Windows:
+.\venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
-
-Copy `.env.example` to `.env` and fill in your Gemini API key:
+### 2. Configure Credentials (`.env`)
 
 ```bash
 cp .env.example .env
@@ -99,107 +111,95 @@ cp .env.example .env
 
 Edit `.env`:
 ```env
-# Get your free key at https://aistudio.google.com/app/apikey
 GEMINI_API_KEY=your_gemini_api_key_here
-
-# Publisher mode: dry_run | instagrapi | meta_graph
 PUBLISH_MODE=dry_run
-
-# Optional credentials if PUBLISH_MODE=instagrapi
-INSTAGRAM_USERNAME=your_username
-INSTAGRAM_PASSWORD=your_password
 ```
 
-### 3. Run the AutoInsta Server
+### 3. Launch the Server & Dashboard
 
 ```bash
 uvicorn server.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Open `http://localhost:8000` in your browser to view the **AutoInsta Dashboard**.
+Open your browser at **`http://localhost:8000`** to access the control center.
 
 ---
 
-## 📱 Android Client Setup (Termux Lifelogger)
+## ⚡ Autostart & Autostop Setup
 
-You can turn any Android phone into an autonomous POV camera in **2 minutes**:
+Enable or remove AutoInsta on boot across all operating systems with a single command:
 
-1. Install **Termux** and **Termux:API** from [F-Droid](https://f-droid.org/).
-2. Grant Camera and Sensor permissions to Termux:API.
+```bash
+# Enable autostart on system boot
+python scripts/autostart/manage_autostart.py --enable
+
+# Disable and completely remove autostart
+python scripts/autostart/manage_autostart.py --disable
+```
+
+- **Windows**: Places a batch shortcut in `shell:startup`.
+- **macOS**: Registers a LaunchAgent in `~/Library/LaunchAgents/`.
+- **Linux**: Creates and activates a systemd user service (`~/.config/systemd/user/autoinsta.service`).
+- **Android**: Installs a boot trigger script in `~/.termux/boot/`.
+
+---
+
+## 📱 Android Client Setup (Termux + Home Screen Widget)
+
+Turn your Android phone into an autonomous POV camera with 2 home screen icons:
+
+1. Install **Termux**, **Termux:API**, and **Termux:Widget** from [F-Droid](https://f-droid.org/).
+2. Grant Camera, Location, and Sensor permissions in Android Settings.
 3. Open Termux on your phone and run:
 
 ```bash
 pkg update && pkg install -y python termux-api git
 pip install requests
 
-# Download capture script
-curl -O https://raw.githubusercontent.com/silveremartin-dev/AutoInsta/main/client/android_termux/autoinsta_capture.py
+# Clone repository
+git clone https://github.com/silveremartin-dev/AutoInsta.git
+cd AutoInsta
 
-# Configure server IP (your PC's local Wi-Fi IP or Tailscale IP)
-export AUTOINSTA_SERVER="http://192.168.1.50:8000/api/capture/upload"
-export AUTOINSTA_INTERVAL="30" # capture every 30 seconds
-
-# Start capture loop
-python autoinsta_capture.py
+# Setup Home Screen Widgets
+mkdir -p ~/.shortcuts
+cp client/android_termux/widget_start.sh ~/.shortcuts/AutoInsta_ON
+cp client/android_termux/widget_stop.sh ~/.shortcuts/AutoInsta_OFF
+chmod +x ~/.shortcuts/*
 ```
 
-*The Termux client automatically reads the phone's light sensor: if the phone is tucked in a dark pocket or face-down, it pauses capture to conserve battery!*
-
----
-
-## 💻 Python Desktop / Webcam Client
-
-To test with a computer webcam, USB camera, or RTSP feed:
-
-```bash
-python client/python_cam/cam_client.py --server http://localhost:8000/api/capture/upload --camera 0 --interval 30
-```
-
-Options:
-- `--camera 0`: Index of webcam or RTSP URL (`rtsp://...`)
-- `--interval 30`: Capture every 30 seconds
-- `--no-motion`: Disable the frame difference motion gate
+4. Long-press on your phone's home screen, add the **Termux:Widget**, and select **AutoInsta_ON** and **AutoInsta_OFF**. You now have one-touch activation directly on your home screen!
 
 ---
 
 ## ⚙️ Configuration Reference (`config.yaml`)
 
 ```yaml
-vlm:
-  model: "gemini-1.5-flash"
-  temperature: 0.7
-  min_social_score: 7.0         # Minimum score (0-10) to auto-publish
-  require_safety_pass: true      # Privacy shield
-  require_quality_pass: true     # Blur and darkness check
-  persona: "spontaneous_chic"   # Caption style
-  language: "en"                 # Language code
+sensors:
+  enable_camera: true
+  enable_gps: true
+  enable_accelerometer: true
+  enable_light_sensor: true
+  enable_heart_rate: false           # Disabled by default
+  
+  heart_rate_alert:
+    enabled: false
+    min_bpm: 45
+    max_bpm: 145
+    emergency_contact: "+33600000000" # SMS or webhook recipient
 
 publisher:
-  mode: "dry_run"               # "dry_run", "instagrapi", or "meta_graph"
-  target_type: "feed"           # "feed" or "story"
-  min_interval_minutes: 60      # Cooldown between posts
-  max_daily_posts: 4            # Daily post limit
+  mode: "dry_run"                    # "dry_run", "instagrapi", or "meta_graph"
+  require_manual_confirmation: true  # One-by-one user approval queue
+  target_type: "feed"                # "feed" or "story"
+  min_interval_minutes: 60
+  max_daily_posts: 4
 ```
-
----
-
-## 📡 REST API Reference
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/capture/upload` | Ingest POV frame (`multipart/form-data`) |
-| `GET` | `/api/captures` | List captures with VLM evaluation & status |
-| `GET` | `/api/captures/{id}` | Get specific capture details & reasoning |
-| `POST` | `/api/captures/{id}/publish` | Manually force-publish a capture |
-| `POST` | `/api/captures/{id}/reevaluate` | Trigger VLM re-evaluation |
-| `GET` | `/api/stats` | Ingestion & social publishing statistics |
-| `GET` / `POST` | `/api/config` | View or update runtime settings |
 
 ---
 
 ## 📜 Agent Guidelines
 
-See [AGENT.md](AGENT.md) for full architectural guidelines, prompt engineering patterns, and autonomous lifecycle specifications.
+See [AGENT.md](AGENT.md) for full architectural specifications, prompt heuristics, and privacy compliance guidelines.
 
 ---
 

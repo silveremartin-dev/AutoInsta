@@ -34,10 +34,27 @@ class Database:
                     hashtags TEXT,
                     vlm_reasoning TEXT,
                     recommended_action TEXT,
+                    sensor_metadata TEXT,
                     published_at DATETIME,
                     published_post_id TEXT,
                     publish_mode TEXT,
                     publish_error TEXT
+                )
+            """)
+            # Add sensor_metadata column if migrating existing database
+            try:
+                cursor.execute("ALTER TABLE captures ADD COLUMN sensor_metadata TEXT")
+            except Exception:
+                pass
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS emergency_alerts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    bpm INTEGER,
+                    alert_type TEXT,
+                    location TEXT,
+                    status TEXT,
+                    details TEXT
                 )
             """)
             cursor.execute("""
@@ -51,12 +68,13 @@ class Database:
             """)
             conn.commit()
 
-    def add_capture(self, filename: str, filepath: str, source: str = "android") -> int:
+    def add_capture(self, filename: str, filepath: str, source: str = "android", sensor_metadata: Optional[Dict[str, Any]] = None) -> int:
         with self.get_connection() as conn:
             cursor = conn.cursor()
+            meta_json = json.dumps(sensor_metadata or {})
             cursor.execute(
-                "INSERT INTO captures (filename, filepath, source, status) VALUES (?, ?, ?, 'PENDING')",
-                (filename, str(filepath), source)
+                "INSERT INTO captures (filename, filepath, source, status, sensor_metadata) VALUES (?, ?, ?, 'PENDING', ?)",
+                (filename, str(filepath), source, meta_json)
             )
             conn.commit()
             return cursor.lastrowid
@@ -116,6 +134,37 @@ class Database:
             """, (error_msg, capture_id))
             conn.commit()
 
+    def update_caption(self, capture_id: int, caption: str, hashtags: Optional[List[str]] = None):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            if hashtags is not None:
+                cursor.execute("UPDATE captures SET caption = ?, hashtags = ? WHERE id = ?", (caption, json.dumps(hashtags), capture_id))
+            else:
+                cursor.execute("UPDATE captures SET caption = ? WHERE id = ?", (caption, capture_id))
+            conn.commit()
+
+    def update_status(self, capture_id: int, status: str):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE captures SET status = ? WHERE id = ?", (status, capture_id))
+            conn.commit()
+
+    def record_emergency_alert(self, bpm: int, alert_type: str, location: str, status: str, details: str = "") -> int:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO emergency_alerts (bpm, alert_type, location, status, details) VALUES (?, ?, ?, ?, ?)",
+                (bpm, alert_type, location, status, details)
+            )
+            conn.commit()
+            return cursor.lastrowid
+
+    def list_emergency_alerts(self, limit: int = 20) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM emergency_alerts ORDER BY id DESC LIMIT ?", (limit,))
+            return [dict(r) for r in cursor.fetchall()]
+
     def get_capture(self, capture_id: int) -> Optional[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -128,13 +177,21 @@ class Database:
                         d["hashtags"] = json.loads(d["hashtags"])
                     except Exception:
                         d["hashtags"] = [d["hashtags"]]
+                if d.get("sensor_metadata"):
+                    try:
+                        d["sensor_metadata"] = json.loads(d["sensor_metadata"])
+                    except Exception:
+                        d["sensor_metadata"] = {}
                 return d
             return None
 
-    def list_captures(self, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    def list_captures(self, limit: int = 50, offset: int = 0, status_filter: Optional[str] = None) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM captures ORDER BY id DESC LIMIT ? OFFSET ?", (limit, offset))
+            if status_filter:
+                cursor.execute("SELECT * FROM captures WHERE status = ? ORDER BY id DESC LIMIT ? OFFSET ?", (status_filter, limit, offset))
+            else:
+                cursor.execute("SELECT * FROM captures ORDER BY id DESC LIMIT ? OFFSET ?", (limit, offset))
             rows = cursor.fetchall()
             results = []
             for r in rows:
@@ -144,6 +201,11 @@ class Database:
                         d["hashtags"] = json.loads(d["hashtags"])
                     except Exception:
                         pass
+                if d.get("sensor_metadata"):
+                    try:
+                        d["sensor_metadata"] = json.loads(d["sensor_metadata"])
+                    except Exception:
+                        d["sensor_metadata"] = {}
                 results.append(d)
             return results
 

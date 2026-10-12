@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="fr" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoInsta POV — Autonomous Social Agent Dashboard</title>
+    <title>AutoInsta POV — Centre de Contrôle & Approbation</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -32,7 +32,7 @@
 <body class="bg-[#0b0f19] text-gray-100 min-h-screen flex flex-col font-sans selection:bg-fuchsia-500 selection:text-white">
 
     <!-- Navbar -->
-    <header class="border-b border-gray-800 bg-gray-900/60 backdrop-blur-md sticky top-0 z-50">
+    <header class="border-b border-gray-800 bg-gray-900/70 backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-fuchsia-600 via-pink-600 to-amber-500 flex items-center justify-center shadow-lg shadow-fuchsia-500/20">
@@ -40,22 +40,22 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-lg leading-none tracking-tight text-white flex items-center gap-2">
-                        AutoInsta <span class="text-xs px-2 py-0.5 rounded-full bg-fuchsia-950 text-fuchsia-400 border border-fuchsia-800/60">POV Agent</span>
+                        AutoInsta <span class="text-xs px-2 py-0.5 rounded-full bg-fuchsia-950 text-fuchsia-400 border border-fuchsia-800/60">POV Lifelogger</span>
                     </h1>
-                    <p class="text-xs text-gray-400">Zero-Cost Egocentric Lifelogging & Social Ingestion</p>
+                    <p class="text-xs text-gray-400">Générateur de sociabilité & Contrôle multi-capteurs</p>
                 </div>
             </div>
 
-            <div class="flex items-center space-x-4">
-                <div class="hidden md:flex items-center space-x-2 text-xs text-gray-400 bg-gray-800/80 px-3 py-1.5 rounded-lg border border-gray-700">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>VLM Model: <strong class="text-gray-200">{{ settings.vlm_model }}</strong></span>
+            <div class="flex items-center space-x-3">
+                <div class="hidden sm:flex items-center space-x-2 text-xs bg-gray-800/80 px-3 py-1.5 rounded-lg border border-gray-700">
+                    <span class="w-2 h-2 rounded-full {{ 'bg-amber-400' if settings.require_manual_confirmation else 'bg-emerald-400' }} animate-pulse"></span>
+                    <span>Validation : <strong class="{{ 'text-amber-300' if settings.require_manual_confirmation else 'text-emerald-300' }}">{{ 'Manuelle' if settings.require_manual_confirmation else 'Automatique' }}</strong></span>
                 </div>
-                <div class="hidden md:flex items-center space-x-2 text-xs text-gray-400 bg-gray-800/80 px-3 py-1.5 rounded-lg border border-gray-700">
-                    <span>Mode: <strong class="text-fuchsia-400 uppercase">{{ settings.publish_mode }}</strong></span>
-                </div>
+                <button onclick="document.getElementById('settingsModal').classList.remove('hidden')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-sliders text-fuchsia-400"></i> Capteurs & Options
+                </button>
                 <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white shadow-md shadow-fuchsia-600/30 transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-upload"></i> Test POV Upload
+                    <i class="fa-solid fa-upload"></i> Tester un cliché
                 </button>
             </div>
         </div>
@@ -63,141 +63,224 @@
 
     <!-- Main Content -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
-        <!-- Metrics Bar -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
+
+        <!-- Top Metrics Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-400 uppercase font-medium">Total POV Captures</p>
-                    <p class="text-2xl font-bold text-white mt-1">{{ stats.total_captures }}</p>
+                    <p class="text-[11px] sm:text-xs text-gray-400 uppercase font-medium">Clichés Capturés</p>
+                    <p class="text-xl sm:text-2xl font-bold text-white mt-1">{{ stats.total_captures }}</p>
                 </div>
-                <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg sm:text-xl">
                     <i class="fa-solid fa-camera"></i>
                 </div>
             </div>
 
-            <div class="p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
+            <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-400 uppercase font-medium">Published (Instagram)</p>
-                    <p class="text-2xl font-bold text-emerald-400 mt-1">{{ stats.total_published }}</p>
-                    <span class="text-[10px] text-gray-500">{{ stats.published_last_24h }} in last 24h</span>
+                    <p class="text-[11px] sm:text-xs text-amber-400 uppercase font-medium">En Attente de Validation</p>
+                    <p class="text-xl sm:text-2xl font-bold text-amber-300 mt-1">{{ pending_approvals|length }}</p>
                 </div>
-                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg sm:text-xl">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] sm:text-xs text-emerald-400 uppercase font-medium">Publiés Instagram</p>
+                    <p class="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">{{ stats.total_published }}</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg sm:text-xl">
                     <i class="fa-brands fa-instagram"></i>
                 </div>
             </div>
 
-            <div class="p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
+            <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-400 uppercase font-medium">Filtered Out (Privacy/Quality)</p>
-                    <p class="text-2xl font-bold text-rose-400 mt-1">{{ stats.total_rejected }}</p>
+                    <p class="text-[11px] sm:text-xs text-rose-400 uppercase font-medium">Rejetés (Filtre Privé/Score)</p>
+                    <p class="text-xl sm:text-2xl font-bold text-rose-400 mt-1">{{ stats.total_rejected }}</p>
                 </div>
-                <div class="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-lg sm:text-xl">
                     <i class="fa-solid fa-shield-halved"></i>
-                </div>
-            </div>
-
-            <div class="p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-gray-400 uppercase font-medium">Avg Social Score</p>
-                    <p class="text-2xl font-bold text-amber-400 mt-1">{{ stats.average_social_score }} / 10</p>
-                    <span class="text-[10px] text-gray-500">Threshold: &ge; {{ settings.min_social_score }}</span>
-                </div>
-                <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl">
-                    <i class="fa-solid fa-fire"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Section: POV Live Ingestion Stream -->
+        <!-- SECTION 1: QUEUE D'APPROBATION MANUELLE (SI PENDING) -->
+        {% if pending_approvals %}
+        <div class="bg-gradient-to-b from-amber-950/20 to-gray-900/80 border-2 border-amber-500/30 rounded-3xl p-6 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-amber-500 text-black flex items-center justify-center font-bold">
+                        {{ pending_approvals|length }}
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                            Publications en attente de votre accord
+                        </h2>
+                        <p class="text-xs text-amber-200/70">L'IA Gemini a validé l'esthétique et la sécurité. Donnez votre accord pour publier.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for item in pending_approvals %}
+                <div class="bg-gray-950 border border-amber-500/40 rounded-2xl overflow-hidden flex flex-col justify-between shadow-lg">
+                    <div class="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
+                        <img src="/captures/{{ item.filename }}" class="w-full h-full object-cover">
+                        <div class="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-amber-500 text-black font-semibold text-xs flex items-center gap-1 shadow">
+                            <i class="fa-solid fa-hourglass-half"></i> Prêt pour Instagram
+                        </div>
+                        <div class="absolute top-2 right-2 px-2.5 py-1 rounded-xl bg-black/70 backdrop-blur-md text-amber-300 font-mono text-xs font-bold border border-white/10">
+                            ★ {{ item.social_score }}/10
+                        </div>
+                        {% if item.sensor_metadata and item.sensor_metadata.city %}
+                        <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] text-gray-300 flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-rose-400"></i> {{ item.sensor_metadata.city }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="p-5 space-y-4 flex-1 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <label class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold block">Légende proposée par l'IA :</label>
+                            <textarea id="caption_edit_{{ item.id }}" rows="3" class="w-full bg-gray-900 border border-gray-700 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-amber-400">{{ item.caption }}</textarea>
+                            
+                            {% if item.hashtags %}
+                            <div class="flex flex-wrap gap-1 text-[11px] text-blue-400">
+                                {% for tag in item.hashtags %}
+                                <span>#{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-800 gap-2">
+                            <button onclick="rejectCapture({{ item.id }})" class="px-3.5 py-2 rounded-xl bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-medium transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-xmark"></i> Rejeter
+                            </button>
+                            <div class="flex gap-2">
+                                <button onclick="saveCaption({{ item.id }})" class="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs transition">
+                                    <i class="fa-solid fa-floppy-disk"></i> Modifier
+                                </button>
+                                <button onclick="approveCapture({{ item.id }})" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/30 transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-check"></i> Accepter & Publier
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- SECTION 2: HISTORIQUE CHRONOLOGIQUE COMPLET -->
         <div class="space-y-4">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between flex-wrap gap-3">
                 <div>
                     <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-timeline text-fuchsia-400"></i> POV Stream & VLM Decisions
+                        <i class="fa-solid fa-clock-rotate-left text-fuchsia-400"></i> Historique Chronologique de toutes les captures
                     </h2>
-                    <p class="text-xs text-gray-400">Frames continuously ingested from phone / wearable client, analyzed by Gemini 1.5 Flash</p>
+                    <p class="text-xs text-gray-400">Clichés ordonnés du plus récent au plus ancien avec statut et données de capteurs</p>
                 </div>
-                <button onclick="window.location.reload()" class="text-xs text-gray-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 rounded-lg hover:bg-gray-700 transition">
-                    <i class="fa-solid fa-rotate-right"></i> Refresh
-                </button>
+
+                <!-- Filtres -->
+                <div class="flex items-center gap-1.5 text-xs bg-gray-900 border border-gray-800 p-1 rounded-xl">
+                    <button onclick="filterCaptures('all')" class="px-3 py-1 rounded-lg bg-gray-800 text-white font-medium filter-btn" data-filter="all">Tous</button>
+                    <button onclick="filterCaptures('PUBLISHED')" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="PUBLISHED">Publiés</button>
+                    <button onclick="filterCaptures('PENDING_APPROVAL')" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="PENDING_APPROVAL">En attente</button>
+                    <button onclick="filterCaptures('REJECTED')" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="REJECTED">Rejetés</button>
+                </div>
             </div>
 
             {% if captures %}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="capturesGrid">
                 {% for cap in captures %}
-                <div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xl transition duration-200 hover:border-gray-700">
+                <div class="capture-card bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xl transition hover:border-gray-700" data-status="{{ cap.status }}">
                     
-                    <!-- Media Header & Badges -->
-                    <div class="relative bg-black aspect-video flex items-center justify-center overflow-hidden group">
-                        <img src="/captures/{{ cap.filename }}" alt="POV Capture" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    <div class="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
+                        <img src="/captures/{{ cap.filename }}" alt="POV" class="w-full h-full object-cover">
                         
-                        <!-- Floating Badges -->
+                        <!-- Badge statut -->
                         <div class="absolute top-2 left-2 flex flex-wrap gap-1.5">
                             {% if cap.status == 'PUBLISHED' %}
-                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1 shadow-md">
-                                <i class="fa-solid fa-check"></i> Published
+                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1">
+                                <i class="fa-solid fa-check"></i> Publié
+                            </span>
+                            {% elif cap.status == 'PENDING_APPROVAL' %}
+                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse">
+                                <i class="fa-solid fa-clock"></i> En attente accord
+                            </span>
+                            {% elif cap.status == 'REJECTED_MANUALLY' %}
+                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-gray-700 text-gray-300 rounded-full flex items-center gap-1">
+                                <i class="fa-solid fa-user-xmark"></i> Rejeté manuel
                             </span>
                             {% elif cap.status == 'ACCEPTED' %}
-                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-blue-500 text-white rounded-full flex items-center gap-1 shadow-md">
-                                <i class="fa-solid fa-thumbs-up"></i> Accepted
-                            </span>
-                            {% elif cap.status == 'PENDING' or cap.status == 'QUEUED_FOR_EVALUATION' %}
-                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 shadow-md animate-pulse">
-                                <i class="fa-solid fa-spinner fa-spin"></i> Evaluating
+                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-blue-500 text-white rounded-full">
+                                Accepté
                             </span>
                             {% else %}
-                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow-md">
-                                <i class="fa-solid fa-xmark"></i> {{ cap.recommended_action or 'Rejected' }}
+                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1">
+                                <i class="fa-solid fa-ban"></i> {{ cap.recommended_action or 'Rejeté' }}
                             </span>
                             {% endif %}
                         </div>
 
-                        <!-- Score Pill -->
                         {% if cap.social_score is not none %}
-                        <div class="absolute top-2 right-2 px-2.5 py-1 rounded-xl backdrop-blur-md bg-black/60 border border-white/10 text-white font-mono text-xs flex items-center gap-1 shadow-lg">
+                        <div class="absolute top-2 right-2 px-2.5 py-1 rounded-xl bg-black/70 backdrop-blur-md text-white font-mono text-xs flex items-center gap-1">
                             <i class="fa-solid fa-star text-amber-400"></i>
                             <span class="font-bold">{{ cap.social_score }}</span><span class="text-gray-400 text-[10px]">/10</span>
                         </div>
                         {% endif %}
 
-                        <!-- Time & Source -->
-                        <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-sm text-[10px] text-gray-300">
+                        <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] text-gray-300">
                             {{ cap.timestamp }} &bull; {{ cap.source }}
                         </div>
                     </div>
 
-                    <!-- Card Body -->
                     <div class="p-5 space-y-4 flex-1 flex flex-col justify-between">
-                        
                         <div class="space-y-3">
-                            <!-- Safety & Quality indicators -->
+                            <!-- Données de capteurs associées -->
+                            {% if cap.sensor_metadata %}
+                            <div class="flex flex-wrap gap-2 text-[11px] text-gray-400 bg-gray-950 p-2 rounded-xl border border-gray-800">
+                                {% if cap.sensor_metadata.city %}
+                                <span class="flex items-center gap-1 text-emerald-400">
+                                    <i class="fa-solid fa-location-dot"></i> {{ cap.sensor_metadata.city }}
+                                </span>
+                                {% endif %}
+                                {% if cap.sensor_metadata.speed_kmh is not none %}
+                                <span class="flex items-center gap-1 text-blue-400">
+                                    <i class="fa-solid fa-gauge"></i> {{ cap.sensor_metadata.speed_kmh }} km/h
+                                </span>
+                                {% endif %}
+                                {% if cap.sensor_metadata.heart_rate_bpm %}
+                                <span class="flex items-center gap-1 text-rose-400 font-semibold">
+                                    <i class="fa-solid fa-heart-pulse"></i> {{ cap.sensor_metadata.heart_rate_bpm }} BPM
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Vérifications de sécurité -->
                             <div class="flex items-center gap-3 text-xs">
                                 <span class="flex items-center gap-1 {{ 'text-emerald-400' if cap.safety_pass else 'text-rose-400' }}">
                                     <i class="fa-solid {{ 'fa-shield-check' if cap.safety_pass else 'fa-shield-slash' }}"></i>
-                                    {{ 'Safety Pass' if cap.safety_pass else 'Privacy Alert' }}
+                                    {{ 'Sécurité Pass' if cap.safety_pass else 'Alerte Privée' }}
                                 </span>
                                 <span class="text-gray-700">&bull;</span>
                                 <span class="flex items-center gap-1 {{ 'text-emerald-400' if cap.quality_pass else 'text-amber-400' }}">
                                     <i class="fa-solid {{ 'fa-circle-check' if cap.quality_pass else 'fa-triangle-exclamation' }}"></i>
-                                    {{ 'Quality Clear' if cap.quality_pass else 'Low Clarity' }}
+                                    {{ 'Netteté OK' if cap.quality_pass else 'Flou/Obscur' }}
                                 </span>
                             </div>
 
-                            <!-- Scene Description -->
-                            {% if cap.scene_description %}
-                            <p class="text-xs text-gray-300 leading-relaxed italic border-l-2 border-fuchsia-500/50 pl-2.5 py-0.5">
-                                "{{ cap.scene_description }}"
-                            </p>
-                            {% endif %}
-
-                            <!-- Generated Caption -->
+                            <!-- Légende -->
                             {% if cap.caption %}
-                            <div class="p-3 rounded-xl bg-gray-950/80 border border-gray-800 text-xs space-y-2">
-                                <div class="text-[10px] text-fuchsia-400 font-semibold uppercase tracking-wider flex items-center gap-1">
-                                    <i class="fa-brands fa-instagram"></i> Generated Caption
-                                </div>
-                                <p class="text-gray-100 select-all whitespace-pre-wrap">{{ cap.caption }}</p>
+                            <div class="p-3 rounded-xl bg-gray-950 border border-gray-800 text-xs space-y-1.5">
+                                <p class="text-gray-100 italic">"{{ cap.caption }}"</p>
                                 {% if cap.hashtags %}
                                 <div class="flex flex-wrap gap-1 text-[11px] text-blue-400">
                                     {% for tag in cap.hashtags %}
@@ -207,32 +290,20 @@
                                 {% endif %}
                             </div>
                             {% endif %}
-
-                            <!-- VLM Reasoning -->
-                            {% if cap.vlm_reasoning %}
-                            <div class="text-[11px] text-gray-400 flex items-start gap-1.5">
-                                <i class="fa-solid fa-brain text-fuchsia-400 mt-0.5"></i>
-                                <span>{{ cap.vlm_reasoning }}</span>
-                            </div>
-                            {% endif %}
                         </div>
 
-                        <!-- Card Footer / Actions -->
-                        <div class="pt-4 border-t border-gray-800 flex items-center justify-between text-xs">
+                        <!-- Footer -->
+                        <div class="pt-3 border-t border-gray-800 flex items-center justify-between text-xs">
                             <span class="text-gray-500 font-mono">#{{ cap.id }}</span>
                             <div class="flex items-center gap-2">
-                                <button onclick="reevaluateCapture({{ cap.id }})" class="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="Re-evaluate with Gemini">
+                                {% if cap.status != 'PUBLISHED' %}
+                                <button onclick="approveCapture({{ cap.id }})" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 text-xs">
+                                    Publier
+                                </button>
+                                {% endif %}
+                                <button onclick="reevaluateCapture({{ cap.id }})" class="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300" title="Ré-évaluer">
                                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                                 </button>
-                                {% if cap.status != 'PUBLISHED' %}
-                                <button onclick="publishCapture({{ cap.id }})" class="px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 transition flex items-center gap-1">
-                                    <i class="fa-solid fa-paper-plane"></i> Publish Now
-                                </button>
-                                {% else %}
-                                <span class="text-[11px] text-emerald-400 flex items-center gap-1">
-                                    <i class="fa-solid fa-circle-check"></i> {{ cap.publish_mode or 'Live' }}
-                                </span>
-                                {% endif %}
                             </div>
                         </div>
 
@@ -241,32 +312,115 @@
                 {% endfor %}
             </div>
             {% else %}
-            <!-- Empty state -->
-            <div class="p-12 text-center border-2 border-dashed border-gray-800 rounded-3xl space-y-4">
-                <div class="w-16 h-16 mx-auto rounded-2xl bg-fuchsia-500/10 text-fuchsia-400 flex items-center justify-center text-2xl">
-                    <i class="fa-solid fa-camera-retro"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-white">No POV Captures Ingested Yet</h3>
-                    <p class="text-xs text-gray-400 max-w-md mx-auto mt-1">
-                        Connect your Android phone client, Python camera stream, or click the button below to upload a sample frame.
-                    </p>
-                </div>
-                <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" class="px-4 py-2 text-xs font-semibold rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white transition">
-                    Upload Sample Image
-                </button>
+            <div class="p-12 text-center border-2 border-dashed border-gray-800 rounded-3xl space-y-3">
+                <i class="fa-solid fa-camera-retro text-4xl text-gray-600"></i>
+                <h3 class="text-base font-bold text-white">Aucun cliché dans l'historique</h3>
+                <p class="text-xs text-gray-400">Lancez la capture sur votre PC ou téléphone pour voir apparaître vos photos.</p>
             </div>
             {% endif %}
         </div>
 
     </main>
 
-    <!-- Upload Modal -->
+    <!-- MODAL : OPTIONS & CAPTEURS -->
+    <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-800 rounded-3xl max-w-xl w-full p-6 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-fuchsia-400"></i> Gestion des Capteurs & Sécurité
+                </h3>
+                <button onclick="document.getElementById('settingsModal').classList.add('hidden')" class="text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Interrupteurs Capteurs un par un -->
+            <div class="space-y-4">
+                <h4 class="text-xs uppercase font-bold tracking-wider text-gray-400">Capteurs actifs un par un</h4>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-camera text-fuchsia-400 mr-2"></i> Caméra POV</span>
+                        <input type="checkbox" id="sensor_cam" class="accent-fuchsia-500 w-4 h-4" {{ 'checked' if settings.enable_camera }}>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-location-dot text-emerald-400 mr-2"></i> GPS & Vitesse</span>
+                        <input type="checkbox" id="sensor_gps" class="accent-fuchsia-500 w-4 h-4" {{ 'checked' if settings.enable_gps }}>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-person-walking text-blue-400 mr-2"></i> Accéléromètre</span>
+                        <input type="checkbox" id="sensor_accel" class="accent-fuchsia-500 w-4 h-4" {{ 'checked' if settings.enable_accelerometer }}>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-sun text-amber-400 mr-2"></i> Luminosité (Poche)</span>
+                        <input type="checkbox" id="sensor_light" class="accent-fuchsia-500 w-4 h-4" {{ 'checked' if settings.enable_light_sensor }}>
+                    </label>
+                </div>
+
+                <!-- Capteur Cardiaque & Alerte Corporelle -->
+                <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-gray-200 flex items-center gap-2">
+                                <i class="fa-solid fa-heart-pulse text-rose-500"></i> Capteur Cardiaque & Vital (Wearable BLE)
+                            </span>
+                            <p class="text-[11px] text-gray-400">Collecte du rythme cardiaque (BPM) pour contextualiser ou lancer une alerte.</p>
+                        </div>
+                        <input type="checkbox" id="sensor_hr" class="accent-rose-500 w-4 h-4" {{ 'checked' if settings.enable_heart_rate }}>
+                    </div>
+
+                    <div class="pt-3 border-t border-gray-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-rose-300 font-medium">Alerte d'urgence en cas de BPM anormal</span>
+                            <input type="checkbox" id="hr_alert_active" class="accent-rose-500 w-4 h-4" {{ 'checked' if settings.hr_alert_enabled }}>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <label class="text-[10px] text-gray-400 block mb-1">Seuil Bas (BPM &lt;)</label>
+                                <input type="number" id="hr_min" value="{{ settings.hr_min_bpm }}" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 block mb-1">Seuil Haut (BPM &gt;)</label>
+                                <input type="number" id="hr_max" value="{{ settings.hr_max_bpm }}" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 block mb-1">Webhook URL d'urgence (Optionnel)</label>
+                            <input type="text" id="hr_webhook" value="{{ settings.hr_webhook_url }}" placeholder="https://..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-white">
+                        </div>
+                        <button onclick="testEmergencyAlert()" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-xs">
+                            Tester l'alerte d'urgence maintenant
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Validation manuelle obligatoire -->
+                <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-amber-300">Validation manuelle obligatoire avant envoi</span>
+                        <p class="text-[11px] text-gray-400">Si activé, l'IA attend votre clic sur [Accepter & Publier] avant tout envoi.</p>
+                    </div>
+                    <input type="checkbox" id="require_approval" class="accent-amber-500 w-5 h-5" {{ 'checked' if settings.require_manual_confirmation }}>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-gray-800">
+                <button onclick="saveSensorConfig()" class="px-4 py-2 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs font-bold transition">
+                    Enregistrer les options
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TEST UPLOAD -->
     <div id="uploadModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-gray-900 border border-gray-800 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl">
+        <div class="bg-gray-900 border border-gray-800 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
             <div class="flex items-center justify-between">
                 <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-cloud-arrow-up text-fuchsia-400"></i> Test Upload POV Frame
+                    <i class="fa-solid fa-cloud-arrow-up text-fuchsia-400"></i> Tester un cliché avec capteurs
                 </h3>
                 <button onclick="document.getElementById('uploadModal').classList.add('hidden')" class="text-gray-400 hover:text-white">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -278,34 +432,24 @@
                     <input type="file" id="fileInput" name="file" accept="image/*" required class="hidden" onchange="previewFile(this)">
                     <label for="fileInput" class="cursor-pointer space-y-2 block">
                         <i class="fa-solid fa-image text-3xl text-gray-500"></i>
-                        <p class="text-xs text-gray-300" id="fileLabel">Click to browse or drop POV photo</p>
-                        <p class="text-[10px] text-gray-500">JPG, PNG, WebP up to 10MB</p>
+                        <p class="text-xs text-gray-300" id="fileLabel">Cliquez pour choisir une photo</p>
                     </label>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                        <label class="text-xs text-gray-400 block mb-1">Source Tag</label>
-                        <input type="text" id="sourceInput" name="source" value="manual_test" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-fuchsia-500">
+                        <label class="text-gray-400 block mb-1">Ville de test</label>
+                        <input type="text" id="testCity" value="Paris" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2 text-white">
                     </div>
                     <div>
-                        <label class="text-xs text-gray-400 block mb-1">Target Persona</label>
-                        <select id="personaSelect" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-fuchsia-500">
-                            <option value="spontaneous_chic">Spontaneous Chic</option>
-                            <option value="witty_minimalist">Witty Minimalist</option>
-                            <option value="candid_existential">Candid Existential</option>
-                            <option value="poetic_flaneur">Poetic Flâneur</option>
-                            <option value="tech_nomad">Tech Nomad</option>
-                        </select>
+                        <label class="text-gray-400 block mb-1">Vitesse (km/h)</label>
+                        <input type="number" id="testSpeed" value="5" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2 text-white">
                     </div>
                 </div>
 
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="document.getElementById('uploadModal').classList.add('hidden')" class="px-4 py-2 text-xs rounded-xl bg-gray-800 text-gray-300 hover:bg-gray-700">
-                        Cancel
-                    </button>
-                    <button type="submit" id="submitBtn" class="px-4 py-2 text-xs font-semibold rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-sparkles"></i> Upload & Evaluate
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="submit" id="submitBtn" class="px-4 py-2 text-xs font-semibold rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white transition">
+                        Envoyer & Analyser
                     </button>
                 </div>
             </form>
@@ -326,45 +470,70 @@
 
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Évaluation en cours...';
 
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
-            formData.append('source', document.getElementById('sourceInput').value);
+            formData.append('source', 'manual_test');
+            formData.append('sensors', JSON.stringify({
+                city: document.getElementById('testCity').value,
+                speed_kmh: parseFloat(document.getElementById('testSpeed').value) || 0
+            }));
 
             try {
-                const res = await fetch('/api/capture/upload', {
-                    method: 'POST',
-                    body: formData
-                });
+                const res = await fetch('/api/capture/upload', { method: 'POST', body: formData });
                 const data = await res.json();
                 if (data.success) {
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
+                    setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    alert('Upload failed: ' + JSON.stringify(data));
+                    alert('Erreur: ' + JSON.stringify(data));
                 }
             } catch (err) {
-                alert('Error uploading file: ' + err);
+                alert('Erreur réseau: ' + err);
             } finally {
                 submitBtn.disabled = false;
             }
         }
 
-        async function publishCapture(id) {
-            if (!confirm('Publish capture #' + id + ' to Instagram now?')) return;
+        async function approveCapture(id) {
             try {
-                const res = await fetch('/api/captures/' + id + '/publish', { method: 'POST' });
+                const res = await fetch('/api/captures/' + id + '/approve', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    alert('Published successfully! (' + (data.mode || 'live') + ')');
+                    alert('Publication validée et exécutée !');
                     window.location.reload();
                 } else {
-                    alert('Publish warning: ' + (data.reason || data.error || JSON.stringify(data)));
+                    alert('Information: ' + (data.reason || data.error || JSON.stringify(data)));
                 }
             } catch (err) {
-                alert('Publish error: ' + err);
+                alert('Erreur: ' + err);
+            }
+        }
+
+        async function rejectCapture(id) {
+            if (!confirm('Rejeter ce cliché ?')) return;
+            try {
+                const res = await fetch('/api/captures/' + id + '/reject', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) window.location.reload();
+            } catch (err) {
+                alert('Erreur: ' + err);
+            }
+        }
+
+        async function saveCaption(id) {
+            const textarea = document.getElementById('caption_edit_' + id);
+            if (!textarea) return;
+            try {
+                const res = await fetch('/api/captures/' + id + '/caption', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ caption: textarea.value })
+                });
+                const data = await res.json();
+                if (data.success) alert('Légende enregistrée avec succès.');
+            } catch (err) {
+                alert('Erreur: ' + err);
             }
         }
 
@@ -373,12 +542,77 @@
                 const res = await fetch('/api/captures/' + id + '/reevaluate', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    alert('Re-evaluation queued.');
+                    alert('Ré-évaluation lancée.');
                     setTimeout(() => window.location.reload(), 2000);
                 }
             } catch (err) {
-                alert('Error: ' + err);
+                alert('Erreur: ' + err);
             }
+        }
+
+        async function saveSensorConfig() {
+            const payload = {
+                enable_camera: document.getElementById('sensor_cam').checked,
+                enable_gps: document.getElementById('sensor_gps').checked,
+                enable_accelerometer: document.getElementById('sensor_accel').checked,
+                enable_light_sensor: document.getElementById('sensor_light').checked,
+                enable_heart_rate: document.getElementById('sensor_hr').checked,
+                hr_alert_enabled: document.getElementById('hr_alert_active').checked,
+                hr_min_bpm: parseInt(document.getElementById('hr_min').value),
+                hr_max_bpm: parseInt(document.getElementById('hr_max').value),
+                hr_webhook_url: document.getElementById('hr_webhook').value,
+                require_manual_confirmation: document.getElementById('require_approval').checked
+            };
+
+            try {
+                const res = await fetch('/api/sensors/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Options et capteurs enregistrés.');
+                    window.location.reload();
+                }
+            } catch (err) {
+                alert('Erreur: ' + err);
+            }
+        }
+
+        async function testEmergencyAlert() {
+            try {
+                const res = await fetch('/api/health/test-alert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bpm: 155, location: 'Local Test Location' })
+                });
+                const data = await res.json();
+                alert('Résultat alerte : ' + JSON.stringify(data));
+            } catch (err) {
+                alert('Erreur: ' + err);
+            }
+        }
+
+        function filterCaptures(status) {
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('bg-gray-800', 'text-white');
+                b.classList.add('text-gray-400');
+            });
+            event.target.classList.add('bg-gray-800', 'text-white');
+
+            document.querySelectorAll('.capture-card').forEach(card => {
+                const cardStatus = card.dataset.status;
+                if (status === 'all') {
+                    card.classList.remove('hidden');
+                } else if (status === 'REJECTED') {
+                    if (cardStatus.startsWith('REJECT')) card.classList.remove('hidden');
+                    else card.classList.add('hidden');
+                } else {
+                    if (cardStatus === status) card.classList.remove('hidden');
+                    else card.classList.add('hidden');
+                }
+            });
         }
     </script>
 </body>

@@ -33,21 +33,39 @@ class Config:
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
+        # Granular Sensors
+        sensors_cfg = self.raw_data.get("sensors", {})
+        self.enable_camera = bool(sensors_cfg.get("enable_camera", True))
+        self.enable_gps = bool(sensors_cfg.get("enable_gps", True))
+        self.enable_accelerometer = bool(sensors_cfg.get("enable_accelerometer", True))
+        self.enable_light_sensor = bool(sensors_cfg.get("enable_light_sensor", True))
+        self.enable_heart_rate = bool(sensors_cfg.get("enable_heart_rate", False))
+
+        # Heart rate emergency alert
+        hr_alert_cfg = sensors_cfg.get("heart_rate_alert", {})
+        self.hr_alert_enabled = bool(hr_alert_cfg.get("enabled", False))
+        self.hr_min_bpm = int(hr_alert_cfg.get("min_bpm", 45))
+        self.hr_max_bpm = int(hr_alert_cfg.get("max_bpm", 145))
+        self.hr_alert_channel = hr_alert_cfg.get("alert_channel", "webhook")
+        self.hr_emergency_contact = hr_alert_cfg.get("emergency_contact", "")
+        self.hr_webhook_url = hr_alert_cfg.get("webhook_url", "")
+
         # Gemini / VLM
         vlm_cfg = self.raw_data.get("vlm", {})
         self.gemini_api_key = os.getenv("GEMINI_API_KEY", "")
         self.vlm_model = vlm_cfg.get("model", "gemini-1.5-flash")
         self.temperature = float(vlm_cfg.get("temperature", 0.7))
         self.min_social_score = float(vlm_cfg.get("min_social_score", 7.0))
-        self.require_safety_pass = bool(vlm_cfg.get("require_safety_pass", True))
+        self.strict_privacy = bool(vlm_cfg.get("strict_privacy", True))
         self.require_quality_pass = bool(vlm_cfg.get("require_quality_pass", True))
         self.persona = vlm_cfg.get("persona", "spontaneous_chic")
-        self.language = vlm_cfg.get("language", "en")
+        self.language = vlm_cfg.get("language", "fr")
         self.persona_instructions = vlm_cfg.get("persona_instructions", "")
 
         # Publisher
         pub_cfg = self.raw_data.get("publisher", {})
         self.publish_mode = os.getenv("PUBLISH_MODE", pub_cfg.get("mode", "dry_run"))
+        self.require_manual_confirmation = bool(pub_cfg.get("require_manual_confirmation", True))
         self.target_type = pub_cfg.get("target_type", "feed")
         self.min_interval_minutes = int(pub_cfg.get("min_interval_minutes", 60))
         self.max_daily_posts = int(pub_cfg.get("max_daily_posts", 4))
