@@ -84,44 +84,63 @@ In evolutionary sociology, **Zahavi's Costly Signaling Theory** posits that auth
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Guide de Démarrage Rapide
 
-### 1. Installation & Start on PC (Windows, macOS, Linux)
+### ⚠️ Différence Essentielle : `INSTALL` vs `START`
 
-AutoInsta provides **1-click installation and startup scripts**:
+| Étape | Rôle | Quand l'exécuter ? |
+| :--- | :--- | :--- |
+| **`INSTALL`** | Télécharge et installe les bibliothèques requises (`fastapi`, `uvicorn`, `pillow`, etc.) et initialise le fichier de configuration `.env`. | **Une seule fois**, lors de la première installation. |
+| **`START`** | Démarre le serveur local, active l'écoute des capteurs, ouvre le tableau de bord web et prépare la file d'approbation. | **À chaque utilisation**, quand vous voulez faire tourner AutoInsta. |
 
-#### Windows:
-- **Installation** : Double-cliquez sur [`install.bat`](file:///c:/Silvere/Encours/Developpement/AutoInsta/install.bat) ou lancez `install.bat`
-- **Démarrage** : Double-cliquez sur [`start.bat`](file:///c:/Silvere/Encours/Developpement/AutoInsta/start.bat) ou tapez `start.bat`
-- **Menu interactif** : Propose le démarrage du serveur, le mode démo, le client webcam PC, la suite de tests, et l'autodémarrage.
+---
 
-#### macOS & Linux:
+### 💻 Utilisation par Plateforme (Dossier `scripts/`)
+
+Tous les scripts ont été regroupés proprement dans le sous-dossier [`scripts/`](file:///c:/Silvere/Encours/Developpement/AutoInsta/scripts/) par système d'exploitation :
+
+#### 🪟 Windows :
+- **1. Installation initiale (1 seule fois)** :
+  Double-cliquez sur [`scripts/windows/install.bat`](file:///c:/Silvere/Encours/Developpement/AutoInsta/scripts/windows/install.bat).
+- **2. Lancement au quotidien** :
+  Double-cliquez sur le raccourci [**`start.bat`**](file:///c:/Silvere/Encours/Developpement/AutoInsta/start.bat) à la racine du projet (ou [`scripts/windows/start.bat`](file:///c:/Silvere/Encours/Developpement/AutoInsta/scripts/windows/start.bat)).
+- **Menu interactif proposé** :
+  ```text
+  [1] Démarrer le Serveur Web & Ouvrir le Tableau de bord (Recommandé)
+  [2] Démarrer le Serveur en Mode Démo (Simulation photos & capteurs)
+  [3] Lancer le Client Caméra PC (Webcam locale)
+  [4] Exécuter la Suite de Tests Complète
+  [5] Installer ou Mettre à jour les dépendances requises
+  [6] Activer l'Autodémarrage au Boot (Windows / macOS / Linux)
+  [7] Désactiver l'Autodémarrage
+  ```
+
+#### 🐧 Linux :
 ```bash
-chmod +x install.sh start.sh
-./install.sh       # Installe les dépendances Python
-./start.sh         # Lance le serveur et ouvre l'interface web
+# 1. Installation initiale (1 seule fois)
+./scripts/linux/install.sh
+
+# 2. Lancement au quotidien
+./scripts/linux/start.sh
 ```
 
-#### Lanceur Python Universel (Multi-plateforme):
+#### 🍏 macOS :
 ```bash
-# Lancement direct (ouvre automatiquement votre navigateur sur http://localhost:8000)
-python start.py
+# 1. Installation initiale (1 seule fois)
+./scripts/macos/install.sh
 
-# Lancement en mode Démo / Simulation (injecte des photos et métriques de test toutes les 25s)
-python start.py --mode demo
-
-# Lancement du client webcam PC (prise de photos via la caméra de votre ordinateur)
-python start.py --mode cam
-
-# Lancement de la suite complète de tests de validation
-python start.py --mode test
+# 2. Lancement au quotidien
+./scripts/macos/start.sh
 ```
 
-### 2. Accès à l'Interface Web & Dashboard
+---
 
-Une fois le serveur démarré :
-- **Sur votre PC** : Ouvrez **`http://localhost:8000`**
-- **Sur votre smartphone / montre (même Wi-Fi)** : Ouvrez **`http://<IP_DU_PC>:8000`** (l'IP locale est automatiquement affichée au lancement du serveur).
+### 🌐 Accès à l'Interface Web & Dashboard
+
+Dès que le serveur est démarré :
+- **Sur votre ordinateur** : Accédez à [**`http://localhost:8000`**](http://localhost:8000)
+- **Sur votre téléphone / montre connectée (même réseau Wi-Fi)** : Accédez à **`http://<IP_DU_PC>:8000`** *(l'adresse IP locale de votre machine est affichée automatiquement dans la console au démarrage).*
+
 
 
 ---

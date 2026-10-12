@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-AutoInsta - Universal Cross-Platform Launcher & Startup Manager
-Supports: Windows, macOS, Linux
+AutoInsta - Multiplatform Backend & Server Launcher
+Called by platform-specific start scripts (Windows, Linux, macOS)
 """
 
 import sys
@@ -22,14 +22,18 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-BASE_DIR = Path(__file__).resolve().parent
+# Ensure project root is in sys.path and is current working directory
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+os.chdir(PROJECT_ROOT)
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 def get_local_ip() -> str:
-    """Detects the LAN IP address of this machine for phone connection."""
+    """Detects LAN IP address of this machine for phone/wearable connection."""
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.settimeout(0.5)
-        # Doesn't need to be reachable, just triggers route lookup
         s.connect(("8.8.8.8", 80))
         ip = s.getsockname()[0]
         s.close()
@@ -38,8 +42,8 @@ def get_local_ip() -> str:
         return "127.0.0.1"
 
 def check_and_install_dependencies():
-    """Checks required dependencies and installs them if missing."""
-    print("\n[*] Vérification des dépendances Python requises...")
+    """Checks required dependencies and installs missing ones."""
+    print("\n[*] Verification des dependances requises...")
     missing = []
     
     modules = {
@@ -59,17 +63,16 @@ def check_and_install_dependencies():
             missing.append(pkg)
             
     if missing:
-        print(f"[!] Dépendances manquantes détectées : {', '.join(missing)}")
-        print("[*] Installation automatique en cours via pip...")
+        print(f"[!] Dependances manquantes detectees : {', '.join(missing)}")
+        print("[*] Installation automatique via pip...")
         cmd = [sys.executable, "-m", "pip", "install", *missing]
         res = subprocess.run(cmd)
         if res.returncode == 0:
-            print("[✓] Toutes les dépendances ont été installées avec succès !\n")
+            print("[✓] Toutes les dependances ont ete installees avec succes !\n")
         else:
-            print("[!] Erreur lors de l'installation automatique. Veuillez exécuter :")
-            print(f"    pip install -r requirements.txt\n")
+            print("[!] Erreur lors de l'installation. Veuillez executer : pip install -r requirements.txt\n")
     else:
-        print("[✓] Toutes les dépendances requises sont prêtes.\n")
+        print("[✓] Toutes les dependances requises sont pretes.\n")
 
 def open_browser_delayed(url: str, delay: float = 1.5):
     """Opens default web browser after server starts."""
@@ -81,19 +84,19 @@ def open_browser_delayed(url: str, delay: float = 1.5):
     t.start()
 
 def run_server(host: str = "0.0.0.0", port: int = 8000, auto_open: bool = True):
-    """Starts the FastAPI/Uvicorn server."""
+    """Starts FastAPI/Uvicorn server."""
     local_ip = get_local_ip()
     url_localhost = f"http://localhost:{port}"
     url_network = f"http://{local_ip}:{port}"
     
     print("\n" + "=" * 68)
-    print(" 🚀 AUTOINSTA - SERVEUR LOCAL & TABLEAU DE BORD DÉMARRÉ ")
+    print(" 🚀 AUTOINSTA - SERVEUR LOCAL & TABLEAU DE BORD DEMARRE ")
     print("=" * 68)
-    print(f"  💻 Accès depuis ce PC   : {url_localhost}")
-    print(f"  📱 Accès depuis Mobile  : {url_network}")
+    print(f"  💻 Acces depuis ce PC   : {url_localhost}")
+    print(f"  📱 Acces depuis Mobile  : {url_network}")
     print(f"  📚 Documentation API    : {url_localhost}/docs")
     print("-" * 68)
-    print("  👉 Sur votre smartphone (Termux ou navigateur) :")
+    print("  👉 Sur votre smartphone (Termux ou navigateur sur le meme Wi-Fi) :")
     print(f"     Utilisez l'URL : {url_network}")
     print("=" * 68 + "\n")
     
@@ -107,24 +110,23 @@ def run_demo_simulation(port: int = 8000):
     """Runs demo simulation posting test captures periodically."""
     import requests
     import random
-    from PIL import Image, ImageDraw, ImageFont
+    from PIL import Image, ImageDraw
     import io
     
     local_ip = get_local_ip()
     url_localhost = f"http://localhost:{port}"
     
     print("\n" + "=" * 68)
-    print(" 🎭 MODE DÉMO & SIMULATION INTERACTIVE AUTOINSTA ")
+    print(" 🎭 MODE DEMO & SIMULATION INTERACTIVE AUTOINSTA ")
     print("=" * 68)
-    print("  Ce mode démarre le serveur ET simule l'activité d'un smartphone :")
-    print("  - Injection automatique de captures d'écran / photos de test")
-    print("  - Données capteurs réalistes (BPM cardiaque, Lux, Batterie, GPS)")
+    print("  Ce mode demarre le serveur ET simule l'activite d'un smartphone :")
+    print("  - Injection automatique de captures d'ecran / photos de test")
+    print("  - Donnees capteurs realistes (BPM cardiaque, Lux, Batterie, GPS)")
     print(f"  💻 Tableau de bord : {url_localhost}")
     print("=" * 68 + "\n")
     
     open_browser_delayed(url_localhost)
 
-    # Start uvicorn in background thread
     def _start_uvicorn():
         import uvicorn
         uvicorn.run("server.app:app", host="0.0.0.0", port=port, log_level="warning")
@@ -132,26 +134,24 @@ def run_demo_simulation(port: int = 8000):
     server_thread = threading.Thread(target=_start_uvicorn, daemon=True)
     server_thread.start()
     
-    # Wait for server to be responsive
     time.sleep(2)
     
     scenes = [
-        ("Terrasse de café ensoleillée", "Paris, France", 48.8566, 2.3522, 650, 72),
-        ("Séance de marche rapide", "Parc des Buttes-Chaumont", 48.8809, 2.3828, 420, 118),
+        ("Terrasse de cafe ensoleillee", "Paris, France", 48.8566, 2.3522, 650, 72),
+        ("Seance de marche rapide", "Parc des Buttes-Chaumont", 48.8809, 2.3828, 420, 118),
         ("Session de travail sur laptop", "Espace Coworking", 48.8606, 2.3376, 210, 68),
         ("Promenade nocturne", "Quais de Seine", 48.8584, 2.2945, 15, 64)
     ]
     
     step = 0
     print("[*] Simulateur actif. Envoi d'une capture toutes les 25 secondes...")
-    print("    (Appuyez sur Ctrl+C pour arrêter le mode démo à tout moment)\n")
+    print("    (Appuyez sur Ctrl+C pour arreter le mode demo a tout moment)\n")
     
     try:
         while True:
             scene_name, loc_city, lat, lon, lux, base_bpm = scenes[step % len(scenes)]
             step += 1
             
-            # Generate a colorful test image
             img = Image.new("RGB", (640, 480), color=(random.randint(40, 100), random.randint(50, 130), random.randint(70, 160)))
             draw = ImageDraw.Draw(img)
             draw.rectangle([20, 20, 620, 460], outline=(255, 255, 255), width=3)
@@ -186,49 +186,53 @@ def run_demo_simulation(port: int = 8000):
                 )
                 if r.status_code == 200:
                     resp_json = r.json()
-                    print(f"[{time.strftime('%H:%M:%S')}] ✓ Capture #{resp_json.get('capture_id')} envoyée : {scene_name} ({base_bpm} BPM, {lux} Lux)")
+                    print(f"[{time.strftime('%H:%M:%S')}] ✓ Capture #{resp_json.get('capture_id')} envoyee : {scene_name} ({base_bpm} BPM, {lux} Lux)")
                 else:
-                    print(f"[!] Échec upload : {r.status_code}")
+                    print(f"[!] Echec upload : {r.status_code}")
             except Exception as e:
-                print(f"[!] Erreur envoi démo : {e}")
+                print(f"[!] Erreur envoi demo : {e}")
                 
             time.sleep(25)
     except KeyboardInterrupt:
-        print("\n[*] Arrêt du Mode Démo.")
+        print("\n[*] Arret du Mode Demo.")
 
 def run_tests():
     """Runs the complete test suite."""
-    test_script = BASE_DIR / "scripts" / "test" / "run_all_tests.py"
+    test_script = PROJECT_ROOT / "scripts" / "test" / "run_all_tests.py"
     subprocess.run([sys.executable, str(test_script)])
 
 def run_cam():
     """Runs PC webcam client."""
-    cam_script = BASE_DIR / "client" / "python_cam" / "cam_client.py"
+    cam_script = PROJECT_ROOT / "client" / "python_cam" / "cam_client.py"
     subprocess.run([sys.executable, str(cam_script)])
 
 def manage_autostart(enable: bool):
     """Enables or disables system boot autostart."""
-    autostart_script = BASE_DIR / "scripts" / "autostart" / "manage_autostart.py"
+    autostart_script = PROJECT_ROOT / "scripts" / "autostart" / "manage_autostart.py"
     action = "--enable" if enable else "--disable"
     subprocess.run([sys.executable, str(autostart_script), action])
 
 def interactive_menu():
-    """Interactive command-line menu."""
+    """Interactive command-line menu without unprintable characters."""
     while True:
         print("\n" + "=" * 68)
-        print("          🌟 AUTOINSTA - MENU PRINCIPAL DE DÉMARRAGE 🌟")
+        print("          AUTOINSTA - MENU PRINCIPAL DE DEMARRAGE")
         print("=" * 68)
-        print("  [1] Démarrer le Serveur Web & Ouvrir le Tableau de bord (Recommandé)")
-        print("  [2] Démarrer le Serveur en Mode Démo (Simulation photos & capteurs)")
-        print("  [3] Lancer le Client Caméra PC (Webcam locale)")
-        print("  [4] Exécuter la Suite de Tests Complète")
-        print("  [5] Installer ou Mettre à jour les dépendances requises")
-        print("  [6] Activer l'Autodémarrage au Boot (Windows / macOS / Linux)")
-        print("  [7] Désactiver l'Autodémarrage")
+        print("  [1] Demarrer le Serveur Web & Ouvrir le Tableau de bord (Recommande)")
+        print("  [2] Demarrer le Serveur en Mode Demo (Simulation photos & capteurs)")
+        print("  [3] Lancer le Client Camera PC (Webcam locale)")
+        print("  [4] Executer la Suite de Tests Complete")
+        print("  [5] Installer ou Mettre a jour les dependances requises")
+        print("  [6] Activer l'Autodemarrage au Boot (Windows / macOS / Linux)")
+        print("  [7] Desactiver l'Autodemarrage")
         print("  [0] Quitter")
         print("=" * 68)
         
-        choice = input("👉 Votre choix [1-7, 0] (défaut: 1) : ").strip()
+        try:
+            choice = input("Votre choix [1-7, 0] (defaut: 1) : ").strip()
+        except EOFError:
+            choice = "1"
+            
         if choice in ("", "1"):
             check_and_install_dependencies()
             run_server(auto_open=True)
@@ -253,15 +257,15 @@ def interactive_menu():
             print("\nAu revoir !")
             sys.exit(0)
         else:
-            print("[!] Choix non reconnu. Veuillez réessayer.")
+            print("[!] Choix non reconnu. Veuillez reessayer.")
 
 def main():
-    parser = argparse.ArgumentParser(description="AutoInsta Universal Cross-Platform Launcher")
-    parser.add_argument("--mode", choices=["server", "demo", "test", "cam", "autostart-enable", "autostart-disable"], help="Mode d'exécution direct")
-    parser.add_argument("--host", default="0.0.0.0", help="Adresse IP d'écoute (défaut: 0.0.0.0)")
-    parser.add_argument("--port", type=int, default=8000, help="Port HTTP (défaut: 8000)")
+    parser = argparse.ArgumentParser(description="AutoInsta Multiplatform Launcher")
+    parser.add_argument("--mode", choices=["server", "demo", "test", "cam", "autostart-enable", "autostart-disable"], help="Mode d'execution direct")
+    parser.add_argument("--host", default="0.0.0.0", help="Adresse IP d'ecoute (defaut: 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=8000, help="Port HTTP (defaut: 8000)")
     parser.add_argument("--no-browser", action="store_true", help="Ne pas ouvrir automatiquement le navigateur")
-    parser.add_argument("--install", action="store_true", help="Vérifier et installer les dépendances requises")
+    parser.add_argument("--install", action="store_true", help="Verifier et installer les dependances requises")
     
     args = parser.parse_args()
     
@@ -284,7 +288,6 @@ def main():
     elif args.mode == "autostart-disable":
         manage_autostart(False)
     else:
-        # No direct mode specified: launch interactive menu
         interactive_menu()
 
 if __name__ == "__main__":
