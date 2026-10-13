@@ -136,7 +136,7 @@ def run_server(host: str = "0.0.0.0", port: int = 8000, auto_open: bool = True):
         open_browser_delayed(url_localhost)
         
     import uvicorn
-    uvicorn.run("server.app:app", host=host, port=port, reload=False)
+    uvicorn.run("server.app:app", host=host, port=port, reload=True)
 
 def run_demo_simulation(port: int = 8000):
     """Runs demo simulation posting test captures periodically."""

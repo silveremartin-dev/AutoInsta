@@ -297,19 +297,19 @@
                                     {% endif %}
                                 </div>
 
-                                <!-- Inline Editable Caption & Hashtags -->
+                                <!-- Inline Auto-Saved Caption & Hashtags -->
                                 <div class="space-y-2">
                                     <div class="flex items-center justify-between">
                                         <label class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Légende & Tags :</label>
-                                        <button onclick="saveCaptionAndTags({{ cap.id }})" class="text-[11px] text-fuchsia-400 hover:text-fuchsia-300 font-semibold flex items-center gap-1 px-2 py-0.5 rounded-lg hover:bg-fuchsia-950/40 transition">
-                                            <i class="fa-solid fa-floppy-disk"></i> Enregistrer
-                                        </button>
+                                        <span id="save_indicator_{{ cap.id }}" class="text-[10px] text-emerald-400 font-medium transition-opacity duration-300 opacity-0 flex items-center gap-1">
+                                            <i class="fa-solid fa-check text-[9px]"></i> Enregistré
+                                        </span>
                                     </div>
-                                    <textarea id="caption_edit_{{ cap.id }}" rows="2" placeholder="Légende du cliché..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-fuchsia-500 transition leading-relaxed">{{ cap.caption or '' }}</textarea>
+                                    <textarea id="caption_edit_{{ cap.id }}" oninput="autoSaveCapture({{ cap.id }})" onblur="saveCaptionAndTagsImmediately({{ cap.id }})" rows="2" placeholder="Légende du cliché..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-fuchsia-500 transition leading-relaxed">{{ cap.caption or '' }}</textarea>
                                     
                                     <div class="relative">
                                         <span class="absolute left-2.5 top-2 text-blue-400 text-xs font-mono">#</span>
-                                        <input id="tags_edit_{{ cap.id }}" type="text" value="{{ cap.hashtags|join(', ') if cap.hashtags else '' }}" placeholder="pov, quotidien, ville (séparés par virgules)" class="w-full bg-gray-950 border border-gray-800 rounded-xl py-1.5 pl-6 pr-2.5 text-xs text-blue-300 placeholder-gray-600 focus:outline-none focus:border-fuchsia-500 font-mono transition">
+                                        <input id="tags_edit_{{ cap.id }}" oninput="autoSaveCapture({{ cap.id }})" onblur="saveCaptionAndTagsImmediately({{ cap.id }})" type="text" value="{{ cap.hashtags|join(', ') if cap.hashtags else '' }}" placeholder="pov, quotidien, ville (séparés par virgules)" class="w-full bg-gray-950 border border-gray-800 rounded-xl py-1.5 pl-6 pr-2.5 text-xs text-blue-300 placeholder-gray-600 focus:outline-none focus:border-fuchsia-500 font-mono transition">
                                     </div>
                                 </div>
                             </div>
@@ -803,9 +803,42 @@
         let isCameraPaused = false;
         let isCameraConfigured = {{ 'true' if settings.enable_camera else 'false' }};
         let isGpsConfigured = {{ 'true' if settings.enable_gps else 'false' }};
+        let isMicConfigured = {{ 'true' if settings.enable_microphone else 'false' }};
         let hasGeminiKey = {{ 'true' if has_gemini_key else 'false' }};
 
+        let audioCtx = null;
+        let analyser = null;
+        let micStream = null;
+        let audioBuf = null;
+
+        async function initMicrophone() {
+            if (!isMicConfigured || micStream) return;
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioCtx.createMediaStreamSource(micStream);
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                audioBuf = new Uint8Array(analyser.frequencyBinCount);
+            } catch (e) {
+                console.warn('[AutoInsta] Micro inactif ou permission refusée:', e);
+            }
+        }
+
+        function getLiveMicDb() {
+            if (!analyser || !audioBuf) return null;
+            analyser.getByteFrequencyData(audioBuf);
+            let sum = 0;
+            for (let i = 0; i < audioBuf.length; i++) {
+                sum += audioBuf[i];
+            }
+            const avg = sum / audioBuf.length;
+            return Math.round(35 + (avg / 255) * 55);
+        }
+
         async function initCamera() {
+            if (isMicConfigured) initMicrophone();
             if (!isCameraConfigured) {
                 document.getElementById('camStatusBadge').textContent = 'Désactivée dans les options';
                 return;
@@ -901,6 +934,13 @@
                         const b = await navigator.getBattery();
                         sensors.battery_pct = Math.round(b.level * 100);
                     } catch (e) {}
+                }
+
+                if (isMicConfigured) {
+                    const micVal = getLiveMicDb();
+                    if (micVal !== null) {
+                        sensors.mic_db = micVal;
+                    }
                 }
 
                 if (isGpsConfigured && navigator.geolocation) {
@@ -1044,14 +1084,14 @@
                         <div class="space-y-2">
                             <div class="flex items-center justify-between">
                                 <label class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Légende & Tags :</label>
-                                <button onclick="saveCaptionAndTags(${cap.id})" class="text-[11px] text-fuchsia-400 hover:text-fuchsia-300 font-semibold flex items-center gap-1 px-2 py-0.5 rounded-lg hover:bg-fuchsia-950/40 transition">
-                                    <i class="fa-solid fa-floppy-disk"></i> Enregistrer
-                                </button>
+                                <span id="save_indicator_${cap.id}" class="text-[10px] text-emerald-400 font-medium transition-opacity duration-300 opacity-0 flex items-center gap-1">
+                                    <i class="fa-solid fa-check text-[9px]"></i> Enregistré
+                                </span>
                             </div>
-                            <textarea id="caption_edit_${cap.id}" rows="2" placeholder="Légende du cliché..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-fuchsia-500 transition leading-relaxed">${escapeHtml(cap.caption || '')}</textarea>
+                            <textarea id="caption_edit_${cap.id}" oninput="autoSaveCapture(${cap.id})" onblur="saveCaptionAndTagsImmediately(${cap.id})" rows="2" placeholder="Légende du cliché..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-fuchsia-500 transition leading-relaxed">${escapeHtml(cap.caption || '')}</textarea>
                             <div class="relative">
                                 <span class="absolute left-2.5 top-2 text-blue-400 text-xs font-mono">#</span>
-                                <input id="tags_edit_${cap.id}" type="text" value="${escapeHtml(tagsStr)}" placeholder="pov, quotidien, ville (séparés par virgules)" class="w-full bg-gray-950 border border-gray-800 rounded-xl py-1.5 pl-6 pr-2.5 text-xs text-blue-300 placeholder-gray-600 focus:outline-none focus:border-fuchsia-500 font-mono transition">
+                                <input id="tags_edit_${cap.id}" oninput="autoSaveCapture(${cap.id})" onblur="saveCaptionAndTagsImmediately(${cap.id})" type="text" value="${escapeHtml(tagsStr)}" placeholder="pov, quotidien, ville (séparés par virgules)" class="w-full bg-gray-950 border border-gray-800 rounded-xl py-1.5 pl-6 pr-2.5 text-xs text-blue-300 placeholder-gray-600 focus:outline-none focus:border-fuchsia-500 font-mono transition">
                             </div>
                         </div>
                     </div>
@@ -1171,6 +1211,7 @@
                             }
                         }
                     }
+                    applyActiveFilter();
                 } else {
                     if (empty) empty.classList.remove('hidden');
                 }
@@ -1193,7 +1234,7 @@
         }
 
         // ========================================================
-        // 4. ACTIONS GALERIE : PUBLIER, REJETER, ENREGISTRER, RÉÉVALUER, SUPPRIMER
+        // 4. ACTIONS GALERIE : PUBLIER, REJETER, AUTO-SAVE, RÉÉVALUER, SUPPRIMER
         // ========================================================
         async function approveCapture(id) {
             try {
@@ -1246,13 +1287,23 @@
             }
         }
 
-        async function saveCaptionAndTags(id) {
+        let saveDebounceTimers = {};
+
+        function autoSaveCapture(id) {
+            if (saveDebounceTimers[id]) clearTimeout(saveDebounceTimers[id]);
+            saveDebounceTimers[id] = setTimeout(() => {
+                saveCaptionAndTagsImmediately(id);
+            }, 500);
+        }
+
+        async function saveCaptionAndTagsImmediately(id) {
             const captionEl = document.getElementById('caption_edit_' + id);
             const tagsEl = document.getElementById('tags_edit_' + id);
+            const indicator = document.getElementById('save_indicator_' + id);
             if (!captionEl) return;
 
-            const captionVal = captionEl.value;
-            const tagsVal = tagsEl ? tagsEl.value : '';
+            const captionVal = captionEl.value || '';
+            const tagsVal = tagsEl ? tagsEl.value || '' : '';
 
             try {
                 const res = await fetch('/api/captures/' + id + '/caption', {
@@ -1260,17 +1311,20 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ caption: captionVal, hashtags: tagsVal })
                 });
-                const data = await res.json();
-                if (data.success) {
-                    showToast('✓ Légende et tags enregistrés pour le cliché #' + id);
-                } else {
-                    showToast('Erreur: ' + (data.detail || 'Inconnue'), true);
+                if (res.ok && indicator) {
+                    indicator.classList.remove('opacity-0');
+                    indicator.classList.add('opacity-100');
+                    setTimeout(() => {
+                        indicator.classList.remove('opacity-100');
+                        indicator.classList.add('opacity-0');
+                    }, 1800);
                 }
             } catch (err) {
-                showToast('Erreur enregistrement : ' + err, true);
+                console.warn('[AutoInsta] Auto-save error:', err);
             }
         }
-        function saveCaption(id) { return saveCaptionAndTags(id); }
+        function saveCaptionAndTags(id) { return saveCaptionAndTagsImmediately(id); }
+        function saveCaption(id) { return saveCaptionAndTagsImmediately(id); }
 
         async function reevaluateCapture(id) {
             if (!hasGeminiKey) {
@@ -1316,7 +1370,10 @@
             }
         }
 
+        let activeFilter = 'all';
+
         function filterCaptures(status, clickedBtn) {
+            activeFilter = status;
             document.querySelectorAll('.filter-btn').forEach(b => {
                 b.classList.remove('bg-gray-800', 'text-white');
                 b.classList.add('text-gray-400');
@@ -1325,23 +1382,32 @@
                 clickedBtn.classList.remove('text-gray-400');
                 clickedBtn.classList.add('bg-gray-800', 'text-white');
             }
+            applyActiveFilter();
+        }
 
+        function applyActiveFilter() {
             document.querySelectorAll('.capture-card').forEach(card => {
-                const cardStatus = card.dataset.status;
-                if (status === 'all') {
+                const cardStatus = card.dataset.status || '';
+                if (activeFilter === 'all') {
                     card.classList.remove('hidden');
-                } else if (status === 'UNPUBLISHED') {
+                } else if (activeFilter === 'UNPUBLISHED') {
                     if (cardStatus !== 'PUBLISHED' && !cardStatus.startsWith('REJECT')) {
                         card.classList.remove('hidden');
                     } else {
                         card.classList.add('hidden');
                     }
-                } else if (status === 'REJECTED') {
-                    if (cardStatus.startsWith('REJECT')) card.classList.remove('hidden');
-                    else card.classList.add('hidden');
-                } else {
-                    if (cardStatus === status) card.classList.remove('hidden');
-                    else card.classList.add('hidden');
+                } else if (activeFilter === 'PUBLISHED') {
+                    if (cardStatus === 'PUBLISHED') {
+                        card.classList.remove('hidden');
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                } else if (activeFilter === 'REJECTED') {
+                    if (cardStatus.startsWith('REJECT')) {
+                        card.classList.remove('hidden');
+                    } else {
+                        card.classList.add('hidden');
+                    }
                 }
             });
         }
