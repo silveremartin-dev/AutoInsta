@@ -213,6 +213,34 @@ class Database:
                 return d
             return None
 
+    def get_best_pending_candidate(self, min_score: float = 7.0) -> Optional[Dict[str, Any]]:
+        """Finds the highest-scoring candidate among pending captures for tournament selection."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM captures 
+                WHERE status = 'PENDING_APPROVAL'
+                ORDER BY 
+                  CASE WHEN social_score IS NULL THEN 0 ELSE social_score END DESC,
+                  id DESC 
+                LIMIT 1
+            """)
+            row = cursor.fetchone()
+            if row:
+                d = dict(row)
+                if d.get("hashtags"):
+                    try:
+                        d["hashtags"] = json.loads(d["hashtags"])
+                    except Exception:
+                        d["hashtags"] = [d["hashtags"]]
+                if d.get("sensor_metadata"):
+                    try:
+                        d["sensor_metadata"] = json.loads(d["sensor_metadata"])
+                    except Exception:
+                        d["sensor_metadata"] = {}
+                return d
+            return None
+
     def list_captures(self, limit: int = 50, offset: int = 0, status_filter: Optional[str] = None) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()

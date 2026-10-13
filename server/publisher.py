@@ -294,4 +294,31 @@ class InstagramPublisher:
             "message": "Cliché dépublié avec succès."
         }
 
+    def dispatch_best_pending_candidate(self) -> Optional[Dict[str, Any]]:
+        """Selects the highest scoring candidate from pending queue and publishes it if cooldown is elapsed."""
+        # 1. Cooldown & daily rate limits
+        if self.mode in ["instagrapi", "meta_graph"]:
+            can_post, reason = self.can_publish_now()
+            if not can_post:
+                return {"success": False, "reason": reason}
+
+        # 2. Get best pending candidate
+        best_cap = db.get_best_pending_candidate(min_score=settings.min_social_score)
+        if not best_cap:
+            return None
+
+        cap_id = best_cap["id"]
+        image_path = Path(best_cap["filepath"])
+        caption = best_cap.get("caption") or "Authentic moments."
+        hashtags = best_cap.get("hashtags") or []
+        score = best_cap.get("social_score")
+        score_str = f"{score}/10" if score is not None else "N/A"
+
+        logger.info(f"Tournament Winner elected: Capture #{cap_id} with score {score_str}.")
+        db.log_event("INFO", f"Tournoi de sélection : Cliché #{cap_id} (Score: {score_str}) élu et publié automatiquement.")
+
+        # Publish winning candidate
+        res = self.publish(cap_id, image_path, caption, hashtags, ignore_cooldown=False)
+        return res
+
 publisher = InstagramPublisher()

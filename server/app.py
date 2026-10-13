@@ -3,6 +3,8 @@ import platform
 import subprocess
 import shutil
 import uuid
+import asyncio
+import logging
 from pathlib import Path
 from typing import Optional, List, Any
 from fastapi import FastAPI, File, UploadFile, Form, Header, HTTPException, BackgroundTasks, Request
@@ -16,11 +18,30 @@ from server.database import db
 from server.evaluator import evaluator
 from server.publisher import publisher
 
+logger = logging.getLogger("autoinsta.server")
+
 app = FastAPI(
     title="AutoInsta POV Ingestion & Social Agent",
     description="Autonomous egocentric lifelogging, VLM evaluation, and Instagram publisher.",
     version="1.0.0"
 )
+
+async def candidate_dispatcher_loop():
+    """Background task checking every 30s if cooldown has elapsed and auto-publishing highest scoring pending capture."""
+    while True:
+        try:
+            await asyncio.sleep(30)
+            if not settings.require_manual_confirmation:
+                res = publisher.dispatch_best_pending_candidate()
+                if res and res.get("success"):
+                    logger.info(f"Auto-tournament dispatcher elected and published capture: {res}")
+        except Exception as e:
+            logger.warning(f"Error in candidate_dispatcher_loop: {e}")
+
+@app.on_event("startup")
+async def on_startup():
+    asyncio.create_task(candidate_dispatcher_loop())
+    logger.info("AutoInsta tournament candidate dispatcher started.")
 
 # Directories
 templates_dir = Path(__file__).parent / "templates"
@@ -329,6 +350,25 @@ async def clear_captures():
     """Clears all historical captures and alerts for a fresh start."""
     db.clear_all_captures()
     return {"success": True, "message": "Historique nettoyé avec succès."}
+
+@app.post("/api/publisher/dispatch-best")
+async def trigger_dispatch_best():
+    """Manually triggers election of the highest-scoring pending candidate."""
+    res = publisher.dispatch_best_pending_candidate()
+    if res is None:
+        return {"success": False, "message": "Aucun cliché éligible en attente dans le vivier."}
+    return res
+
+@app.get("/api/publisher/queue-status")
+async def get_queue_status():
+    """Returns cooldown countdown status and top pending candidate in tournament queue."""
+    can_post, reason = publisher.can_publish_now()
+    best_candidate = db.get_best_pending_candidate(min_score=settings.min_social_score)
+    return {
+        "can_publish_now": can_post,
+        "cooldown_reason": reason,
+        "top_candidate": best_candidate
+    }
 
 @app.post("/api/settings/toggle-validation")
 async def toggle_validation_mode():
