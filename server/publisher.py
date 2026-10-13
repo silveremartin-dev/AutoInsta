@@ -241,21 +241,60 @@ class InstagramPublisher:
             return {"success": False, "error": err, "message": err}
 
     def _publish_meta_graph(self, capture_id: int, image_path: Path, full_caption: str) -> Dict[str, Any]:
-        # Official Meta Graph API flow requires a publicly accessible image URL
-        # e.g., POST https://graph.facebook.com/v19.0/{ig_user_id}/media
         token = settings.meta_access_token
-        acc_id = settings.instagram_account_id
+        fb_page_id = settings.facebook_page_id
+        ig_acc_id = settings.instagram_account_id
 
-        if not token or not acc_id:
-            err = "META_ACCESS_TOKEN and INSTAGRAM_ACCOUNT_ID required for meta_graph mode."
+        if not token:
+            err = "Clé META_ACCESS_TOKEN requise pour le mode Meta Graph API (Facebook / Instagram Pro)."
             db.mark_publish_failed(capture_id, err)
-            return {"success": False, "error": err}
+            return {"success": False, "error": err, "message": err}
 
-        # Note: Meta Graph API requires an image_url accessible on the internet
-        err = "Meta Graph API requires a public image URL. Configure tunnel (e.g. ngrok/Cloudflare) or use instagrapi."
-        logger.warning(err)
+        # 1. Publication directe sur Page Facebook (Upload direct du fichier binaire sans tunnel !)
+        if fb_page_id:
+            try:
+                url = f"https://graph.facebook.com/v19.0/{fb_page_id}/photos"
+                with open(image_path, "rb") as f:
+                    files = {"source": f}
+                    data = {
+                        "caption": full_caption,
+                        "access_token": token,
+                        "published": "true"
+                    }
+                    resp = requests.post(url, files=files, data=data, timeout=30)
+
+                res_data = resp.json()
+                if resp.status_code == 200 and ("id" in res_data or "post_id" in res_data):
+                    post_id = str(res_data.get("id") or res_data.get("post_id"))
+                    db.mark_published(capture_id, post_id, "meta_graph")
+                    db.log_event("INFO", f"Published post {post_id} to Facebook Page via Meta Graph API")
+                    return {
+                        "success": True,
+                        "mode": "meta_graph",
+                        "post_id": post_id,
+                        "message": f"Cliché publié avec succès sur votre Page Facebook (#{post_id}) !"
+                    }
+                else:
+                    err = res_data.get("error", {}).get("message") or f"Erreur Facebook Graph API HTTP {resp.status_code}"
+                    logger.error(f"Facebook Graph API failed: {err}")
+                    db.mark_publish_failed(capture_id, err)
+                    return {"success": False, "error": err, "message": err}
+            except Exception as e:
+                err = f"Erreur lors de l'appel Facebook Graph API: {str(e)}"
+                logger.error(err, exc_info=True)
+                db.mark_publish_failed(capture_id, err)
+                return {"success": False, "error": err, "message": err}
+
+        # 2. Instagram Pro via Graph API (Nécessite un tunnel ou image URL publique)
+        if ig_acc_id:
+            err = "Instagram Graph API requiert une URL d'image publique (tunnel ngrok/Cloudflare). Pour Instagram direct, utilisez le mode 'Instagram Mobile (Instagrapi)'."
+            logger.warning(err)
+            db.mark_publish_failed(capture_id, err)
+            return {"success": False, "error": err, "message": err}
+
+        err = "Veuillez renseigner FACEBOOK_PAGE_ID ou INSTAGRAM_ACCOUNT_ID dans vos paramètres Meta."
         db.mark_publish_failed(capture_id, err)
-        return {"success": False, "error": err}
+        return {"success": False, "error": err, "message": err}
 
     def unpublish(self, capture_id: int, cap_data: dict) -> Dict[str, Any]:
         """Unpublishes a capture: removes local exported files / deletes Instagram post."""
@@ -286,6 +325,15 @@ class InstagramPublisher:
                     logger.info(f"Deleted post {post_id} from Instagram.")
             except Exception as e:
                 logger.warning(f"Failed to delete post {post_id} from Instagram: {e}")
+
+        # 3. If Facebook via Meta Graph API, attempt to delete photo
+        if publish_mode == "meta_graph" and post_id and settings.meta_access_token:
+            try:
+                del_url = f"https://graph.facebook.com/v19.0/{post_id}?access_token={settings.meta_access_token}"
+                requests.delete(del_url, timeout=10)
+                logger.info(f"Deleted post {post_id} from Facebook.")
+            except Exception as e:
+                logger.warning(f"Failed to delete post {post_id} from Facebook: {e}")
 
         return {
             "success": True,

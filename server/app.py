@@ -710,6 +710,9 @@ class CredentialsUpdateRequest(BaseModel):
     publish_mode: Optional[str] = None # "local_only", "dry_run", "instagrapi", "meta_graph"
     instagram_username: Optional[str] = None
     instagram_password: Optional[str] = None
+    meta_access_token: Optional[str] = None
+    facebook_page_id: Optional[str] = None
+    instagram_account_id: Optional[str] = None
     emergency_phone: Optional[str] = None
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
@@ -730,7 +733,6 @@ async def update_credentials(req: CredentialsUpdateRequest):
     # Update in-memory settings
     if req.gemini_api_key is not None:
         settings.gemini_api_key = req.gemini_api_key
-        # re-init evaluator
         evaluator.api_key = req.gemini_api_key
         evaluator._init_client()
     if req.publish_mode is not None:
@@ -740,6 +742,12 @@ async def update_credentials(req: CredentialsUpdateRequest):
         settings.instagram_username = req.instagram_username
     if req.instagram_password is not None:
         settings.instagram_password = req.instagram_password
+    if req.meta_access_token is not None:
+        settings.meta_access_token = req.meta_access_token
+    if req.facebook_page_id is not None:
+        settings.facebook_page_id = req.facebook_page_id
+    if req.instagram_account_id is not None:
+        settings.instagram_account_id = req.instagram_account_id
     if req.emergency_phone is not None:
         settings.emergency_phone = req.emergency_phone
     if req.telegram_bot_token is not None:
@@ -762,6 +770,9 @@ async def update_credentials(req: CredentialsUpdateRequest):
     if req.publish_mode is not None: existing_lines["PUBLISH_MODE"] = req.publish_mode
     if req.instagram_username is not None: existing_lines["INSTAGRAM_USERNAME"] = req.instagram_username
     if req.instagram_password is not None: existing_lines["INSTAGRAM_PASSWORD"] = req.instagram_password
+    if req.meta_access_token is not None: existing_lines["META_ACCESS_TOKEN"] = req.meta_access_token
+    if req.facebook_page_id is not None: existing_lines["FACEBOOK_PAGE_ID"] = req.facebook_page_id
+    if req.instagram_account_id is not None: existing_lines["INSTAGRAM_ACCOUNT_ID"] = req.instagram_account_id
     if req.emergency_phone is not None: existing_lines["EMERGENCY_PHONE"] = req.emergency_phone
     if req.telegram_bot_token is not None: existing_lines["TELEGRAM_BOT_TOKEN"] = req.telegram_bot_token
     if req.telegram_chat_id is not None: existing_lines["TELEGRAM_CHAT_ID"] = req.telegram_chat_id

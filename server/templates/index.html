@@ -743,6 +743,30 @@
                         </div>
                     </div>
 
+                    <!-- Meta Graph API & Facebook Page Credentials -->
+                    <div class="p-3.5 rounded-2xl bg-gray-950 border border-gray-800 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-brands fa-facebook text-blue-500 text-sm"></i>
+                            <span class="text-xs font-bold text-gray-200">Meta Graph API & Page Facebook (Mode Meta Graph)</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="text-[10px] text-gray-400 block mb-0.5">Jeton d'accès Meta (Page Access Token) :</label>
+                                <input type="password" id="cred_meta_token" value="{{ settings.meta_access_token }}" placeholder="EAA..." class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-[10px] text-gray-400 block mb-0.5">ID de la Page Facebook :</label>
+                                    <input type="text" id="cred_fb_page" value="{{ settings.facebook_page_id }}" placeholder="1029384756..." class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-xs text-white">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-gray-400 block mb-0.5">ID Compte Instagram Pro (Optionnel) :</label>
+                                    <input type="text" id="cred_ig_acc_id" value="{{ settings.instagram_account_id }}" placeholder="178414..." class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-xs text-white">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="text-[11px] text-gray-400 block mb-1">Téléphone Destinataire SMS SOS :</label>
@@ -1871,6 +1895,9 @@
                 gemini_api_key: document.getElementById('cred_gemini').value,
                 instagram_username: document.getElementById('cred_ig_user').value,
                 instagram_password: document.getElementById('cred_ig_pass').value,
+                meta_access_token: document.getElementById('cred_meta_token') ? document.getElementById('cred_meta_token').value : '',
+                facebook_page_id: document.getElementById('cred_fb_page') ? document.getElementById('cred_fb_page').value : '',
+                instagram_account_id: document.getElementById('cred_ig_acc_id') ? document.getElementById('cred_ig_acc_id').value : '',
                 emergency_phone: document.getElementById('cred_phone').value,
                 telegram_chat_id: document.getElementById('cred_tg_chat').value
             };
