@@ -317,6 +317,8 @@
                                         <span class="absolute left-2.5 top-2 text-blue-400 text-xs font-mono">#</span>
                                         <input id="tags_edit_{{ cap.id }}" oninput="autoSaveCapture({{ cap.id }})" onblur="saveCaptionAndTagsImmediately({{ cap.id }})" type="text" value="{{ cap.hashtags|join(', ') if cap.hashtags else '' }}" placeholder="pov, quotidien, ville (séparés par virgules)" class="w-full bg-gray-950 border border-gray-800 rounded-xl py-1.5 pl-6 pr-2.5 text-xs text-blue-300 placeholder-gray-600 focus:outline-none focus:border-fuchsia-500 font-mono transition">
                                     </div>
+                                </div>
+
                                 <!-- Auto-Publish Countdown Bar (Mode Automatique uniquement) -->
                                 <div id="auto_timer_container_{{ cap.id }}" class="{{ '' if (not settings.require_manual_confirmation and cap.status != 'PUBLISHED' and not cap.status.startswith('REJECT') and cap.status != 'UNPUBLISHED') else 'hidden' }} flex items-center justify-between bg-amber-950/40 border border-amber-800/50 rounded-xl px-3 py-1.5 text-xs text-amber-200">
                                     <span class="flex items-center gap-1.5 text-[11px]">
