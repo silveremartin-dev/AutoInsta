@@ -119,6 +119,13 @@ async def get_capture_image_file(filename: str):
         return FileResponse(str(fallback))
     raise HTTPException(status_code=404, detail="Image capture introuvable")
 
+def is_valid_gemini_key(key: Optional[str]) -> bool:
+    """Verifies that the Gemini API key has the real Google AI Studio format."""
+    if not key or not str(key).strip():
+        return False
+    k = str(key).strip()
+    return k.startswith("AIzaSy") and len(k) >= 30
+
 @app.get("/", response_class=HTMLResponse)
 async def dashboard_view(request: Request):
     """Render real-time AutoInsta web dashboard."""
@@ -140,7 +147,7 @@ async def dashboard_view(request: Request):
             "alerts": alerts,
             "hardware": hardware,
             "storage": storage,
-            "has_gemini_key": bool(settings.gemini_api_key and settings.gemini_api_key.strip())
+            "has_gemini_key": is_valid_gemini_key(settings.gemini_api_key)
         }
     )
 
@@ -217,7 +224,8 @@ async def approve_capture(capture_id: int):
     caption = cap.get("caption") or "Authentic moments."
     hashtags = cap.get("hashtags") or []
 
-    res = publisher.publish(capture_id, image_path, caption, hashtags)
+    # When manually requested by user from the UI, ignore cooldown
+    res = publisher.publish(capture_id, image_path, caption, hashtags, ignore_cooldown=True)
     return res
 
 @app.post("/api/captures/{capture_id}/reject")
@@ -333,7 +341,7 @@ async def open_storage_folder(req: OpenFolderRequest):
     try:
         sys_plat = platform.system().lower()
         if sys_plat == "windows":
-            os.startfile(target_abs)
+            subprocess.Popen(["explorer.exe", target_abs])
         elif sys_plat == "darwin":
             subprocess.Popen(["open", target_abs])
         else:
@@ -572,7 +580,7 @@ async def get_config():
         "target_type": settings.target_type,
         "min_interval_minutes": settings.min_interval_minutes,
         "max_daily_posts": settings.max_daily_posts,
-        "has_gemini_key": bool(settings.gemini_api_key),
+        "has_gemini_key": is_valid_gemini_key(settings.gemini_api_key),
         "has_ig_credentials": bool(settings.instagram_username and settings.instagram_password),
         "storage": get_storage_details(),
         "sensors": await get_sensors_config()

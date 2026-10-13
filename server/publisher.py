@@ -88,18 +88,18 @@ class InstagramPublisher:
         if self.mode in ["google_photos", "folder_sync"]:
             return self._publish_google_photos(capture_id, image_path, full_caption)
         elif self.mode in ["local_only", "private_vault"]:
-            return self._publish_local_only(capture_id, full_caption)
+            return self._publish_local_only(capture_id, image_path, full_caption)
         elif self.mode == "dry_run":
             return self._publish_dry_run(capture_id, full_caption)
         elif self.mode == "instagrapi":
             if not settings.instagram_username or not settings.instagram_password:
                 logger.info(f"No Instagram account configured. Defaulting capture #{capture_id} to local private archive.")
-                return self._publish_local_only(capture_id, full_caption)
+                return self._publish_local_only(capture_id, image_path, full_caption)
             return self._publish_instagrapi(capture_id, image_path, full_caption)
         elif self.mode == "meta_graph":
             return self._publish_meta_graph(capture_id, image_path, full_caption)
         else:
-            return self._publish_local_only(capture_id, full_caption)
+            return self._publish_local_only(capture_id, image_path, full_caption)
 
     def _publish_google_photos(self, capture_id: int, image_path: Path, full_caption: str) -> Dict[str, Any]:
         """Copies photo into a user-specified synced folder (Google Photos / Drive / Nextcloud)."""
@@ -126,16 +126,30 @@ class InstagramPublisher:
             "caption": full_caption
         }
 
-    def _publish_local_only(self, capture_id: int, full_caption: str) -> Dict[str, Any]:
+    def _publish_local_only(self, capture_id: int, image_path: Path, full_caption: str) -> Dict[str, Any]:
+        """Archives photo and caption locally into settings.export_directory (data/my_private_photos)."""
         local_post_id = f"local_vault_{int(time.time())}"
-        logger.info(f"[COFFRE-FORT LOCAL] Cliché #{capture_id} archivé en local sans diffusion externe.")
+        target_dir = settings.export_directory
+        target_dir.mkdir(parents=True, exist_ok=True)
+        dest_filename = f"POV_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{image_path.name}"
+        dest_path = target_dir / dest_filename
+        try:
+            import shutil
+            shutil.copy2(image_path, dest_path)
+            sidecar = target_dir / f"{dest_filename}.txt"
+            sidecar.write_text(full_caption, encoding="utf-8")
+        except Exception as e:
+            logger.warning(f"Failed to copy to export_directory: {e}")
+
+        logger.info(f"[COFFRE-FORT LOCAL] Cliché #{capture_id} exporté dans {dest_path}")
         db.mark_published(capture_id, local_post_id, "local_only")
-        db.log_event("INFO", f"Cliché #{capture_id} conservé dans le coffre privé local (mode 100% hors-ligne/local).")
+        db.log_event("INFO", f"Cliché #{capture_id} conservé dans le coffre privé local ({dest_filename}).")
         return {
             "success": True,
             "mode": "local_only",
             "post_id": local_post_id,
-            "message": "Archivé dans votre Coffre Privé Local (aucun compte Instagram configuré).",
+            "exported_to": str(dest_path),
+            "message": f"Archivé dans votre Coffre Privé Local ({dest_filename}).",
             "caption": full_caption
         }
 

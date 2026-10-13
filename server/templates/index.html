@@ -398,14 +398,14 @@
                         <p class="text-[11px] text-gray-400">Emplacement où toutes les photos de la webcam sont enregistrées.</p>
                         
                         <div class="space-y-2">
-                            <input type="text" id="cfg_storage_dir" value="{{ storage.storage_dir }}" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-fuchsia-500">
+                            <input type="text" id="cfg_storage_dir" value="{{ storage.storage_dir }}" oninput="autoSaveStoragePath('captures')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-fuchsia-500">
                             <div class="flex items-center justify-between gap-2 pt-1">
                                 <button onclick="openFolderInExplorer('captures')" class="px-3.5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold transition flex items-center gap-1.5 border border-gray-700">
                                     <i class="fa-solid fa-folder-open text-amber-400"></i> Ouvrir dans l'Explorateur
                                 </button>
-                                <button onclick="saveStoragePath('captures')" class="px-3.5 py-2 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md">
-                                    <i class="fa-solid fa-floppy-disk"></i> Enregistrer
-                                </button>
+                                <span id="save_storage_captures" class="text-[11px] text-emerald-400 font-medium transition-opacity opacity-0 flex items-center gap-1">
+                                    <i class="fa-solid fa-check text-[9px]"></i> Chemin enregistré
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -421,14 +421,14 @@
                         <p class="text-[11px] text-gray-400">Dossier export pour les photos publiées (Google Photos, Drive, Nextcloud).</p>
                         
                         <div class="space-y-2">
-                            <input type="text" id="cfg_export_dir" value="{{ storage.export_dir }}" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-500">
+                            <input type="text" id="cfg_export_dir" value="{{ storage.export_dir }}" oninput="autoSaveStoragePath('export')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-500">
                             <div class="flex items-center justify-between gap-2 pt-1">
                                 <button onclick="openFolderInExplorer('export')" class="px-3.5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold transition flex items-center gap-1.5 border border-gray-700">
                                     <i class="fa-solid fa-folder-open text-amber-400"></i> Ouvrir dans l'Explorateur
                                 </button>
-                                <button onclick="saveStoragePath('export')" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md">
-                                    <i class="fa-solid fa-floppy-disk"></i> Enregistrer
-                                </button>
+                                <span id="save_storage_export" class="text-[11px] text-emerald-400 font-medium transition-opacity opacity-0 flex items-center gap-1">
+                                    <i class="fa-solid fa-check text-[9px]"></i> Chemin enregistré
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -912,6 +912,26 @@
             }
         }
 
+        // GPS Location Caching & Continuous Watcher
+        let lastKnownGps = null;
+        if (navigator.geolocation) {
+            try {
+                navigator.geolocation.watchPosition(
+                    (pos) => {
+                        lastKnownGps = {
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude,
+                            timestamp: Date.now()
+                        };
+                    },
+                    (err) => {
+                        console.warn('[AutoInsta] Erreur lecture GPS continue:', err.message);
+                    },
+                    { enableHighAccuracy: true, maximumAge: 300000, timeout: 10000 }
+                );
+            } catch (e) {}
+        }
+
         async function snapWebcamNow() {
             const video = document.getElementById('webcamPreview');
             const canvas = document.getElementById('webcamCanvas');
@@ -943,20 +963,36 @@
                     }
                 }
 
-                if (isGpsConfigured && navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                            sensors.latitude = pos.coords.latitude;
-                            sensors.longitude = pos.coords.longitude;
-                            formData.append('sensors', JSON.stringify(sensors));
-                            sendCapturePayload(formData);
-                        },
-                        () => {
-                            formData.append('sensors', JSON.stringify(sensors));
-                            sendCapturePayload(formData);
-                        },
-                        { timeout: 1200 }
-                    );
+                // If GPS is enabled: prioritize lastKnownGps cache (instant and reliable)
+                if (isGpsConfigured) {
+                    if (lastKnownGps && (Date.now() - lastKnownGps.timestamp < 600000)) {
+                        sensors.latitude = lastKnownGps.latitude;
+                        sensors.longitude = lastKnownGps.longitude;
+                        formData.append('sensors', JSON.stringify(sensors));
+                        sendCapturePayload(formData);
+                    } else if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                                lastKnownGps = {
+                                    latitude: pos.coords.latitude,
+                                    longitude: pos.coords.longitude,
+                                    timestamp: Date.now()
+                                };
+                                sensors.latitude = pos.coords.latitude;
+                                sensors.longitude = pos.coords.longitude;
+                                formData.append('sensors', JSON.stringify(sensors));
+                                sendCapturePayload(formData);
+                            },
+                            () => {
+                                formData.append('sensors', JSON.stringify(sensors));
+                                sendCapturePayload(formData);
+                            },
+                            { maximumAge: 300000, timeout: 3000 }
+                        );
+                    } else {
+                        formData.append('sensors', JSON.stringify(sensors));
+                        sendCapturePayload(formData);
+                    }
                 } else {
                     formData.append('sensors', JSON.stringify(sensors));
                     sendCapturePayload(formData);
@@ -1520,31 +1556,43 @@
             }
         }
 
-        async function saveStoragePath(folderType) {
-            const payload = {};
-            if (folderType === 'captures') {
-                payload.storage_dir = document.getElementById('cfg_storage_dir').value;
-            } else {
-                payload.export_dir = document.getElementById('cfg_export_dir').value;
-            }
-
-            try {
-                const res = await fetch('/api/storage/update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (data.success) {
-                    showToast('✓ Emplacement de sauvegarde mis à jour');
-                    if (data.storage) {
-                        document.getElementById('storageCapturesCount').textContent = `${data.storage.captures_count} fichiers • ${data.storage.captures_size_mb} Mo`;
-                        document.getElementById('storageExportCount').textContent = `${data.storage.export_count} fichiers • ${data.storage.export_size_mb} Mo`;
-                    }
+        let autoSaveStorageTimer = null;
+        function autoSaveStoragePath(folderType) {
+            if (autoSaveStorageTimer) clearTimeout(autoSaveStorageTimer);
+            autoSaveStorageTimer = setTimeout(async () => {
+                const payload = {};
+                if (folderType === 'captures') {
+                    payload.storage_dir = document.getElementById('cfg_storage_dir').value;
+                } else {
+                    payload.export_dir = document.getElementById('cfg_export_dir').value;
                 }
-            } catch (err) {
-                showToast('Erreur enregistrement dossier: ' + err, true);
-            }
+
+                try {
+                    const res = await fetch('/api/storage/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        const ind = document.getElementById(folderType === 'captures' ? 'save_storage_captures' : 'save_storage_export');
+                        if (ind) {
+                            ind.classList.remove('opacity-0');
+                            setTimeout(() => ind.classList.add('opacity-0'), 2500);
+                        }
+                        if (data.storage) {
+                            document.getElementById('storageCapturesCount').textContent = `${data.storage.captures_count} fichiers • ${data.storage.captures_size_mb} Mo`;
+                            document.getElementById('storageExportCount').textContent = `${data.storage.export_count} fichiers • ${data.storage.export_size_mb} Mo`;
+                        }
+                    }
+                } catch (err) {
+                    console.error('Erreur auto-save storage:', err);
+                }
+            }, 600);
+        }
+
+        async function saveStoragePath(folderType) {
+            autoSaveStoragePath(folderType);
         }
 
         // ========================================================
