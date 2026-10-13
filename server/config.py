@@ -111,5 +111,79 @@ class Config:
         self.meta_access_token = os.getenv("META_ACCESS_TOKEN", "")
         self.instagram_account_id = os.getenv("INSTAGRAM_ACCOUNT_ID", "")
 
+    def save(self):
+        """Persists current configuration to config.yaml safely."""
+        if yaml is None:
+            return
+        
+        # Format paths relative to project root if within project root
+        def format_path(p: Path) -> str:
+            try:
+                return str(p.relative_to(BASE_DIR)).replace("\\", "/")
+            except ValueError:
+                return str(p).replace("\\", "/")
+
+        data = {
+            "server": {
+                "host": self.server_host,
+                "port": self.server_port,
+                "storage_dir": format_path(self.storage_dir),
+                "db_path": format_path(self.db_path),
+                "client_api_key": self.client_api_key
+            },
+            "sensors": {
+                "enable_camera": self.enable_camera,
+                "enable_gps": self.enable_gps,
+                "enable_accelerometer": self.enable_accelerometer,
+                "enable_light_sensor": self.enable_light_sensor,
+                "enable_microphone": self.enable_microphone,
+                "enable_barometer": self.enable_barometer,
+                "enable_battery": self.enable_battery,
+                "enable_pedometer": self.enable_pedometer,
+                "enable_heart_rate": self.enable_heart_rate,
+                "heart_rate_alert": {
+                    "enabled": self.hr_alert_enabled,
+                    "min_bpm": self.hr_min_bpm,
+                    "max_bpm": self.hr_max_bpm,
+                    "countdown_seconds": self.hr_countdown_seconds,
+                    "sound_alarm": self.hr_sound_alarm,
+                    "vibration_alarm": self.hr_vibration_alarm,
+                    "allow_sms_dispatch": self.hr_allow_sms_dispatch,
+                    "allow_gps_emergency_override": self.hr_allow_gps_override,
+                    "local_alarm_only": self.hr_local_alarm_only,
+                    "webhook_url": self.hr_webhook_url,
+                    "channels": self.hr_channels
+                }
+            },
+            "vlm": {
+                "model": self.vlm_model,
+                "temperature": self.temperature,
+                "min_social_score": self.min_social_score,
+                "strict_privacy": self.strict_privacy,
+                "require_quality_pass": self.require_quality_pass,
+                "persona": self.persona,
+                "language": self.language,
+                "persona_instructions": self.persona_instructions
+            },
+            "publisher": {
+                "mode": self.publish_mode,
+                "export_directory": format_path(self.export_directory),
+                "require_manual_confirmation": self.require_manual_confirmation,
+                "target_type": self.target_type,
+                "min_interval_minutes": self.min_interval_minutes,
+                "max_daily_posts": self.max_daily_posts
+            },
+            "client": {
+                "capture_interval_seconds": 30,
+                "motion_threshold": 0.25,
+                "darkness_threshold": 15
+            }
+        }
+        try:
+            with open(self.config_path, "w", encoding="utf-8") as f:
+                yaml.safe_dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        except Exception:
+            pass
+
 # Global settings instance
 settings = Config()

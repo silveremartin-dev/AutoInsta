@@ -1,80 +1,61 @@
-# AutoInsta Configuration File
-
 server:
-  host: "0.0.0.0"
+  host: 0.0.0.0
   port: 8000
-  storage_dir: "data/captures"
-  db_path: "data/autoinsta.db"
-  client_api_key: "autoinsta_device_secret_token_123"
-
-# Granular Sensor Settings
+  storage_dir: data/captures
+  db_path: data/autoinsta.db
+  client_api_key: autoinsta_device_secret_token_123
 sensors:
   enable_camera: true
-  enable_gps: true                  # GPS coordinates, reverse-geocoding city/neighborhood
-  enable_accelerometer: true        # Motion detection (pauses capture when completely still)
-  enable_light_sensor: true         # Avoids taking pictures inside dark pockets or bags
-  enable_microphone: false          # Ambient decibel / acoustic environment (dB level)
-  enable_barometer: false           # Elevation, floor climbing & atmospheric pressure
-  enable_battery: true              # Battery level & charging state (pauses capture if < 15%)
-  enable_pedometer: false           # Daily step counter integration
-  enable_heart_rate: false          # Physiological wearable / BLE heart rate monitoring
-  
-  # Heart Rate Emergency Alert & Dead Man's Switch (Homme Mort)
+  enable_gps: true
+  enable_accelerometer: true
+  enable_light_sensor: true
+  enable_microphone: false
+  enable_barometer: false
+  enable_battery: true
+  enable_pedometer: false
+  enable_heart_rate: false
   heart_rate_alert:
     enabled: false
-    min_bpm: 45                     # Low heart rate threshold (Bradycardia alert)
-    max_bpm: 145                    # High heart rate threshold (Tachycardia alert)
-    countdown_seconds: 10           # 10s grace period with sound & vibration before sending SOS
-    sound_alarm: true               # Audible warning beeps during countdown
-    vibration_alarm: true           # Continuous vibration during countdown
-    
-    # Explicit Emergency Overrides & Privacy Consent
-    allow_sms_dispatch: false       # Explicit consent required before sending SMS via mobile plan
-    allow_gps_emergency_override: true # Allow fetching GPS ONLY for rescue, even if GPS is OFF for photos
-    local_alarm_only: false         # If true: zero external messages. Audible siren & local alert only (pure offline)
-    
-    channels:                       # Active alert destinations (if not local_alarm_only)
-      - "sms"
-      - "telegram"
-      - "webhook"
-
+    min_bpm: 45
+    max_bpm: 145
+    countdown_seconds: 10
+    sound_alarm: true
+    vibration_alarm: true
+    allow_sms_dispatch: false
+    allow_gps_emergency_override: true
+    local_alarm_only: false
+    webhook_url: ''
+    channels:
+    - sms
+    - telegram
+    - webhook
 vlm:
-  model: "gemini-1.5-flash"
+  model: gemini-1.5-flash
   temperature: 0.7
-  min_social_score: 7.0             # Score between 0.0 and 10.0 required to propose posting
-  
-  # Strict Privacy & Safety Filters
-  strict_privacy: true              # Zero-tolerance for screens, banking, intimate spaces, nudity
-  require_quality_pass: true        # Avoid pure black, occluded, or severely motion-blurred shots
+  min_social_score: 7.5
+  strict_privacy: true
+  require_quality_pass: true
+  persona: witty_minimalist
+  language: fr
+  persona_instructions: 'Tu rédiges des légendes Instagram naturelles, spontanées
+    et élégantes à la première personne.
 
-  # Persona style for generated captions
-  # Options: spontaneous_chic, witty_minimalist, candid_existential, poetic_flaneur, tech_nomad
-  persona: "spontaneous_chic"
-  language: "fr"                     # Default caption language
-
-  # Custom prompt guidance
-  persona_instructions: |
-    Tu rédiges des légendes Instagram naturelles, spontanées et élégantes à la première personne.
     Ne sonne jamais comme un robot ou une marque.
-    Intègre subtilement le lieu et l'ambiance si des données GPS ou d'activité sont fournies.
+
+    Intègre subtilement le lieu et l''ambiance si des données GPS ou d''activité sont
+    fournies.
+
     Ajoute 2 à 4 hashtags discrets à la fin.
 
+    '
 publisher:
-  # Mode: "local_only" (private vault), "google_photos" (local sync folder), "dry_run", "instagrapi", or "meta_graph"
-  mode: "local_only"
-  
-  # Private Local Export Target
-  export_directory: "data/my_private_photos" # Synced folder (e.g. Google Drive / Google Photos / Nextcloud)
-  
-  # Approval Workflow
-  require_manual_confirmation: true # If true, never auto-posts without user clicking Accept/Approve
-  
-  target_type: "feed"               # "feed" or "story"
-  min_interval_minutes: 60          # Minimum time between posts
-  max_daily_posts: 4                # Maximum posts per 24 hours
-
+  mode: local_only
+  export_directory: data/my_private_photos
+  require_manual_confirmation: true
+  target_type: feed
+  min_interval_minutes: 60
+  max_daily_posts: 4
 client:
   capture_interval_seconds: 30
   motion_threshold: 0.25
   darkness_threshold: 15
-

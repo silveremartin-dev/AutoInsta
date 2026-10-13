@@ -93,6 +93,9 @@ def run_test():
     pub_res = publisher.publish(cap_id, img_path, caption, hashtags, ignore_cooldown=True)
     print(f"      Mode : {pub_res.get('mode', 'N/A')} - Succès: {pub_res.get('success')}")
 
+    # Clean up test capture so production database remains pristine
+    db.delete_capture(cap_id)
+
     print("=" * 60)
     print(" ✅ TEST DU PIPELINE RÉUSSI SANS ERREUR !")
     print("=" * 60)

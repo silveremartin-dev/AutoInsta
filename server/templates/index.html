@@ -31,8 +31,16 @@
 </head>
 <body class="bg-[#0b0f19] text-gray-100 min-h-screen flex flex-col font-sans selection:bg-fuchsia-500 selection:text-white">
 
-    <!-- Navbar -->
-    <header class="border-b border-gray-800 bg-gray-900/70 backdrop-blur-md sticky top-0 z-50">
+    <!-- Global Toast Notification -->
+    <div id="globalToast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="px-4 py-3 rounded-2xl bg-emerald-950/90 border border-emerald-500/40 text-emerald-200 text-xs font-semibold shadow-2xl flex items-center gap-2 backdrop-blur-md">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+            <span id="globalToastMsg">Action enregistrée avec succès</span>
+        </div>
+    </div>
+
+    <!-- Header & Navigation -->
+    <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur-md sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-fuchsia-600 via-pink-600 to-amber-500 flex items-center justify-center shadow-lg shadow-fuchsia-500/20">
@@ -40,19 +48,31 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-lg leading-none tracking-tight text-white flex items-center gap-2">
-                        AutoInsta <span class="text-xs px-2 py-0.5 rounded-full bg-fuchsia-950 text-fuchsia-400 border border-fuchsia-800/60">POV Lifelogger</span>
+                        AutoInsta <span class="text-xs px-2 py-0.5 rounded-full bg-fuchsia-950 text-fuchsia-400 border border-fuchsia-800/60 font-mono">POV Lifelogger</span>
                     </h1>
-                    <p class="text-xs text-gray-400">Générateur de sociabilité & Contrôle multi-capteurs</p>
+                    <p class="text-xs text-gray-400">Agent autonome d'ingestion égocentrique & multi-capteurs</p>
                 </div>
             </div>
 
-            <div class="flex items-center space-x-3">
-                <button id="validationToggleBtn" onclick="toggleValidationMode()" class="flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition {{ 'bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60' if settings.require_manual_confirmation else 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60' }}">
+            <!-- Tab Selector & Validation Toggle -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- Two Main Tabs Selector -->
+                <div class="bg-gray-950 p-1 rounded-xl border border-gray-800 flex items-center">
+                    <button id="navTabCaptures" onclick="switchTab('captures')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-fuchsia-600 text-white shadow-md shadow-fuchsia-600/30">
+                        <i class="fa-solid fa-camera"></i>
+                        <span>Photos & Historique</span>
+                        <span id="badgeCaptureCount" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-black/40">{{ stats.total_captures }}</span>
+                    </button>
+                    <button id="navTabSettings" onclick="switchTab('settings')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Options & Paramètres</span>
+                    </button>
+                </div>
+
+                <!-- Instant Mode Validation Toggle -->
+                <button id="validationToggleBtn" onclick="toggleValidationMode()" class="hidden sm:flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition {{ 'bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60' if settings.require_manual_confirmation else 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60' }}" title="Cliquer pour basculer instantanément entre approbation manuelle et publication automatique">
                     <span id="validationDot" class="w-2 h-2 rounded-full {{ 'bg-amber-400' if settings.require_manual_confirmation else 'bg-emerald-400' }} animate-pulse"></span>
-                    <span>Validation : <strong id="validationToggleLabel">{{ 'Manuelle (Cliquer pour changer)' if settings.require_manual_confirmation else 'Automatique (Cliquer pour changer)' }}</strong></span>
-                </button>
-                <button onclick="document.getElementById('settingsModal').classList.remove('hidden')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-sliders text-fuchsia-400"></i> Capteurs & Options
+                    <span>Validation : <strong id="validationToggleLabel">{{ 'Manuelle' if settings.require_manual_confirmation else 'Automatique' }}</strong></span>
                 </button>
             </div>
         </div>
@@ -68,7 +88,7 @@
                         ALERTE RYTHME CARDIAQUE CRITIQUE !
                         <span id="countdownTimer" class="px-2 py-0.5 rounded-lg bg-black/40 font-mono text-yellow-300 font-bold">10s</span>
                     </h3>
-                    <p class="text-xs text-rose-100">Bouton de l'homme mort actif : un SMS & SOS Telegram seront envoyés automatiquement si vous n'annulez pas.</p>
+                    <p class="text-xs text-rose-100">Bouton de l'homme mort actif : secours et coordonnées envoyés si vous n'annulez pas.</p>
                 </div>
             </div>
             <button onclick="abortEmergencySOS()" class="px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold text-xs shadow-lg transition flex items-center gap-2 transform active:scale-95">
@@ -77,325 +97,510 @@
         </div>
     </div>
 
-    <!-- Main Container -->
+    <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
 
-        <!-- Direct Webcam & Sensor Capture Component -->
-        <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-4 sm:p-5 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex items-center gap-4 w-full md:w-auto">
-                <div class="relative w-28 h-20 bg-black/60 rounded-xl overflow-hidden border border-gray-700 flex items-center justify-center shrink-0">
-                    <video id="webcamPreview" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
-                    <canvas id="webcamCanvas" class="hidden"></canvas>
-                    <div id="webcamPlaceholder" class="text-gray-500 text-xs flex flex-col items-center">
-                        <i class="fa-solid fa-video-slash text-xl mb-1 text-gray-600"></i>
-                        <span>Webcam OFF</span>
+        <!-- ======================================================================= -->
+        <!-- TAB 1 : PHOTOS & HISTORIQUE                                             -->
+        <!-- ======================================================================= -->
+        <div id="tabContentCaptures" class="space-y-6">
+
+            <!-- Real-time Ingestion Module: Dual Camera & Direct File Upload -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                
+                <!-- Card 1: Integrated Webcam Live Stream -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-5 shadow-xl flex flex-col justify-between space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-xl bg-fuchsia-500/10 text-fuchsia-400 flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-video"></i>
+                            </span>
+                            <div>
+                                <h3 class="font-bold text-white text-sm">Caméra Intégrée (Webcam PC / Mobile)</h3>
+                                <p class="text-xs text-gray-400">Capture vidéo continue et injection automatique</p>
+                            </div>
+                        </div>
+                        <span id="camStatusBadge" class="text-[10px] px-2.5 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700">Inactive</span>
+                    </div>
+
+                    <!-- Video Viewport -->
+                    <div class="relative w-full h-48 bg-black/80 rounded-2xl overflow-hidden border border-gray-800 flex items-center justify-center">
+                        <video id="webcamPreview" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+                        <canvas id="webcamCanvas" class="hidden"></canvas>
+                        <div id="webcamPlaceholder" class="text-gray-500 text-xs flex flex-col items-center space-y-2">
+                            <i class="fa-solid fa-camera-slash text-3xl text-gray-700"></i>
+                            <span>Aperçu de la caméra désactivé</span>
+                        </div>
+                        <div id="camNextCountdown" class="absolute bottom-2 right-2 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[11px] text-fuchsia-300 font-mono hidden border border-fuchsia-500/30">
+                            <i class="fa-solid fa-spinner fa-spin mr-1"></i> Prochaine capture : <strong id="camSecLeft">30s</strong>
+                        </div>
+                    </div>
+
+                    <!-- Webcam Action Controls -->
+                    <div class="flex items-center justify-between gap-2 pt-2">
+                        <button id="btnToggleCam" onclick="toggleWebcamCapture()" class="flex-1 py-2.5 rounded-xl text-xs font-bold bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-600/20 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-camera"></i> Activer la Caméra
+                        </button>
+                        <button id="btnSnapNow" onclick="snapWebcamNow()" disabled class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-gray-800 text-gray-400 border border-gray-700 transition flex items-center gap-1.5 opacity-50 cursor-not-allowed">
+                            <i class="fa-solid fa-camera-retro"></i> Prendre un cliché
+                        </button>
                     </div>
                 </div>
-                <div>
-                    <h3 class="font-bold text-white text-sm sm:text-base flex items-center gap-2">
-                        <span>Caméra Intégrée (Webcam PC & Smartphone)</span>
-                        <span id="camStatusBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700">Inactive</span>
-                    </h3>
-                    <p class="text-xs text-gray-400 mt-0.5">Capture automatiquement des clichés et transmet les capteurs depuis ce navigateur.</p>
-                    <p id="camNextCountdown" class="text-xs text-fuchsia-400 font-mono mt-1 hidden">
-                        <i class="fa-solid fa-spinner fa-spin mr-1"></i> Prochaine capture automatique dans : <strong id="camSecLeft">30s</strong>
-                    </p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2 w-full md:w-auto justify-end">
-                <button id="btnToggleCam" onclick="toggleWebcamCapture()" class="px-4 py-2 rounded-xl text-xs font-bold bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-600/20 transition flex items-center gap-2">
-                    <i class="fa-solid fa-camera"></i> Activer la Caméra
-                </button>
-                <button id="btnSnapNow" onclick="snapWebcamNow()" disabled class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-gray-800 text-gray-400 border border-gray-700 transition flex items-center gap-1.5 opacity-50 cursor-not-allowed">
-                    <i class="fa-solid fa-camera-retro"></i> Prendre un cliché
-                </button>
-            </div>
-        </div>
 
-        <!-- Top Metrics Cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
-                <div>
-                    <p class="text-[11px] sm:text-xs text-gray-400 uppercase font-medium">Clichés Capturés</p>
-                    <p class="text-xl sm:text-2xl font-bold text-white mt-1">{{ stats.total_captures }}</p>
-                </div>
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg sm:text-xl">
-                    <i class="fa-solid fa-camera"></i>
-                </div>
-            </div>
-
-            <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
-                <div>
-                    <p class="text-[11px] sm:text-xs text-amber-400 uppercase font-medium">En Attente de Validation</p>
-                    <p class="text-xl sm:text-2xl font-bold text-amber-300 mt-1">{{ pending_approvals|length }}</p>
-                </div>
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg sm:text-xl">
-                    <i class="fa-solid fa-clock"></i>
-                </div>
-            </div>
-
-            <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
-                <div>
-                    <p class="text-[11px] sm:text-xs text-emerald-400 uppercase font-medium">Publiés Instagram</p>
-                    <p class="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">{{ stats.total_published }}</p>
-                </div>
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg sm:text-xl">
-                    <i class="fa-brands fa-instagram"></i>
-                </div>
-            </div>
-
-            <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
-                <div>
-                    <p class="text-[11px] sm:text-xs text-rose-400 uppercase font-medium">Rejetés (Filtre Privé/Score)</p>
-                    <p class="text-xl sm:text-2xl font-bold text-rose-400 mt-1">{{ stats.total_rejected }}</p>
-                </div>
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-lg sm:text-xl">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 1: QUEUE D'APPROBATION MANUELLE (SI PENDING) -->
-        {% if pending_approvals %}
-        <div class="bg-gradient-to-b from-amber-950/20 to-gray-900/80 border-2 border-amber-500/30 rounded-3xl p-6 space-y-6 shadow-2xl">
-            <div class="flex items-center justify-between flex-wrap gap-2">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-amber-500 text-black flex items-center justify-center font-bold">
-                        {{ pending_approvals|length }}
+                <!-- Card 2: Direct Real Photo Upload from PC -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-5 shadow-xl flex flex-col justify-between space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </span>
+                            <div>
+                                <h3 class="font-bold text-white text-sm">Importer une Photo Réelle (PC / Téléphone)</h3>
+                                <p class="text-xs text-gray-400">Tester instantanément avec vos propres clichés</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800">Prêt</span>
                     </div>
+
+                    <!-- Dropzone -->
+                    <div id="dropZone" onclick="document.getElementById('manualFileInput').click()" class="w-full h-48 border-2 border-dashed border-gray-700 hover:border-fuchsia-500/60 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition p-4 bg-gray-950/40 text-center group">
+                        <input type="file" id="manualFileInput" accept="image/jpeg,image/png,image/webp" onchange="handleFileSelect(event)" class="hidden">
+                        <div class="w-12 h-12 rounded-full bg-gray-800 group-hover:bg-fuchsia-600/20 group-hover:text-fuchsia-400 text-gray-400 flex items-center justify-center text-xl transition mb-2">
+                            <i class="fa-solid fa-image"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-gray-200">Cliquez pour choisir une photo ou glissez-déposez ici</p>
+                        <p class="text-[11px] text-gray-500 mt-1">Formats acceptés : JPG, PNG, WebP &bull; Analyse IA immédiate</p>
+                    </div>
+
+                    <!-- Upload Controls & Location input -->
+                    <div class="flex items-center gap-2 pt-2">
+                        <input type="text" id="manualCityInput" placeholder="Lieu optionnel (ex: Paris, Nice, Bureau...)" class="flex-1 bg-gray-950 border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-fuchsia-500">
+                        <button onclick="document.getElementById('manualFileInput').click()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition flex items-center gap-2">
+                            <i class="fa-solid fa-folder-open"></i> Parcourir
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Real Statistics Metrics Bar -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
                     <div>
-                        <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                            Publications en attente de votre accord
-                        </h2>
-                        <p class="text-xs text-amber-200/70">L'IA Gemini a validé l'esthétique et la sécurité. Donnez votre accord pour publier.</p>
+                        <p class="text-[11px] sm:text-xs text-gray-400 uppercase font-medium">Clichés Capturés</p>
+                        <p class="text-xl sm:text-2xl font-bold text-white mt-1">{{ stats.total_captures }}</p>
+                    </div>
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg sm:text-xl">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                </div>
+
+                <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] sm:text-xs text-amber-400 uppercase font-medium">En Attente de Validation</p>
+                        <p class="text-xl sm:text-2xl font-bold text-amber-300 mt-1">{{ pending_approvals|length }}</p>
+                    </div>
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg sm:text-xl">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                </div>
+
+                <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] sm:text-xs text-emerald-400 uppercase font-medium">Publiés / Exportés</p>
+                        <p class="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">{{ stats.total_published }}</p>
+                    </div>
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg sm:text-xl">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+
+                <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] sm:text-xs text-rose-400 uppercase font-medium">Rejetés (Filtre Sécurité / Score)</p>
+                        <p class="text-xl sm:text-2xl font-bold text-rose-400 mt-1">{{ stats.total_rejected }}</p>
+                    </div>
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-lg sm:text-xl">
+                        <i class="fa-solid fa-shield-halved"></i>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {% for item in pending_approvals %}
-                <div class="bg-gray-950 border border-amber-500/40 rounded-2xl overflow-hidden flex flex-col justify-between shadow-lg">
-                    <div class="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
-                        <img src="/captures/{{ item.filename }}" class="w-full h-full object-cover">
-                        <div class="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-amber-500 text-black font-semibold text-xs flex items-center gap-1 shadow">
-                            <i class="fa-solid fa-hourglass-half"></i> Prêt pour Instagram
+            <!-- Manual Approval Queue (Shown if pending_approvals exist) -->
+            {% if pending_approvals %}
+            <div class="bg-gradient-to-b from-amber-950/20 to-gray-900/80 border-2 border-amber-500/30 rounded-3xl p-6 space-y-6 shadow-2xl">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500 text-black flex items-center justify-center font-bold">
+                            {{ pending_approvals|length }}
                         </div>
-                        <div class="absolute top-2 right-2 px-2.5 py-1 rounded-xl bg-black/70 backdrop-blur-md text-amber-300 font-mono text-xs font-bold border border-white/10">
-                            ★ {{ item.social_score }}/10
+                        <div>
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                Clichés en attente de votre accord
+                            </h2>
+                            <p class="text-xs text-amber-200/70">L'IA a évalué l'image et propose une légende. Validez ou modifiez avant diffusion.</p>
                         </div>
-                        {% if item.sensor_metadata and item.sensor_metadata.city %}
-                        <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] text-gray-300 flex items-center gap-1">
-                            <i class="fa-solid fa-location-dot text-rose-400"></i> {{ item.sensor_metadata.city }}
-                        </div>
-                        {% endif %}
                     </div>
+                </div>
 
-                    <div class="p-5 space-y-4 flex-1 flex flex-col justify-between">
-                        <div class="space-y-2">
-                            <label class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold block">Légende proposée par l'IA :</label>
-                            <textarea id="caption_edit_{{ item.id }}" rows="3" class="w-full bg-gray-900 border border-gray-700 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-amber-400">{{ item.caption }}</textarea>
-                            
-                            {% if item.hashtags %}
-                            <div class="flex flex-wrap gap-1 text-[11px] text-blue-400">
-                                {% for tag in item.hashtags %}
-                                <span>#{{ tag }}</span>
-                                {% endfor %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for item in pending_approvals %}
+                    <div class="bg-gray-950 border border-amber-500/40 rounded-2xl overflow-hidden flex flex-col justify-between shadow-lg">
+                        <div class="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
+                            <img src="/captures/{{ item.filename }}" class="w-full h-full object-cover">
+                            <div class="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-amber-500 text-black font-semibold text-xs flex items-center gap-1 shadow">
+                                <i class="fa-solid fa-hourglass-half"></i> Prêt pour diffusion
+                            </div>
+                            <div class="absolute top-2 right-2 px-2.5 py-1 rounded-xl bg-black/70 backdrop-blur-md text-amber-300 font-mono text-xs font-bold border border-white/10">
+                                ★ {{ item.social_score }}/10
+                            </div>
+                            {% if item.sensor_metadata and item.sensor_metadata.city %}
+                            <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] text-gray-300 flex items-center gap-1">
+                                <i class="fa-solid fa-location-dot text-rose-400"></i> {{ item.sensor_metadata.city }}
                             </div>
                             {% endif %}
                         </div>
 
-                        <!-- Boutons d'action -->
-                        <div class="flex items-center justify-between pt-4 border-t border-gray-800 gap-2">
-                            <button onclick="rejectCapture({{ item.id }})" class="px-3.5 py-2 rounded-xl bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-medium transition flex items-center gap-1.5">
-                                <i class="fa-solid fa-xmark"></i> Rejeter
-                            </button>
-                            <div class="flex gap-2">
-                                <button onclick="saveCaption({{ item.id }})" class="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs transition">
-                                    <i class="fa-solid fa-floppy-disk"></i> Modifier
-                                </button>
-                                <button onclick="approveCapture({{ item.id }})" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/30 transition flex items-center gap-1.5">
-                                    <i class="fa-solid fa-check"></i> Accepter & Publier
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- SECTION 2: HISTORIQUE CHRONOLOGIQUE COMPLET -->
-        <div class="space-y-4">
-            <div class="flex items-center justify-between flex-wrap gap-3">
-                <div>
-                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-clock-rotate-left text-fuchsia-400"></i> Historique Chronologique de toutes les captures
-                    </h2>
-                    <p class="text-xs text-gray-400">Clichés ordonnés du plus récent au plus ancien avec statut et données de capteurs</p>
-                </div>
-
-                <!-- Filtres et Nettoyage -->
-                <div class="flex items-center gap-2 flex-wrap">
-                    <div class="flex items-center gap-1.5 text-xs bg-gray-900 border border-gray-800 p-1 rounded-xl">
-                        <button onclick="filterCaptures('all', this)" class="px-3 py-1 rounded-lg bg-gray-800 text-white font-medium filter-btn" data-filter="all">Tous</button>
-                        <button onclick="filterCaptures('PUBLISHED', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="PUBLISHED">Publiés</button>
-                        <button onclick="filterCaptures('PENDING_APPROVAL', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="PENDING_APPROVAL">En attente</button>
-                        <button onclick="filterCaptures('REJECTED', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="REJECTED">Rejetés</button>
-                    </div>
-                    {% if captures %}
-                    <button onclick="clearHistory()" class="px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 text-xs font-semibold flex items-center gap-1.5 transition">
-                        <i class="fa-solid fa-trash-can text-rose-400"></i> Vider les données de test
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-
-            {% if captures %}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="capturesGrid">
-                {% for cap in captures %}
-                <div class="capture-card bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xl transition hover:border-gray-700" data-status="{{ cap.status }}">
-                    
-                    <div class="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
-                        <img src="/captures/{{ cap.filename }}" alt="POV" class="w-full h-full object-cover">
-                        
-                        <!-- Badge statut -->
-                        <div class="absolute top-2 left-2 flex flex-wrap gap-1.5">
-                            {% if cap.status == 'PUBLISHED' %}
-                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1">
-                                <i class="fa-solid fa-check"></i> Publié
-                            </span>
-                            {% elif cap.status == 'PENDING_APPROVAL' %}
-                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse">
-                                <i class="fa-solid fa-clock"></i> En attente accord
-                            </span>
-                            {% elif cap.status == 'REJECTED_MANUALLY' %}
-                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-gray-700 text-gray-300 rounded-full flex items-center gap-1">
-                                <i class="fa-solid fa-user-xmark"></i> Rejeté manuel
-                            </span>
-                            {% elif cap.status == 'ACCEPTED' %}
-                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-blue-500 text-white rounded-full">
-                                Accepté
-                            </span>
-                            {% else %}
-                            <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1">
-                                <i class="fa-solid fa-ban"></i> {{ cap.recommended_action or 'Rejeté' }}
-                            </span>
-                            {% endif %}
-                        </div>
-
-                        {% if cap.social_score is not none %}
-                        <div class="absolute top-2 right-2 px-2.5 py-1 rounded-xl bg-black/70 backdrop-blur-md text-white font-mono text-xs flex items-center gap-1">
-                            <i class="fa-solid fa-star text-amber-400"></i>
-                            <span class="font-bold">{{ cap.social_score }}</span><span class="text-gray-400 text-[10px]">/10</span>
-                        </div>
-                        {% endif %}
-
-                        <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] text-gray-300">
-                            {{ cap.timestamp }} &bull; {{ cap.source }}
-                        </div>
-                    </div>
-
-                    <div class="p-5 space-y-4 flex-1 flex flex-col justify-between">
-                        <div class="space-y-3">
-                            <!-- Données de capteurs associées -->
-                            {% if cap.sensor_metadata %}
-                            <div class="flex flex-wrap gap-2 text-[11px] text-gray-400 bg-gray-950 p-2 rounded-xl border border-gray-800">
-                                {% if cap.sensor_metadata.city %}
-                                <span class="flex items-center gap-1 text-emerald-400">
-                                    <i class="fa-solid fa-location-dot"></i> {{ cap.sensor_metadata.city }}
-                                </span>
-                                {% endif %}
-                                {% if cap.sensor_metadata.speed_kmh is not none %}
-                                <span class="flex items-center gap-1 text-blue-400">
-                                    <i class="fa-solid fa-gauge"></i> {{ cap.sensor_metadata.speed_kmh }} km/h
-                                </span>
-                                {% endif %}
-                                {% if cap.sensor_metadata.heart_rate_bpm %}
-                                <span class="flex items-center gap-1 text-rose-400 font-semibold">
-                                    <i class="fa-solid fa-heart-pulse"></i> {{ cap.sensor_metadata.heart_rate_bpm }} BPM
-                                </span>
-                                {% endif %}
-                            </div>
-                            {% endif %}
-
-                            <!-- Vérifications de sécurité -->
-                            <div class="flex items-center gap-3 text-xs">
-                                <span class="flex items-center gap-1 {{ 'text-emerald-400' if cap.safety_pass else 'text-rose-400' }}">
-                                    <i class="fa-solid {{ 'fa-shield-check' if cap.safety_pass else 'fa-shield-slash' }}"></i>
-                                    {{ 'Sécurité Pass' if cap.safety_pass else 'Alerte Privée' }}
-                                </span>
-                                <span class="text-gray-700">&bull;</span>
-                                <span class="flex items-center gap-1 {{ 'text-emerald-400' if cap.quality_pass else 'text-amber-400' }}">
-                                    <i class="fa-solid {{ 'fa-circle-check' if cap.quality_pass else 'fa-triangle-exclamation' }}"></i>
-                                    {{ 'Netteté OK' if cap.quality_pass else 'Flou/Obscur' }}
-                                </span>
-                            </div>
-
-                            <!-- Légende -->
-                            {% if cap.caption %}
-                            <div class="p-3 rounded-xl bg-gray-950 border border-gray-800 text-xs space-y-1.5">
-                                <p class="text-gray-100 italic">"{{ cap.caption }}"</p>
-                                {% if cap.hashtags %}
+                        <div class="p-5 space-y-4 flex-1 flex flex-col justify-between">
+                            <div class="space-y-2">
+                                <label class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold block">Légende proposée par l'IA :</label>
+                                <textarea id="caption_edit_{{ item.id }}" rows="3" class="w-full bg-gray-900 border border-gray-700 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-amber-400">{{ item.caption }}</textarea>
+                                
+                                {% if item.hashtags %}
                                 <div class="flex flex-wrap gap-1 text-[11px] text-blue-400">
-                                    {% for tag in cap.hashtags %}
+                                    {% for tag in item.hashtags %}
                                     <span>#{{ tag }}</span>
                                     {% endfor %}
                                 </div>
                                 {% endif %}
                             </div>
-                            {% endif %}
-                        </div>
 
-                        <!-- Footer -->
-                        <div class="pt-3 border-t border-gray-800 flex items-center justify-between text-xs">
-                            <span class="text-gray-500 font-mono">#{{ cap.id }}</span>
-                            <div class="flex items-center gap-2">
-                                {% if cap.status != 'PUBLISHED' %}
-                                <button onclick="approveCapture({{ cap.id }})" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 text-xs">
-                                    Publier
+                            <!-- Buttons -->
+                            <div class="flex items-center justify-between pt-4 border-t border-gray-800 gap-2">
+                                <button onclick="rejectCapture({{ item.id }})" class="px-3.5 py-2 rounded-xl bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-medium transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-xmark"></i> Rejeter
                                 </button>
+                                <div class="flex gap-2">
+                                    <button onclick="saveCaption({{ item.id }})" class="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs transition">
+                                        <i class="fa-solid fa-floppy-disk"></i> Modifier
+                                    </button>
+                                    <button onclick="approveCapture({{ item.id }})" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/30 transition flex items-center gap-1.5">
+                                        <i class="fa-solid fa-check"></i> Accepter & Publier
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Chronological Feed & History Section -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-fuchsia-400"></i> Historique Chronologique des Captures
+                        </h2>
+                        <p class="text-xs text-gray-400">Tous les clichés POV enregistrés, leurs évaluations IA et données capteurs</p>
+                    </div>
+
+                    <!-- Filter Buttons -->
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <div class="flex items-center gap-1.5 text-xs bg-gray-900 border border-gray-800 p-1 rounded-xl">
+                            <button onclick="filterCaptures('all', this)" class="px-3 py-1 rounded-lg bg-gray-800 text-white font-medium filter-btn" data-filter="all">Tous</button>
+                            <button onclick="filterCaptures('PUBLISHED', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="PUBLISHED">Publiés</button>
+                            <button onclick="filterCaptures('PENDING_APPROVAL', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="PENDING_APPROVAL">En attente</button>
+                            <button onclick="filterCaptures('REJECTED', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="REJECTED">Rejetés</button>
+                        </div>
+                    </div>
+                </div>
+
+                {% if captures %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="capturesGrid">
+                    {% for cap in captures %}
+                    <div id="capture_card_{{ cap.id }}" class="capture-card bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xl transition hover:border-gray-700" data-status="{{ cap.status }}">
+                        
+                        <div class="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
+                            <img src="/captures/{{ cap.filename }}" alt="POV" class="w-full h-full object-cover">
+                            
+                            <!-- Status Badges -->
+                            <div class="absolute top-2 left-2 flex flex-wrap gap-1.5">
+                                {% if cap.status == 'PUBLISHED' %}
+                                <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1">
+                                    <i class="fa-solid fa-check"></i> Publié
+                                </span>
+                                {% elif cap.status == 'PENDING_APPROVAL' %}
+                                <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse">
+                                    <i class="fa-solid fa-clock"></i> En attente accord
+                                </span>
+                                {% elif cap.status == 'REJECTED_MANUALLY' %}
+                                <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-gray-700 text-gray-300 rounded-full flex items-center gap-1">
+                                    <i class="fa-solid fa-user-xmark"></i> Rejeté manuel
+                                </span>
+                                {% elif cap.status == 'ACCEPTED' %}
+                                <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-blue-500 text-white rounded-full">
+                                    Accepté
+                                </span>
+                                {% else %}
+                                <span class="px-2.5 py-0.5 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1">
+                                    <i class="fa-solid fa-ban"></i> {{ cap.recommended_action or 'Rejeté' }}
+                                </span>
                                 {% endif %}
-                                <button onclick="reevaluateCapture({{ cap.id }})" class="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300" title="Ré-évaluer">
-                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                                </button>
+                            </div>
+
+                            {% if cap.social_score is not none %}
+                            <div class="absolute top-2 right-2 px-2.5 py-1 rounded-xl bg-black/70 backdrop-blur-md text-white font-mono text-xs flex items-center gap-1 border border-white/10">
+                                <i class="fa-solid fa-star text-amber-400"></i>
+                                <span class="font-bold">{{ cap.social_score }}</span><span class="text-gray-400 text-[10px]">/10</span>
+                            </div>
+                            {% endif %}
+
+                            <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] text-gray-300 font-mono">
+                                {{ cap.timestamp }} &bull; {{ cap.source }}
                             </div>
                         </div>
 
+                        <div class="p-5 space-y-4 flex-1 flex flex-col justify-between">
+                            <div class="space-y-3">
+                                <!-- Associated Sensor Metadata -->
+                                {% if cap.sensor_metadata %}
+                                <div class="flex flex-wrap gap-2 text-[11px] text-gray-400 bg-gray-950 p-2 rounded-xl border border-gray-800">
+                                    {% if cap.sensor_metadata.city %}
+                                    <span class="flex items-center gap-1 text-emerald-400">
+                                        <i class="fa-solid fa-location-dot"></i> {{ cap.sensor_metadata.city }}
+                                    </span>
+                                    {% endif %}
+                                    {% if cap.sensor_metadata.battery_pct is not none %}
+                                    <span class="flex items-center gap-1 text-green-400">
+                                        <i class="fa-solid fa-battery-half"></i> {{ cap.sensor_metadata.battery_pct }}%
+                                    </span>
+                                    {% endif %}
+                                    {% if cap.sensor_metadata.heart_rate_bpm %}
+                                    <span class="flex items-center gap-1 text-rose-400 font-semibold">
+                                        <i class="fa-solid fa-heart-pulse"></i> {{ cap.sensor_metadata.heart_rate_bpm }} BPM
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                <!-- Security & Quality Gate Checks -->
+                                <div class="flex items-center gap-3 text-xs">
+                                    <span class="flex items-center gap-1 {{ 'text-emerald-400' if cap.safety_pass else 'text-rose-400' }}">
+                                        <i class="fa-solid {{ 'fa-shield-check' if cap.safety_pass else 'fa-shield-slash' }}"></i>
+                                        {{ 'Sécurité Pass' if cap.safety_pass else 'Alerte Privée' }}
+                                    </span>
+                                    <span class="text-gray-700">&bull;</span>
+                                    <span class="flex items-center gap-1 {{ 'text-emerald-400' if cap.quality_pass else 'text-amber-400' }}">
+                                        <i class="fa-solid {{ 'fa-circle-check' if cap.quality_pass else 'fa-triangle-exclamation' }}"></i>
+                                        {{ 'Netteté OK' if cap.quality_pass else 'Flou/Obscur' }}
+                                    </span>
+                                </div>
+
+                                <!-- Caption & hashtags -->
+                                {% if cap.caption %}
+                                <div class="p-3 rounded-xl bg-gray-950 border border-gray-800 text-xs space-y-1.5">
+                                    <p class="text-gray-100 italic">"{{ cap.caption }}"</p>
+                                    {% if cap.hashtags %}
+                                    <div class="flex flex-wrap gap-1 text-[11px] text-blue-400">
+                                        {% for tag in cap.hashtags %}
+                                        <span>#{{ tag }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Footer Actions: Publish, Download, Re-eval, Delete -->
+                            <div class="pt-3 border-t border-gray-800 flex items-center justify-between text-xs">
+                                <span class="text-gray-500 font-mono">#{{ cap.id }}</span>
+                                <div class="flex items-center gap-1.5">
+                                    {% if cap.status != 'PUBLISHED' %}
+                                    <button onclick="approveCapture({{ cap.id }})" class="px-2.5 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 text-xs font-semibold" title="Publier / Exporter ce cliché">
+                                        <i class="fa-solid fa-paper-plane mr-1"></i> Publier
+                                    </button>
+                                    {% endif %}
+                                    <a href="/captures/{{ cap.filename }}" download class="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300" title="Télécharger l'image sur ce PC">
+                                        <i class="fa-solid fa-download"></i>
+                                    </a>
+                                    <button onclick="reevaluateCapture({{ cap.id }})" class="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300" title="Ré-évaluer par l'IA">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                    </button>
+                                    <button onclick="deleteCapture({{ cap.id }})" class="p-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40" title="Supprimer définitivement ce cliché">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-12 text-center border-2 border-dashed border-gray-800 rounded-3xl space-y-4 bg-gray-900/30">
+                    <div class="w-16 h-16 rounded-full bg-fuchsia-600/10 text-fuchsia-400 mx-auto flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-camera-retro"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Aucun cliché dans votre historique pour le moment</h3>
+                        <p class="text-xs text-gray-400 mt-1 max-w-md mx-auto">Activez la caméra intégrée ci-dessus ou importez une photo depuis votre PC pour démarrer votre lifelogging en direct.</p>
+                    </div>
+                    <div class="flex items-center justify-center gap-3 pt-2">
+                        <button onclick="toggleWebcamCapture()" class="px-4 py-2 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-fuchsia-600/20">
+                            <i class="fa-solid fa-camera"></i> Activer la Webcam
+                        </button>
+                        <button onclick="document.getElementById('manualFileInput').click()" class="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-semibold transition flex items-center gap-2">
+                            <i class="fa-solid fa-upload"></i> Choisir une photo
+                        </button>
                     </div>
                 </div>
-                {% endfor %}
+                {% endif %}
             </div>
-            {% else %}
-            <div class="p-12 text-center border-2 border-dashed border-gray-800 rounded-3xl space-y-3">
-                <i class="fa-solid fa-camera-retro text-4xl text-gray-600"></i>
-                <h3 class="text-base font-bold text-white">Aucun cliché dans l'historique</h3>
-                <p class="text-xs text-gray-400">Lancez la capture sur votre PC ou téléphone pour voir apparaître vos photos.</p>
-            </div>
-            {% endif %}
+
         </div>
 
-    </main>
+        <!-- ======================================================================= -->
+        <!-- TAB 2 : OPTIONS & PARAMÈTRES (VALIDATION INSTANTANÉE)                   -->
+        <!-- ======================================================================= -->
+        <div id="tabContentSettings" class="hidden space-y-6">
 
-    <!-- MODAL : OPTIONS & CAPTEURS -->
-    <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-gray-900 border border-gray-800 rounded-3xl max-w-xl w-full p-6 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between border-b border-gray-800 pb-4">
-                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-sliders text-fuchsia-400"></i> Gestion des Capteurs & Sécurité
-                </h3>
-                <button onclick="document.getElementById('settingsModal').classList.add('hidden')" class="text-gray-400 hover:text-white">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+            <!-- Section 1 : Emplacement de Sauvegarde & Stockage des Photos -->
+            <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-6 shadow-xl space-y-5">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-fuchsia-500/10 text-fuchsia-400 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-folder-tree"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Emplacements de Sauvegarde & Stockage</h3>
+                            <p class="text-xs text-gray-400">Gestion des dossiers de stockage local et export privé</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">
+                        <i class="fa-solid fa-hard-drive mr-1"></i> Stockage Local Actif
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- Dossier 1 : Captures Brutes -->
+                    <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-gray-200 flex items-center gap-2">
+                                <i class="fa-solid fa-camera text-fuchsia-400"></i> Dossier des Captures Brutes
+                            </span>
+                            <span id="storageCapturesCount" class="text-[10px] font-mono text-gray-400">{{ storage.captures_count }} fichiers &bull; {{ storage.captures_size_mb }} Mo</span>
+                        </div>
+                        <p class="text-[11px] text-gray-400">Emplacement où toutes les photos prises par la webcam ou l'application sont enregistrées.</p>
+                        
+                        <div class="space-y-2">
+                            <input type="text" id="cfg_storage_dir" value="{{ storage.storage_dir }}" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-fuchsia-500">
+                            <div class="flex items-center justify-between gap-2 pt-1">
+                                <button onclick="openFolderInExplorer('captures')" class="px-3.5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold transition flex items-center gap-1.5 border border-gray-700">
+                                    <i class="fa-solid fa-folder-open text-amber-400"></i> Ouvrir dans l'Explorateur
+                                </button>
+                                <button onclick="saveStoragePath('captures')" class="px-3.5 py-2 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md">
+                                    <i class="fa-solid fa-floppy-disk"></i> Enregistrer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dossier 2 : Export Privé Synchronisé -->
+                    <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-gray-200 flex items-center gap-2">
+                                <i class="fa-solid fa-vault text-emerald-400"></i> Dossier Coffre & Synchronisation Privée
+                            </span>
+                            <span id="storageExportCount" class="text-[10px] font-mono text-gray-400">{{ storage.export_count }} fichiers &bull; {{ storage.export_size_mb }} Mo</span>
+                        </div>
+                        <p class="text-[11px] text-gray-400">Dossier export pour les photos publiées (Google Photos, Google Drive, Nextcloud ou archive privée).</p>
+                        
+                        <div class="space-y-2">
+                            <input type="text" id="cfg_export_dir" value="{{ storage.export_dir }}" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-500">
+                            <div class="flex items-center justify-between gap-2 pt-1">
+                                <button onclick="openFolderInExplorer('export')" class="px-3.5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold transition flex items-center gap-1.5 border border-gray-700">
+                                    <i class="fa-solid fa-folder-open text-amber-400"></i> Ouvrir dans l'Explorateur
+                                </button>
+                                <button onclick="saveStoragePath('export')" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md">
+                                    <i class="fa-solid fa-floppy-disk"></i> Enregistrer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
 
-            <!-- Interrupteurs Capteurs un par un -->
-            <div class="space-y-4">
-                <h4 class="text-xs uppercase font-bold tracking-wider text-gray-400">Capteurs actifs un par un</h4>
-                
+            <!-- Section 2 : Mode de Validation & Workflow -->
+            <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-6 shadow-xl space-y-5">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Mode de Validation & Diffusion</h3>
+                            <p class="text-xs text-gray-400">Contrôle autonome ou approbation manuelle en 1 clic</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Validation manuelle toggle card -->
+                    <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-amber-300">Validation manuelle avant publication</span>
+                            <p class="text-[11px] text-gray-400 mt-0.5">Si cochée, l'IA attend votre accord. Si décochée, l'envoi est 100% autonome dès que le score &gt;= 7.0.</p>
+                        </div>
+                        <input type="checkbox" id="require_approval" onchange="autoSaveGeneralSettings()" class="accent-amber-500 w-5 h-5 cursor-pointer ml-3 shrink-0" {{ 'checked' if settings.require_manual_confirmation }}>
+                    </div>
+
+                    <!-- Mode de diffusion -->
+                    <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-1.5">
+                        <label class="text-xs font-bold text-gray-200 block">Mode de Diffusion actif :</label>
+                        <select id="cred_mode" onchange="autoSaveGeneralSettings()" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-xs text-white">
+                            <option value="local_only" {{ 'selected' if settings.publish_mode == 'local_only' }}>Coffre Privé Local (Archivage local, sans compte Instagram)</option>
+                            <option value="google_photos" {{ 'selected' if settings.publish_mode == 'google_photos' }}>Synchronisation Privée (Copie dans le dossier synchronisé)</option>
+                            <option value="dry_run" {{ 'selected' if settings.publish_mode == 'dry_run' }}>Simulation Dry-Run (Aperçu virtuel sans envoi)</option>
+                            <option value="instagrapi" {{ 'selected' if settings.publish_mode == 'instagrapi' }}>Instagram Mobile (Instagrapi)</option>
+                            <option value="meta_graph" {{ 'selected' if settings.publish_mode == 'meta_graph' }}>Meta Graph API (Compte Pro / Facebook)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Rate Limits -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 text-xs">
+                    <div>
+                        <label class="text-[11px] text-gray-400 block mb-1">Intervalle minimum entre publications (minutes) :</label>
+                        <input type="number" id="cfg_min_interval" onchange="autoSaveGeneralSettings()" value="{{ settings.min_interval_minutes }}" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-gray-400 block mb-1">Nombre maximum de posts par 24h :</label>
+                        <input type="number" id="cfg_max_daily" onchange="autoSaveGeneralSettings()" value="{{ settings.max_daily_posts }}" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3 : Capteurs Matériels & Détection Physique -->
+            <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-6 shadow-xl space-y-5">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-microchip"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Capteurs & Détection Matérielle</h3>
+                            <p class="text-xs text-gray-400">Détection dynamique : les capteurs absents sur PC sont grisés</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <!-- Caméra POV -->
-                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                    <label class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <div class="flex flex-col">
                             <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-camera text-fuchsia-400 mr-2"></i> Caméra POV</span>
                             <span class="text-[10px] text-emerald-400 ml-6">✓ Détectée (Webcam / Navigateur)</span>
@@ -404,7 +609,7 @@
                     </label>
 
                     <!-- GPS & Vitesse -->
-                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                    <label class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <div class="flex flex-col">
                             <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-location-dot text-emerald-400 mr-2"></i> GPS & Vitesse</span>
                             <span class="text-[10px] text-emerald-400 ml-6">✓ Détecté (Réseau IP / Navigateur)</span>
@@ -412,40 +617,8 @@
                         <input type="checkbox" id="sensor_gps" onchange="autoSaveSensorConfig()" class="accent-fuchsia-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_gps }}>
                     </label>
 
-                    <!-- Accéléromètre -->
-                    {% if hardware.accelerometer %}
-                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
-                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-person-walking text-blue-400 mr-2"></i> Accéléromètre</span>
-                        <input type="checkbox" id="sensor_accel" onchange="autoSaveSensorConfig()" class="accent-fuchsia-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_accelerometer }}>
-                    </label>
-                    {% else %}
-                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="Non disponible sur ce PC (Capteur physique présent sur smartphone)">
-                        <div class="flex flex-col">
-                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-person-walking text-gray-600 mr-2"></i> Accéléromètre</span>
-                            <span class="text-[9px] text-gray-500 italic ml-6">Non détecté sur ce PC (Requis mobile)</span>
-                        </div>
-                        <input type="checkbox" id="sensor_accel" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
-                    </div>
-                    {% endif %}
-
-                    <!-- Luminosité -->
-                    {% if hardware.light_sensor %}
-                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
-                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-sun text-amber-400 mr-2"></i> Luminosité (Poche)</span>
-                        <input type="checkbox" id="sensor_light" onchange="autoSaveSensorConfig()" class="accent-fuchsia-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_light_sensor }}>
-                    </label>
-                    {% else %}
-                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="Non disponible sur ce PC (Photodiode présente sur smartphone)">
-                        <div class="flex flex-col">
-                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-sun text-gray-600 mr-2"></i> Luminosité (Poche)</span>
-                            <span class="text-[9px] text-gray-500 italic ml-6">Non détecté sur ce PC (Requis mobile)</span>
-                        </div>
-                        <input type="checkbox" id="sensor_light" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
-                    </div>
-                    {% endif %}
-
                     <!-- Microphone -->
-                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                    <label class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <div class="flex flex-col">
                             <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-microphone text-teal-400 mr-2"></i> Microphone (dB Ambiance)</span>
                             <span class="text-[10px] text-emerald-400 ml-6">✓ Détecté (Entrée audio disponible)</span>
@@ -453,25 +626,9 @@
                         <input type="checkbox" id="sensor_mic" onchange="autoSaveSensorConfig()" class="accent-teal-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_microphone }}>
                     </label>
 
-                    <!-- Baromètre -->
-                    {% if hardware.barometer %}
-                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
-                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-mountain text-indigo-400 mr-2"></i> Baromètre (Altitude)</span>
-                        <input type="checkbox" id="sensor_baro" onchange="autoSaveSensorConfig()" class="accent-indigo-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_barometer }}>
-                    </label>
-                    {% else %}
-                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="Non disponible sur ce PC">
-                        <div class="flex flex-col">
-                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-mountain text-gray-600 mr-2"></i> Baromètre (Altitude)</span>
-                            <span class="text-[9px] text-gray-500 italic ml-6">Non détecté sur ce PC (Requis montre)</span>
-                        </div>
-                        <input type="checkbox" id="sensor_baro" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
-                    </div>
-                    {% endif %}
-
                     <!-- Batterie -->
                     {% if hardware.battery %}
-                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                    <label class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <div class="flex flex-col">
                             <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-battery-half text-green-400 mr-2"></i> Batterie (Pause si &lt; 15%)</span>
                             <span class="text-[10px] text-emerald-400 ml-6">✓ Détectée</span>
@@ -479,188 +636,286 @@
                         <input type="checkbox" id="sensor_bat" onchange="autoSaveSensorConfig()" class="accent-green-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_battery }}>
                     </label>
                     {% else %}
-                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="PC fixe branché sur secteur (Aucune batterie)">
+                    <div class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed">
                         <div class="flex flex-col">
                             <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-battery-half text-gray-600 mr-2"></i> Batterie (Alimentation)</span>
-                            <span class="text-[9px] text-gray-500 italic ml-6">PC sur secteur (Pas de batterie)</span>
+                            <span class="text-[9px] text-gray-500 italic ml-6">PC sur secteur fixe</span>
                         </div>
-                        <input type="checkbox" id="sensor_bat" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
+                        <input type="checkbox" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
+                    </div>
+                    {% endif %}
+
+                    <!-- Accéléromètre -->
+                    {% if hardware.accelerometer %}
+                    <label class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950 border border-gray-800 cursor-pointer">
+                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-person-walking text-blue-400 mr-2"></i> Accéléromètre</span>
+                        <input type="checkbox" id="sensor_accel" onchange="autoSaveSensorConfig()" class="accent-fuchsia-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_accelerometer }}>
+                    </label>
+                    {% else %}
+                    <div class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="Non disponible sur ce PC (Requis smartphone)">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-person-walking text-gray-600 mr-2"></i> Accéléromètre</span>
+                            <span class="text-[9px] text-gray-500 italic ml-6">Non détecté sur ce PC (Requis mobile)</span>
+                        </div>
+                        <input type="checkbox" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
                     </div>
                     {% endif %}
 
                     <!-- Podomètre -->
                     {% if hardware.pedometer %}
-                    <label class="flex items-center justify-between p-3 rounded-xl bg-gray-950 border border-gray-800 cursor-pointer">
+                    <label class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-shoe-prints text-orange-400 mr-2"></i> Podomètre (Pas du jour)</span>
                         <input type="checkbox" id="sensor_step" onchange="autoSaveSensorConfig()" class="accent-orange-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_pedometer }}>
                     </label>
                     {% else %}
-                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="Non disponible sur PC (Requis smartphone dans la poche ou montre connectée)">
+                    <div class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="Non disponible sur ce PC">
                         <div class="flex flex-col">
                             <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-shoe-prints text-gray-600 mr-2"></i> Podomètre (Pas du jour)</span>
-                            <span class="text-[9px] text-gray-500 italic ml-6">Non détecté sur ce PC (Requis smartphone/montre)</span>
+                            <span class="text-[9px] text-gray-500 italic ml-6">Non détecté sur ce PC (Requis montre/smartphone)</span>
                         </div>
-                        <input type="checkbox" id="sensor_step" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
+                        <input type="checkbox" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
                     </div>
                     {% endif %}
                 </div>
+            </div>
 
-                <!-- Capteur Cardiaque & Alerte Corporelle (Homme Mort) -->
-                <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="text-xs font-bold text-gray-200 flex items-center gap-2">
-                                <i class="fa-solid fa-heart-pulse text-rose-500"></i> Capteur Cardiaque & Vital (Wearable BLE)
-                            </span>
-                            <p class="text-[11px] text-gray-400">Collecte du rythme cardiaque (BPM) pour contextualiser ou lancer une alerte.</p>
-                        </div>
-                        <input type="checkbox" id="sensor_hr" class="accent-rose-500 w-4 h-4" {{ 'checked' if settings.enable_heart_rate }}>
-                    </div>
-
-                    <div class="pt-3 border-t border-gray-800 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs text-rose-300 font-medium">Bouton de l'homme mort (Alerte si BPM anormal)</span>
-                            <input type="checkbox" id="hr_alert_active" class="accent-rose-500 w-4 h-4" {{ 'checked' if settings.hr_alert_enabled }}>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2 text-xs">
-                            <div>
-                                <label class="text-[10px] text-gray-400 block mb-1">Seuil Bas (&lt; BPM)</label>
-                                <input type="number" id="hr_min" value="{{ settings.hr_min_bpm }}" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-gray-400 block mb-1">Seuil Haut (&gt; BPM)</label>
-                                <input type="number" id="hr_max" value="{{ settings.hr_max_bpm }}" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-gray-400 block mb-1">Délai Homme Mort</label>
-                                <input type="number" id="hr_countdown" value="{{ settings.hr_countdown_seconds }}" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
-                            </div>
+            <!-- Section 4 : Sécurité Cardiaque & Bouton Homme Mort -->
+            <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-6 shadow-xl space-y-5">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-heart-pulse"></i>
                         </div>
                         <div>
-                            <label class="text-[10px] text-gray-400 block mb-1">Webhook URL d'urgence (Optionnel)</label>
-                            <input type="text" id="hr_webhook" value="{{ settings.hr_webhook_url }}" placeholder="https://..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-white">
+                            <h3 class="text-base font-bold text-white">Sécurité Cardiaque & Bouton de l'Homme Mort</h3>
+                            <p class="text-xs text-gray-400">Détection d'anomalies de rythme cardiaque et procédure de secours</p>
                         </div>
-
-                        <!-- Consentements et Overrides d'Urgence explicites -->
-                        <div class="space-y-2 pt-2 border-t border-gray-800/80">
-                            <span class="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">Consentements d'Urgence & Sécurité :</span>
-
-                            <label class="flex items-start gap-2 p-2 rounded-lg bg-gray-900 border border-gray-800 text-[11px] text-gray-300 cursor-pointer">
-                                <input type="checkbox" id="hr_override_gps" class="accent-emerald-500 mt-0.5" {{ 'checked' if settings.hr_allow_gps_override }}>
-                                <span><strong>Override d'Urgence GPS :</strong> Autoriser la localisation GPS <em>exclusivement</em> pour secourir si rythme critique, même si le GPS est désactivé pour les photos.</span>
-                            </label>
-
-                            <label class="flex items-start gap-2 p-2 rounded-lg bg-gray-900 border border-gray-800 text-[11px] text-gray-300 cursor-pointer">
-                                <input type="checkbox" id="hr_allow_sms" class="accent-rose-500 mt-0.5" {{ 'checked' if settings.hr_allow_sms_dispatch }}>
-                                <span><strong>Consentement envoi SMS :</strong> Autoriser formellement l'envoi de SMS payant/mobile vers mon contact de secours en cas de détresse.</span>
-                            </label>
-
-                            <label class="flex items-start gap-2 p-2 rounded-lg bg-gray-900 border border-gray-800 text-[11px] text-gray-300 cursor-pointer">
-                                <input type="checkbox" id="hr_local_alarm" class="accent-yellow-500 mt-0.5" {{ 'checked' if settings.hr_local_alarm_only }}>
-                                <span><strong>Alarme 100% Locale (Purement hors-ligne) :</strong> Zéro message vers l'extérieur. Sonnerie, sirène sonore et notification locale uniquement.</span>
-                            </label>
-                        </div>
-
-                        <button onclick="testEmergencyAlert()" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-semibold">
-                            Simuler l'alerte Homme Mort (Compte à rebours 10s)
-                        </button>
                     </div>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <span class="text-xs text-gray-300">Activer le monitoring :</span>
+                        <input type="checkbox" id="sensor_hr" onchange="autoSaveSensorConfig()" class="accent-rose-500 w-4 h-4" {{ 'checked' if settings.enable_heart_rate }}>
+                    </label>
                 </div>
 
-                <!-- Statut de sécurité & Configuration des Secrets (.env) -->
                 <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-4">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-gray-200 flex items-center gap-2">
-                            <i class="fa-solid fa-lock text-emerald-400"></i> Coffre-fort des Identifiants & Secrets (.env)
-                        </span>
-                        <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">100% Local & Sécurisé</span>
+                        <span class="text-xs text-rose-300 font-bold">Alerte automatique si BPM anormal (Tachycardie / Bradycardie)</span>
+                        <input type="checkbox" id="hr_alert_active" onchange="autoSaveSensorConfig()" class="accent-rose-500 w-4 h-4" {{ 'checked' if settings.hr_alert_enabled }}>
                     </div>
-                    <p class="text-[11px] text-gray-400">Vous pouvez renseigner ou modifier vos clés ici sans toucher aux fichiers. Si aucun compte Instagram n'est renseigné, le mode <strong>Coffre Privé Local</strong> s'applique automatiquement.</p>
 
-                    <div class="space-y-3 pt-2 text-xs">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                         <div>
-                            <label class="text-[10px] text-gray-400 block mb-1">Mode de Diffusion :</label>
-                            <select id="cred_mode" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
-                                <option value="local_only" {{ 'selected' if settings.publish_mode == 'local_only' }}>Coffre Privé Local (Aucun compte requis, stockage sécurisé)</option>
-                                <option value="google_photos" {{ 'selected' if settings.publish_mode == 'google_photos' }}>Synchronisation Privée (Google Photos / Drive / Dossier local)</option>
-                                <option value="dry_run" {{ 'selected' if settings.publish_mode == 'dry_run' }}>Simulation Dry-Run (Aperçu virtuel sans envoi)</option>
-                                <option value="instagrapi" {{ 'selected' if settings.publish_mode == 'instagrapi' }}>Instagram Mobile (Instagrapi)</option>
-                                <option value="meta_graph" {{ 'selected' if settings.publish_mode == 'meta_graph' }}>Meta Graph API (Compte Pro / Facebook)</option>
-                            </select>
+                            <label class="text-[10px] text-gray-400 block mb-1">Seuil Bas (&lt; BPM) :</label>
+                            <input type="number" id="hr_min" onchange="autoSaveSensorConfig()" value="{{ settings.hr_min_bpm }}" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
                         </div>
-
                         <div>
-                            <label class="text-[10px] text-gray-400 block mb-1">Clé API Google Gemini (Vision 1.5 Flash) :</label>
-                            <input type="password" id="cred_gemini" value="{{ settings.gemini_api_key }}" placeholder="AIzaSy..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white font-mono">
+                            <label class="text-[10px] text-gray-400 block mb-1">Seuil Haut (&gt; BPM) :</label>
+                            <input type="number" id="hr_max" onchange="autoSaveSensorConfig()" value="{{ settings.hr_max_bpm }}" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
                         </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[10px] text-gray-400 block mb-1">Nom d'utilisateur Instagram (Optionnel) :</label>
-                                <input type="text" id="cred_ig_user" value="{{ settings.instagram_username }}" placeholder="laisser vide pour mode local" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-gray-400 block mb-1">Mot de passe Instagram (Optionnel) :</label>
-                                <input type="password" id="cred_ig_pass" value="{{ settings.instagram_password }}" placeholder="••••••••" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[10px] text-gray-400 block mb-1">Téléphone Destinataire SMS SOS :</label>
-                                <input type="text" id="cred_phone" value="{{ settings.emergency_phone }}" placeholder="+33612345678" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-gray-400 block mb-1">Telegram Chat ID SOS (Optionnel) :</label>
-                                <input type="text" id="cred_tg_chat" value="{{ settings.telegram_chat_id }}" placeholder="987654321" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
-                            </div>
-                        </div>
-
                         <div>
-                            <label class="text-[10px] text-gray-400 block mb-1">Telegram Bot Token SOS (Optionnel) :</label>
-                            <input type="password" id="cred_tg_token" value="{{ settings.telegram_bot_token }}" placeholder="123456:ABC-DEF..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white font-mono">
+                            <label class="text-[10px] text-gray-400 block mb-1">Délai Homme Mort (sec) :</label>
+                            <input type="number" id="hr_countdown" onchange="autoSaveSensorConfig()" value="{{ settings.hr_countdown_seconds }}" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
                         </div>
+                    </div>
 
-                        <div class="grid grid-cols-2 gap-3 pt-1">
-                            <div>
-                                <label class="text-[10px] text-amber-300 block mb-1">Code PIN Maître (Actuel) :</label>
-                                <input type="password" id="master_pin" placeholder="Si configuré" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-amber-300 block mb-1">Nouveau Code PIN Maître (Optionnel) :</label>
-                                <input type="password" id="new_master_pin" placeholder="Créer ou changer le PIN" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-white">
-                            </div>
-                        </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 block mb-1">Webhook URL d'urgence (Optionnel) :</label>
+                        <input type="text" id="hr_webhook" onchange="autoSaveSensorConfig()" value="{{ settings.hr_webhook_url }}" placeholder="https://..." class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-xs text-white">
+                    </div>
 
-                        <button onclick="saveCredentials()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-md">
-                            <i class="fa-solid fa-floppy-disk"></i> Enregistrer les Identifiants en Sécurité
+                    <!-- Consentements explicites -->
+                    <div class="space-y-2 pt-2 border-t border-gray-800 text-[11px]">
+                        <span class="font-bold text-amber-300 uppercase tracking-wider block">Consentements & Overrides d'Urgence :</span>
+                        
+                        <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-gray-900 border border-gray-800 text-gray-300 cursor-pointer">
+                            <input type="checkbox" id="hr_override_gps" onchange="autoSaveSensorConfig()" class="accent-emerald-500 mt-0.5" {{ 'checked' if settings.hr_allow_gps_override }}>
+                            <span><strong>Override GPS de secours :</strong> Autoriser la localisation <em>exclusivement</em> pour secourir si rythme critique.</span>
+                        </label>
+
+                        <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-gray-900 border border-gray-800 text-gray-300 cursor-pointer">
+                            <input type="checkbox" id="hr_allow_sms" onchange="autoSaveSensorConfig()" class="accent-rose-500 mt-0.5" {{ 'checked' if settings.hr_allow_sms_dispatch }}>
+                            <span><strong>Consentement SMS :</strong> Autoriser l'envoi de SMS payant vers mon contact de secours en cas de détresse.</span>
+                        </label>
+
+                        <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-gray-900 border border-gray-800 text-gray-300 cursor-pointer">
+                            <input type="checkbox" id="hr_local_alarm" onchange="autoSaveSensorConfig()" class="accent-yellow-500 mt-0.5" {{ 'checked' if settings.hr_local_alarm_only }}>
+                            <span><strong>Alarme 100% Locale (Hors-ligne) :</strong> Zéro message externe. Sonnerie, sirène sonore et alerte sur cet écran uniquement.</span>
+                        </label>
+                    </div>
+
+                    <div class="pt-2">
+                        <button onclick="testEmergencyAlert()" class="px-4 py-2 rounded-xl bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-bold transition flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Simuler l'alerte Homme Mort (10s)
                         </button>
                     </div>
                 </div>
+            </div>
 
-                <!-- Validation manuelle obligatoire -->
-                <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 flex items-center justify-between">
-                    <div>
-                        <span class="text-xs font-bold text-amber-300">Validation manuelle obligatoire avant envoi</span>
-                        <p class="text-[11px] text-gray-400">Si activé, l'IA attend votre accord avant publication. Si désactivé, l'envoi est 100% automatique si la note &gt;= 7.0.</p>
+            <!-- Section 5 : Intelligence Artificielle & Personas VLM -->
+            <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-6 shadow-xl space-y-5">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-fuchsia-500/10 text-fuchsia-400 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">IA Multimodale & Personas de Rédaction</h3>
+                            <p class="text-xs text-gray-400">Modèle Gemini 1.5 Flash & Calibrage stylistique des légendes</p>
+                        </div>
                     </div>
-                    <input type="checkbox" id="require_approval" onchange="autoSaveSensorConfig()" class="accent-amber-500 w-5 h-5 cursor-pointer" {{ 'checked' if settings.require_manual_confirmation }}>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                    <div>
+                        <label class="text-[11px] text-gray-400 block mb-1">Style de Persona :</label>
+                        <select id="cfg_persona" onchange="autoSaveGeneralSettings()" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
+                            <option value="spontaneous_chic" {{ 'selected' if settings.persona == 'spontaneous_chic' }}>Spontaneous Chic (Effortless, café, ville)</option>
+                            <option value="witty_minimalist" {{ 'selected' if settings.persona == 'witty_minimalist' }}>Witty Minimalist (Punchy, 1-liner, concis)</option>
+                            <option value="candid_existential" {{ 'selected' if settings.persona == 'candid_existential' }}>Candid Existential (Réflexions poétiques)</option>
+                            <option value="poetic_flaneur" {{ 'selected' if settings.persona == 'poetic_flaneur' }}>Poetic Flâneur (Sensoriel, ombres & lumières)</option>
+                            <option value="tech_nomad" {{ 'selected' if settings.persona == 'tech_nomad' }}>Tech Nomad (Mobilité, craft, espaces de travail)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] text-gray-400 block mb-1">Seuil Social Minimum (/10) :</label>
+                        <input type="number" step="0.1" id="cfg_min_score" onchange="autoSaveGeneralSettings()" value="{{ settings.min_social_score }}" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] text-gray-400 block mb-1">Langue des Légendes :</label>
+                        <select id="cfg_language" onchange="autoSaveGeneralSettings()" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
+                            <option value="fr" {{ 'selected' if settings.language == 'fr' }}>Français</option>
+                            <option value="en" {{ 'selected' if settings.language == 'en' }}>Anglais</option>
+                            <option value="es" {{ 'selected' if settings.language == 'es' }}>Espagnol</option>
+                            <option value="it" {{ 'selected' if settings.language == 'it' }}>Italien</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] text-gray-400 block mb-1">Consignes spécifiques de rédaction pour l'IA :</label>
+                    <textarea id="cfg_instructions" onchange="autoSaveGeneralSettings()" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-fuchsia-500">{{ settings.persona_instructions }}</textarea>
                 </div>
             </div>
 
-            <div class="flex items-center justify-between pt-3 border-t border-gray-800">
-                <span id="saveToast" class="text-xs text-emerald-400 font-semibold opacity-0 transition-opacity duration-300 flex items-center gap-1.5"><i class="fa-solid fa-check"></i> Options sauvegardées automatiquement</span>
-                <button onclick="document.getElementById('settingsModal').classList.add('hidden')" class="px-5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold transition flex items-center gap-2">
-                    <i class="fa-solid fa-xmark"></i> Fermer
-                </button>
-            </div>
-        </div>
-    </div>
+            <!-- Section 6 : Identifiants & Secrets Locaux (.env) -->
+            <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-6 shadow-xl space-y-5">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Coffre-fort des Identifiants & Clés d'Accès (.env)</h3>
+                            <p class="text-xs text-gray-400">Stockage 100% sécurisé et local sur votre machine</p>
+                        </div>
+                    </div>
+                </div>
 
+                <div class="space-y-4 text-xs">
+                    <div>
+                        <label class="text-[11px] text-gray-400 block mb-1">Clé API Google Gemini (Google AI Studio) :</label>
+                        <input type="password" id="cred_gemini" value="{{ settings.gemini_api_key }}" placeholder="AIzaSy..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white font-mono focus:outline-none focus:border-emerald-500">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[11px] text-gray-400 block mb-1">Nom d'utilisateur Instagram (Optionnel) :</label>
+                            <input type="text" id="cred_ig_user" value="{{ settings.instagram_username }}" placeholder="Laisser vide pour mode coffre privé" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-gray-400 block mb-1">Mot de passe Instagram (Optionnel) :</label>
+                            <input type="password" id="cred_ig_pass" value="{{ settings.instagram_password }}" placeholder="••••••••" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[11px] text-gray-400 block mb-1">Téléphone Destinataire SMS SOS :</label>
+                            <input type="text" id="cred_phone" value="{{ settings.emergency_phone }}" placeholder="+33612345678" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-gray-400 block mb-1">Telegram Chat ID SOS (Optionnel) :</label>
+                            <input type="text" id="cred_tg_chat" value="{{ settings.telegram_chat_id }}" placeholder="987654321" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] text-gray-400 block mb-1">Telegram Bot Token SOS (Optionnel) :</label>
+                        <input type="password" id="cred_tg_token" value="{{ settings.telegram_bot_token }}" placeholder="123456:ABC-DEF..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white font-mono">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                        <div>
+                            <label class="text-[11px] text-amber-300 block mb-1">Code PIN Maître (Actuel) :</label>
+                            <input type="password" id="master_pin" placeholder="Si coffre verrouillé" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-amber-300 block mb-1">Nouveau Code PIN Maître (Optionnel) :</label>
+                            <input type="password" id="new_master_pin" placeholder="Créer ou changer le PIN" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
+                        </div>
+                    </div>
+
+                    <button onclick="saveCredentials()" class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
+                        <i class="fa-solid fa-floppy-disk"></i> Enregistrer les Clés & Identifiants en Sécurité
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- JavaScript Application Logic -->
     <script>
-        // ==========================================
-        // 1. GESTION DU MODE DE VALIDATION (TOGGLE 1-CLIC)
-        // ==========================================
+        // ========================================================
+        // 1. GESTION DES ONGLETS & NOTIFICATIONS TOAST
+        // ========================================================
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('globalToast');
+            const msg = document.getElementById('globalToastMsg');
+            msg.textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        function switchTab(tabName) {
+            const tabCaptures = document.getElementById('tabContentCaptures');
+            const tabSettings = document.getElementById('tabContentSettings');
+            const btnCaptures = document.getElementById('navTabCaptures');
+            const btnSettings = document.getElementById('navTabSettings');
+
+            if (tabName === 'settings') {
+                tabCaptures.classList.add('hidden');
+                tabSettings.classList.remove('hidden');
+                btnCaptures.className = 'px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition flex items-center gap-1.5';
+                btnSettings.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-fuchsia-600 text-white shadow-md shadow-fuchsia-600/30';
+                localStorage.setItem('autoinsta_active_tab', 'settings');
+            } else {
+                tabSettings.classList.add('hidden');
+                tabCaptures.classList.remove('hidden');
+                btnSettings.className = 'px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition flex items-center gap-1.5';
+                btnCaptures.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-fuchsia-600 text-white shadow-md shadow-fuchsia-600/30';
+                localStorage.setItem('autoinsta_active_tab', 'captures');
+            }
+        }
+
+        // Restore active tab on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTab = localStorage.getItem('autoinsta_active_tab');
+            if (savedTab === 'settings') {
+                switchTab('settings');
+            }
+        });
+
+        // ========================================================
+        // 2. GESTION DU MODE DE VALIDATION (TOGGLE 1-CLIC)
+        // ========================================================
         async function toggleValidationMode() {
             try {
                 const res = await fetch('/api/settings/toggle-validation', { method: 'POST' });
@@ -674,24 +929,102 @@
                     if (isManual) {
                         btn.className = 'flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60';
                         dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
-                        label.textContent = 'Manuelle (Cliquer pour changer)';
+                        label.textContent = 'Manuelle';
                     } else {
                         btn.className = 'flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60';
                         dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
-                        label.textContent = 'Automatique (Cliquer pour changer)';
+                        label.textContent = 'Automatique';
                     }
                     const chk = document.getElementById('require_approval');
                     if (chk) chk.checked = isManual;
+                    showToast('Mode de validation mis à jour : ' + (isManual ? 'Manuelle' : 'Automatique'));
                 }
             } catch (err) {
                 console.error('Erreur toggle validation:', err);
             }
         }
 
-        // ==========================================
-        // 2. SAUVEGARDE AUTOMATIQUE DES CAPTEURS & OPTIONS
-        // ==========================================
+        // ========================================================
+        // 3. GESTION DU STOCKAGE & OUVERTURE DE DOSSIER
+        // ========================================================
+        async function openFolderInExplorer(folderType) {
+            try {
+                const res = await fetch('/api/storage/open-folder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder_type: folderType })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Dossier ouvert dans l\'Explorateur Windows');
+                } else {
+                    alert('Erreur ouverture dossier : ' + (data.error || 'Introuvable'));
+                }
+            } catch (err) {
+                alert('Erreur: ' + err);
+            }
+        }
+
+        async function saveStoragePath(folderType) {
+            const payload = {};
+            if (folderType === 'captures') {
+                payload.storage_dir = document.getElementById('cfg_storage_dir').value;
+            } else {
+                payload.export_dir = document.getElementById('cfg_export_dir').value;
+            }
+
+            try {
+                const res = await fetch('/api/storage/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Emplacement de sauvegarde mis à jour');
+                    if (data.storage) {
+                        document.getElementById('storageCapturesCount').textContent = `${data.storage.captures_count} fichiers • ${data.storage.captures_size_mb} Mo`;
+                        document.getElementById('storageExportCount').textContent = `${data.storage.export_count} fichiers • ${data.storage.export_size_mb} Mo`;
+                    }
+                }
+            } catch (err) {
+                alert('Erreur enregistrement dossier : ' + err);
+            }
+        }
+
+        // ========================================================
+        // 4. SAUVEGARDE AUTOMATIQUE DES OPTIONS GÉNÉRALES
+        // ========================================================
         let autoSaveTimer = null;
+        function autoSaveGeneralSettings() {
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(async () => {
+                const payload = {
+                    persona: document.getElementById('cfg_persona') ? document.getElementById('cfg_persona').value : 'spontaneous_chic',
+                    min_social_score: parseFloat(document.getElementById('cfg_min_score').value) || 7.0,
+                    language: document.getElementById('cfg_language') ? document.getElementById('cfg_language').value : 'fr',
+                    persona_instructions: document.getElementById('cfg_instructions') ? document.getElementById('cfg_instructions').value : '',
+                    publish_mode: document.getElementById('cred_mode') ? document.getElementById('cred_mode').value : 'local_only',
+                    require_manual_confirmation: document.getElementById('require_approval') ? document.getElementById('require_approval').checked : true,
+                    min_interval_minutes: parseInt(document.getElementById('cfg_min_interval').value) || 60,
+                    max_daily_posts: parseInt(document.getElementById('cfg_max_daily').value) || 4
+                };
+
+                try {
+                    const res = await fetch('/api/settings/general', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        showToast('Paramètres généraux sauvegardés');
+                    }
+                } catch (e) {
+                    console.error('Erreur auto-save général:', e);
+                }
+            }, 300);
+        }
+
         async function autoSaveSensorConfig() {
             if (autoSaveTimer) clearTimeout(autoSaveTimer);
             autoSaveTimer = setTimeout(async () => {
@@ -699,9 +1032,9 @@
                     enable_camera: document.getElementById('sensor_cam') ? document.getElementById('sensor_cam').checked : true,
                     enable_gps: document.getElementById('sensor_gps') ? document.getElementById('sensor_gps').checked : true,
                     enable_accelerometer: document.getElementById('sensor_accel') ? document.getElementById('sensor_accel').checked : false,
-                    enable_light_sensor: document.getElementById('sensor_light') ? document.getElementById('sensor_light').checked : false,
+                    enable_light_sensor: false,
                     enable_microphone: document.getElementById('sensor_mic') ? document.getElementById('sensor_mic').checked : false,
-                    enable_barometer: document.getElementById('sensor_baro') ? document.getElementById('sensor_baro').checked : false,
+                    enable_barometer: false,
                     enable_battery: document.getElementById('sensor_bat') ? document.getElementById('sensor_bat').checked : true,
                     enable_pedometer: document.getElementById('sensor_step') ? document.getElementById('sensor_step').checked : false,
                     enable_heart_rate: document.getElementById('sensor_hr') ? document.getElementById('sensor_hr').checked : false,
@@ -723,42 +1056,26 @@
                         body: JSON.stringify(payload)
                     });
                     if (res.ok) {
-                        const toast = document.getElementById('saveToast');
-                        if (toast) {
-                            toast.classList.remove('opacity-0');
-                            setTimeout(() => toast.classList.add('opacity-0'), 2000);
-                        }
+                        showToast('Options capteurs sauvegardées');
                     }
                 } catch (e) {
-                    console.error('Erreur auto-save:', e);
+                    console.error('Erreur auto-save capteurs:', e);
                 }
             }, 300);
         }
 
-        // ==========================================
-        // 3. ACTIONS HISTORIQUE & CLICHÉS
-        // ==========================================
-        async function clearHistory() {
-            if (!confirm('Voulez-vous réinitialiser et supprimer tous les clichés de test de l\'historique ?')) return;
-            try {
-                const res = await fetch('/api/captures/clear', { method: 'POST' });
-                const data = await res.json();
-                if (data.success) {
-                    window.location.reload();
-                }
-            } catch (err) {
-                alert('Erreur: ' + err);
-            }
-        }
-
+        // ========================================================
+        // 5. ACTIONS HISTORIQUE & CLICHÉS
+        // ========================================================
         async function approveCapture(id) {
             try {
                 const res = await fetch('/api/captures/' + id + '/approve', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    window.location.reload();
+                    showToast('Cliché validé et publié avec succès');
+                    setTimeout(() => window.location.reload(), 1000);
                 } else {
-                    alert('Information: ' + (data.reason || data.error || JSON.stringify(data)));
+                    alert('Information de publication: ' + (data.reason || data.error || JSON.stringify(data)));
                 }
             } catch (err) {
                 alert('Erreur: ' + err);
@@ -770,7 +1087,28 @@
             try {
                 const res = await fetch('/api/captures/' + id + '/reject', { method: 'POST' });
                 const data = await res.json();
-                if (data.success) window.location.reload();
+                if (data.success) {
+                    showToast('Cliché rejeté');
+                    setTimeout(() => window.location.reload(), 800);
+                }
+            } catch (err) {
+                alert('Erreur: ' + err);
+            }
+        }
+
+        async function deleteCapture(id) {
+            if (!confirm('Voulez-vous supprimer définitivement ce cliché et son fichier ?')) return;
+            try {
+                const res = await fetch('/api/captures/' + id, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Cliché supprimé');
+                    const card = document.getElementById('capture_card_' + id);
+                    if (card) card.remove();
+                    else window.location.reload();
+                } else {
+                    alert('Erreur: ' + data.detail);
+                }
             } catch (err) {
                 alert('Erreur: ' + err);
             }
@@ -786,7 +1124,7 @@
                     body: JSON.stringify({ caption: textarea.value })
                 });
                 const data = await res.json();
-                if (data.success) alert('Légende mise à jour.');
+                if (data.success) showToast('Légende mise à jour');
             } catch (err) {
                 alert('Erreur: ' + err);
             }
@@ -797,7 +1135,7 @@
                 const res = await fetch('/api/captures/' + id + '/reevaluate', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    alert('Ré-évaluation Gemini demandée...');
+                    showToast('Ré-évaluation par l\'IA en cours...');
                     setTimeout(() => window.location.reload(), 2500);
                 }
             } catch (err) {
@@ -829,9 +1167,69 @@
             });
         }
 
-        // ==========================================
-        // 4. WEBCAM DIRECTE DANS LE NAVIGATEUR
-        // ==========================================
+        // ========================================================
+        // 6. TÉLÉVERSEMENT DE VRAIE PHOTO (FICHIER PC)
+        // ========================================================
+        async function handleFileSelect(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            await uploadFileDirectly(file);
+        }
+
+        // Drag & drop handlers
+        const dropZone = document.getElementById('dropZone');
+        if (dropZone) {
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('border-fuchsia-500', 'bg-fuchsia-950/20');
+                }, false);
+            });
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-fuchsia-500', 'bg-fuchsia-950/20');
+                }, false);
+            });
+            dropZone.addEventListener('drop', async (e) => {
+                const dt = e.dataTransfer;
+                if (dt && dt.files && dt.files.length > 0) {
+                    await uploadFileDirectly(dt.files[0]);
+                }
+            });
+        }
+
+        async function uploadFileDirectly(file) {
+            showToast('Téléversement et analyse IA en cours...');
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('source', 'manual_upload');
+
+            const cityVal = document.getElementById('manualCityInput').value.trim();
+            const sensors = {};
+            if (cityVal) sensors.city = cityVal;
+            formData.append('sensors', JSON.stringify(sensors));
+
+            try {
+                const res = await fetch('/api/capture/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) {
+                    showToast('Photo reçue et analysée avec succès !');
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    alert('Erreur téléversement : ' + res.statusText);
+                }
+            } catch (err) {
+                alert('Erreur: ' + err);
+            }
+        }
+
+        // ========================================================
+        // 7. WEBCAM DIRECTE DU NAVIGATEUR
+        // ========================================================
         let webcamStream = null;
         let webcamCountdown = null;
         let secRemaining = 30;
@@ -853,9 +1251,9 @@
                 placeholder.classList.remove('hidden');
                 countEl.classList.add('hidden');
                 badge.textContent = 'Inactive';
-                badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700';
+                badge.className = 'text-[10px] px-2.5 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700';
                 btn.innerHTML = '<i class="fa-solid fa-camera"></i> Activer la Caméra';
-                btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-lg transition flex items-center gap-2';
+                btn.className = 'flex-1 py-2.5 rounded-xl text-xs font-bold bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-lg transition flex items-center justify-center gap-2';
                 snapBtn.disabled = true;
                 snapBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 return;
@@ -868,10 +1266,10 @@
                 video.srcObject = webcamStream;
                 video.classList.remove('hidden');
                 placeholder.classList.add('hidden');
-                badge.textContent = 'Active (Capture auto 30s)';
-                badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800';
+                badge.textContent = 'Active (Auto 30s)';
+                badge.className = 'text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800';
                 btn.innerHTML = '<i class="fa-solid fa-stop"></i> Arrêter la Caméra';
-                btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg transition flex items-center gap-2';
+                btn.className = 'flex-1 py-2.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg transition flex items-center justify-center gap-2';
                 snapBtn.disabled = false;
                 snapBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 countEl.classList.remove('hidden');
@@ -893,7 +1291,7 @@
                 }, 1000);
 
             } catch (err) {
-                alert('Impossible d\'accéder à la webcam : ' + err.message + '\nAssurez-vous d\'autoriser l\'accès dans les paramètres du navigateur.');
+                alert('Impossible d\'accéder à la webcam : ' + err.message + '\nAssurez-vous d\'autoriser l\'accès dans votre navigateur.');
             }
         }
 
@@ -951,17 +1349,17 @@
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    console.log('[AutoInsta] Cliché envoyé avec succès :', data);
-                    setTimeout(() => location.reload(), 3000);
+                    showToast('Cliché capturé et analysé');
+                    setTimeout(() => location.reload(), 2500);
                 }
             } catch (err) {
-                console.error('[AutoInsta] Erreur transmission capture:', err);
+                console.error('[AutoInsta] Erreur capture:', err);
             }
         }
 
-        // ==========================================
-        // 5. IDENTIFIANTS (.ENV) & SÉCURITÉ
-        // ==========================================
+        // ========================================================
+        // 8. IDENTIFIANTS (.ENV) & SÉCURITÉ
+        // ========================================================
         async function saveCredentials() {
             const payload = {
                 master_pin: document.getElementById('master_pin').value,
@@ -983,8 +1381,8 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert(data.message || 'Identifiants enregistrés avec succès.');
-                    window.location.reload();
+                    showToast(data.message || 'Identifiants enregistrés avec succès.');
+                    setTimeout(() => window.location.reload(), 1200);
                 } else {
                     alert('Erreur: ' + (data.detail || JSON.stringify(data)));
                 }
@@ -993,9 +1391,9 @@
             }
         }
 
-        // ==========================================
-        // 6. SÉCURITÉ CARDIAQUE & BOUTON HOMME MORT
-        // ==========================================
+        // ========================================================
+        // 9. SÉCURITÉ CARDIAQUE & BOUTON HOMME MORT
+        // ========================================================
         let countdownInterval = null;
         let activeEmergencyAlertId = null;
         let audioContext = null;
@@ -1049,7 +1447,7 @@
                 if (remaining <= 0) {
                     clearInterval(countdownInterval);
                     banner.classList.add('hidden');
-                    alert('COMPTE À REBOURS EXPIRÉ : Alerte SOS et coordonnées GPS transmises (SMS / Telegram / Webhook).');
+                    alert('COMPTE À REBOURS EXPIRÉ : Alerte SOS transmise conformément à la configuration.');
                 }
             }, 1000);
         }
@@ -1062,7 +1460,7 @@
                     await fetch('/api/health/cancel-alert/' + activeEmergencyAlertId, { method: 'POST' });
                 } catch (e) {}
             }
-            alert('ALERTE ANNULÉE PAR L\'UTILISATEUR (Faux positif évité).');
+            showToast('Alerte d\'urgence annulée par l\'utilisateur');
         }
     </script>
 </body>

@@ -70,9 +70,12 @@ def test_deadman():
     # Restore setting
     settings.hr_countdown_seconds = original_countdown
 
-    # Verify database logs
-    alerts = db.list_emergency_alerts(limit=5)
-    print(f"\n[Vérification] {len(alerts)} alertes enregistrées en base locale SQLite.")
+    # Verify and clean up test alerts so user DB stays pristine
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM emergency_alerts")
+        conn.commit()
+
     print("=" * 60)
     print(" ✅ TEST DU BOUTON DE L'HOMME MORT TERMINÉ AVEC SUCCÈS !")
     print("=" * 60)

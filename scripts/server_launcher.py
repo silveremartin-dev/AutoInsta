@@ -53,7 +53,8 @@ def check_and_install_dependencies():
         "requests": "requests",
         "pydantic": "pydantic",
         "dotenv": "python-dotenv",
-        "multipart": "python-multipart"
+        "multipart": "python-multipart",
+        "yaml": "pyyaml"
     }
     
     for mod, pkg in modules.items():

@@ -124,12 +124,20 @@ class Database:
             conn.commit()
 
     def clear_all_captures(self):
-        """Clears all historical test captures and alerts."""
+        """Clears all historical captures and alerts."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM captures")
             cursor.execute("DELETE FROM emergency_alerts")
             conn.commit()
+
+    def delete_capture(self, capture_id: int) -> bool:
+        """Deletes a specific capture by ID."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM captures WHERE id = ?", (capture_id,))
+            conn.commit()
+            return cursor.rowcount > 0
 
     def mark_publish_failed(self, capture_id: int, error_msg: str):
         with self.get_connection() as conn:
