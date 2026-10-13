@@ -237,6 +237,9 @@ class Database:
             cursor.execute("SELECT COUNT(*) FROM captures WHERE status LIKE 'REJECT%'")
             rejected = cursor.fetchone()[0]
 
+            cursor.execute("SELECT COUNT(*) FROM captures WHERE status NOT IN ('PUBLISHED') AND status NOT LIKE 'REJECT%'")
+            pending = cursor.fetchone()[0]
+
             cursor.execute("SELECT AVG(social_score) FROM captures WHERE social_score IS NOT NULL")
             avg_score = cursor.fetchone()[0] or 0.0
 
@@ -249,6 +252,7 @@ class Database:
 
             return {
                 "total_captures": total,
+                "total_pending": pending,
                 "total_published": published,
                 "total_rejected": rejected,
                 "average_social_score": round(avg_score, 2),

@@ -163,7 +163,7 @@
                 <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
                     <div>
                         <p class="text-[11px] sm:text-xs text-amber-400 uppercase font-medium">À Publier / En Attente</p>
-                        <p id="statPendingApprovals" class="text-xl sm:text-2xl font-bold text-amber-300 mt-1">{{ pending_approvals|length }}</p>
+                        <p id="statPendingApprovals" class="text-xl sm:text-2xl font-bold text-amber-300 mt-1">{{ stats.total_pending }}</p>
                     </div>
                     <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg sm:text-xl">
                         <i class="fa-solid fa-clock"></i>
@@ -218,31 +218,32 @@
                         <div class="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
                             <img src="/captures/{{ cap.filename }}" alt="POV" class="w-full h-full object-cover">
                             
-                            <!-- Status & Score Floating Badges -->
+                            <!-- Status Badges -->
                             <div class="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
                                 {% if cap.status == 'PUBLISHED' %}
                                 <span class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1 shadow">
                                     <i class="fa-solid fa-check"></i> Publié
                                 </span>
-                                {% elif cap.status == 'PENDING_APPROVAL' or cap.status == 'PENDING' %}
+                                {% elif cap.status.startswith('REJECT') %}
+                                <span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow">
+                                    <i class="fa-solid fa-ban"></i> Rejeté
+                                </span>
+                                {% elif cap.status == 'PENDING_APPROVAL' or cap.status == 'PENDING' or cap.status == 'QUEUED_FOR_EVALUATION' %}
                                 <span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow">
                                     <i class="fa-solid fa-clock"></i> En attente accord
-                                </span>
-                                {% elif cap.status == 'REJECTED_MANUALLY' %}
-                                <span class="px-2.5 py-1 text-[11px] font-semibold bg-gray-700 text-gray-200 rounded-full flex items-center gap-1 shadow">
-                                    <i class="fa-solid fa-user-xmark"></i> Rejeté manuel
                                 </span>
                                 {% elif cap.status == 'ACCEPTED' %}
                                 <span class="px-2.5 py-1 text-[11px] font-semibold bg-blue-500 text-white rounded-full shadow">
                                     Accepté IA
                                 </span>
                                 {% else %}
-                                <span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow">
-                                    <i class="fa-solid fa-ban"></i> Rejeté
+                                <span class="px-2.5 py-1 text-[11px] font-semibold bg-gray-600 text-white rounded-full shadow">
+                                    {{ cap.status }}
                                 </span>
                                 {% endif %}
                             </div>
 
+                            <!-- Star Score (ONLY shown if social_score is not null) -->
                             {% if cap.social_score is not none %}
                             <div class="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-xl bg-black/70 backdrop-blur-md text-white font-mono text-xs flex items-center gap-1 border border-white/10 shadow">
                                 <i class="fa-solid fa-star text-amber-400"></i>
@@ -255,58 +256,65 @@
                         <div class="p-5 space-y-4 flex-1 flex flex-col justify-between">
                             
                             <div class="space-y-3">
-                                <!-- Date & Sensor Metadata Row (Cleanly placed below the photo) -->
-                                <div class="flex items-center justify-between text-xs text-gray-400 border-b border-gray-800/80 pb-2.5">
-                                    <span class="flex items-center gap-1.5 font-medium text-gray-300">
+                                <!-- Compact Horizontal Sensor Row -->
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] bg-gray-950 px-3 py-2 rounded-xl border border-gray-800">
+                                    <span class="flex items-center gap-1.5 text-gray-300">
                                         <i class="fa-regular fa-clock text-fuchsia-400"></i> {{ cap.timestamp }}
                                     </span>
-                                    <span class="text-[11px] px-2 py-0.5 rounded-lg bg-gray-950 border border-gray-800 text-gray-400 font-mono">
+                                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-900 border border-gray-800 text-gray-400 font-mono">
                                         {{ cap.source }}
                                     </span>
+                                    {% if cap.sensor_metadata %}
+                                        {% if cap.sensor_metadata.city %}
+                                        <span class="flex items-center gap-1 text-sky-400 font-medium">
+                                            <i class="fa-solid fa-location-dot"></i> {{ cap.sensor_metadata.city }}
+                                        </span>
+                                        {% elif cap.sensor_metadata.latitude and cap.sensor_metadata.longitude %}
+                                        <span class="flex items-center gap-1 text-sky-400 font-medium">
+                                            <i class="fa-solid fa-location-dot"></i> {{ "%.2f"|format(cap.sensor_metadata.latitude) }}, {{ "%.2f"|format(cap.sensor_metadata.longitude) }}
+                                        </span>
+                                        {% endif %}
+                                        {% if cap.sensor_metadata.battery_pct is not none %}
+                                        <span class="flex items-center gap-1 text-emerald-400">
+                                            <i class="fa-solid fa-battery-half"></i> {{ cap.sensor_metadata.battery_pct }}%
+                                        </span>
+                                        {% endif %}
+                                        {% if cap.sensor_metadata.mic_db or cap.sensor_metadata.ambient_noise %}
+                                        <span class="flex items-center gap-1 text-indigo-400">
+                                            <i class="fa-solid fa-microphone"></i> {{ cap.sensor_metadata.mic_db or cap.sensor_metadata.ambient_noise }} dB
+                                        </span>
+                                        {% endif %}
+                                        {% if cap.sensor_metadata.heart_rate_bpm %}
+                                        <span class="flex items-center gap-1 text-rose-400 font-semibold">
+                                            <i class="fa-solid fa-heart-pulse"></i> {{ cap.sensor_metadata.heart_rate_bpm }} BPM
+                                        </span>
+                                        {% endif %}
+                                        {% if cap.sensor_metadata.step_cadence or cap.sensor_metadata.steps %}
+                                        <span class="flex items-center gap-1 text-amber-400">
+                                            <i class="fa-solid fa-shoe-prints"></i> {{ cap.sensor_metadata.step_cadence or cap.sensor_metadata.steps }} pas
+                                        </span>
+                                        {% endif %}
+                                    {% endif %}
                                 </div>
-
-                                <!-- Sensor Tags if present -->
-                                {% if cap.sensor_metadata and (cap.sensor_metadata.city or cap.sensor_metadata.battery_pct or cap.sensor_metadata.heart_rate_bpm) %}
-                                <div class="flex flex-wrap gap-2 text-[11px] text-gray-400 bg-gray-950 p-2 rounded-xl border border-gray-800">
-                                    {% if cap.sensor_metadata.city %}
-                                    <span class="flex items-center gap-1 text-emerald-400 font-medium">
-                                        <i class="fa-solid fa-location-dot"></i> {{ cap.sensor_metadata.city }}
-                                    </span>
-                                    {% endif %}
-                                    {% if cap.sensor_metadata.battery_pct is not none %}
-                                    <span class="flex items-center gap-1 text-green-400">
-                                        <i class="fa-solid fa-battery-half"></i> {{ cap.sensor_metadata.battery_pct }}%
-                                    </span>
-                                    {% endif %}
-                                    {% if cap.sensor_metadata.heart_rate_bpm %}
-                                    <span class="flex items-center gap-1 text-rose-400 font-semibold">
-                                        <i class="fa-solid fa-heart-pulse"></i> {{ cap.sensor_metadata.heart_rate_bpm }} BPM
-                                    </span>
-                                    {% endif %}
-                                </div>
-                                {% endif %}
 
                                 <!-- Inline Editable Caption & Hashtags -->
-                                <div class="space-y-1.5">
+                                <div class="space-y-2">
                                     <div class="flex items-center justify-between">
-                                        <label class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Légende :</label>
-                                        <button onclick="saveCaption({{ cap.id }})" class="text-[11px] text-fuchsia-400 hover:text-fuchsia-300 font-semibold flex items-center gap-1">
+                                        <label class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Légende & Tags :</label>
+                                        <button onclick="saveCaptionAndTags({{ cap.id }})" class="text-[11px] text-fuchsia-400 hover:text-fuchsia-300 font-semibold flex items-center gap-1 px-2 py-0.5 rounded-lg hover:bg-fuchsia-950/40 transition">
                                             <i class="fa-solid fa-floppy-disk"></i> Enregistrer
                                         </button>
                                     </div>
-                                    <textarea id="caption_edit_{{ cap.id }}" rows="2" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-fuchsia-500 transition leading-relaxed">{{ cap.caption or '' }}</textarea>
+                                    <textarea id="caption_edit_{{ cap.id }}" rows="2" placeholder="Légende du cliché..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-fuchsia-500 transition leading-relaxed">{{ cap.caption or '' }}</textarea>
                                     
-                                    {% if cap.hashtags %}
-                                    <div class="flex flex-wrap gap-1 text-[11px] text-blue-400 pt-0.5">
-                                        {% for tag in cap.hashtags %}
-                                        <span>#{{ tag }}</span>
-                                        {% endfor %}
+                                    <div class="relative">
+                                        <span class="absolute left-2.5 top-2 text-blue-400 text-xs font-mono">#</span>
+                                        <input id="tags_edit_{{ cap.id }}" type="text" value="{{ cap.hashtags|join(', ') if cap.hashtags else '' }}" placeholder="pov, quotidien, ville (séparés par virgules)" class="w-full bg-gray-950 border border-gray-800 rounded-xl py-1.5 pl-6 pr-2.5 text-xs text-blue-300 placeholder-gray-600 focus:outline-none focus:border-fuchsia-500 font-mono transition">
                                     </div>
-                                    {% endif %}
                                 </div>
                             </div>
 
-                            <!-- Footer Actions: Publish, Re-eval, Download, Delete -->
+                            <!-- Footer Actions: Publish, Reject, Download, Re-eval, Delete -->
                             <div class="pt-3 border-t border-gray-800 flex items-center justify-between text-xs">
                                 <span class="text-gray-500 font-mono text-[11px]">#{{ cap.id }}</span>
                                 <div class="flex items-center gap-1.5">
@@ -315,12 +323,23 @@
                                         <i class="fa-solid fa-paper-plane mr-0.5"></i> Publier
                                     </button>
                                     {% endif %}
+                                    {% if not cap.status.startswith('REJECT') %}
+                                    <button onclick="rejectCaptureManual({{ cap.id }})" class="px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="Rejeter ce cliché (conservé sur le disque)">
+                                        <i class="fa-solid fa-ban text-rose-400"></i> Rejeter
+                                    </button>
+                                    {% endif %}
                                     <a href="/captures/{{ cap.filename }}" download class="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="Télécharger l'image">
                                         <i class="fa-solid fa-download"></i>
                                     </a>
-                                    <button onclick="reevaluateCapture({{ cap.id }})" class="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="Ré-évaluer par l'IA">
+                                    {% if has_gemini_key %}
+                                    <button onclick="reevaluateCapture({{ cap.id }})" class="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="Ré-évaluer par l'IA Gemini">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-fuchsia-400"></i>
+                                    </button>
+                                    {% else %}
+                                    <button disabled class="p-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-600 opacity-40 cursor-not-allowed" title="Ré-évaluation désactivée : Clé Gemini non configurée dans Options">
                                         <i class="fa-solid fa-wand-magic-sparkles"></i>
                                     </button>
+                                    {% endif %}
                                     <button onclick="deleteCapture({{ cap.id }})" class="p-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 transition" title="Supprimer définitivement (photo et fichier)">
                                         <i class="fa-solid fa-trash-can"></i>
                                     </button>
@@ -784,6 +803,7 @@
         let isCameraPaused = false;
         let isCameraConfigured = {{ 'true' if settings.enable_camera else 'false' }};
         let isGpsConfigured = {{ 'true' if settings.enable_gps else 'false' }};
+        let hasGeminiKey = {{ 'true' if has_gemini_key else 'false' }};
 
         async function initCamera() {
             if (!isCameraConfigured) {
@@ -904,7 +924,157 @@
             }, 'image/jpeg', 0.88);
         }
 
-        // CRITICAL FIX: NEVER CALL location.reload()! Update DOM smoothly without stopping camera!
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function renderCaptureCard(cap, hasGemini) {
+            const isPublished = cap.status === 'PUBLISHED';
+            const isRejected = cap.status && cap.status.startsWith('REJECT');
+            const isPending = cap.status === 'PENDING_APPROVAL' || cap.status === 'PENDING' || cap.status === 'QUEUED_FOR_EVALUATION';
+            const isAccepted = cap.status === 'ACCEPTED';
+
+            // Status badge
+            let statusBadge = '';
+            if (isPublished) {
+                statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-check"></i> Publié</span>';
+            } else if (isRejected) {
+                statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-ban"></i> Rejeté</span>';
+            } else if (isPending) {
+                statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-clock"></i> En attente accord</span>';
+            } else if (isAccepted) {
+                statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-blue-500 text-white rounded-full shadow">Accepté IA</span>';
+            } else {
+                statusBadge = `<span class="px-2.5 py-1 text-[11px] font-semibold bg-gray-600 text-white rounded-full shadow">${escapeHtml(cap.status || 'En cours')}</span>`;
+            }
+
+            // Star score (ONLY shown if social_score is not null/undefined)
+            let scoreBadge = '';
+            if (cap.social_score !== null && cap.social_score !== undefined) {
+                scoreBadge = `
+                <div class="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-xl bg-black/70 backdrop-blur-md text-white font-mono text-xs flex items-center gap-1 border border-white/10 shadow">
+                    <i class="fa-solid fa-star text-amber-400"></i>
+                    <span class="font-bold">${cap.social_score}</span><span class="text-gray-400 text-[10px]">/10</span>
+                </div>`;
+            }
+
+            // Inline Horizontal Sensor Row
+            const meta = cap.sensor_metadata || {};
+            let sensorsHtml = '';
+            if (meta.city) {
+                sensorsHtml += `<span class="flex items-center gap-1 text-sky-400 font-medium"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(meta.city)}</span>`;
+            } else if (meta.latitude && meta.longitude) {
+                sensorsHtml += `<span class="flex items-center gap-1 text-sky-400 font-medium"><i class="fa-solid fa-location-dot"></i> ${meta.latitude.toFixed(2)}, ${meta.longitude.toFixed(2)}</span>`;
+            }
+            if (meta.battery_pct !== undefined && meta.battery_pct !== null) {
+                sensorsHtml += `<span class="flex items-center gap-1 text-emerald-400"><i class="fa-solid fa-battery-half"></i> ${meta.battery_pct}%</span>`;
+            }
+            if (meta.mic_db || meta.ambient_noise) {
+                sensorsHtml += `<span class="flex items-center gap-1 text-indigo-400"><i class="fa-solid fa-microphone"></i> ${meta.mic_db || meta.ambient_noise} dB</span>`;
+            }
+            if (meta.heart_rate_bpm) {
+                sensorsHtml += `<span class="flex items-center gap-1 text-rose-400 font-semibold"><i class="fa-solid fa-heart-pulse"></i> ${meta.heart_rate_bpm} BPM</span>`;
+            }
+            if (meta.step_cadence || meta.steps) {
+                sensorsHtml += `<span class="flex items-center gap-1 text-amber-400"><i class="fa-solid fa-shoe-prints"></i> ${meta.step_cadence || meta.steps} pas</span>`;
+            }
+
+            // Hashtags string
+            let tagsStr = '';
+            if (Array.isArray(cap.hashtags)) {
+                tagsStr = cap.hashtags.join(', ');
+            } else if (typeof cap.hashtags === 'string') {
+                tagsStr = cap.hashtags;
+            }
+
+            // Re-eval button (grayed out if no Gemini key)
+            let reevalBtn = '';
+            if (hasGemini) {
+                reevalBtn = `
+                <button onclick="reevaluateCapture(${cap.id})" class="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="Ré-évaluer par l'IA Gemini">
+                    <i class="fa-solid fa-wand-magic-sparkles text-fuchsia-400"></i>
+                </button>`;
+            } else {
+                reevalBtn = `
+                <button disabled class="p-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-600 opacity-40 cursor-not-allowed" title="Ré-évaluation désactivée : Clé Gemini non configurée dans Options">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </button>`;
+            }
+
+            // Publish button
+            const publishBtn = !isPublished ? `
+                <button onclick="approveCapture(${cap.id})" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="Publier ou exporter ce cliché">
+                    <i class="fa-solid fa-paper-plane mr-0.5"></i> Publier
+                </button>` : '';
+
+            // Reject button (keeps on disk)
+            const rejectBtn = !isRejected ? `
+                <button onclick="rejectCaptureManual(${cap.id})" class="px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="Rejeter ce cliché (conservé sur le disque)">
+                    <i class="fa-solid fa-ban text-rose-400"></i> Rejeter
+                </button>` : '';
+
+            return `
+            <div id="capture_card_${cap.id}" class="capture-card bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-xl transition-all duration-300 hover:border-gray-700" data-status="${escapeHtml(cap.status || '')}">
+                <div class="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
+                    <img src="/captures/${escapeHtml(cap.filename)}" alt="POV" class="w-full h-full object-cover">
+                    <div class="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
+                        ${statusBadge}
+                    </div>
+                    ${scoreBadge}
+                </div>
+
+                <div class="p-5 space-y-4 flex-1 flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] bg-gray-950 px-3 py-2 rounded-xl border border-gray-800">
+                            <span class="flex items-center gap-1.5 text-gray-300">
+                                <i class="fa-regular fa-clock text-fuchsia-400"></i> ${escapeHtml(cap.timestamp || '')}
+                            </span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-900 border border-gray-800 text-gray-400 font-mono">
+                                ${escapeHtml(cap.source || '')}
+                            </span>
+                            ${sensorsHtml}
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Légende & Tags :</label>
+                                <button onclick="saveCaptionAndTags(${cap.id})" class="text-[11px] text-fuchsia-400 hover:text-fuchsia-300 font-semibold flex items-center gap-1 px-2 py-0.5 rounded-lg hover:bg-fuchsia-950/40 transition">
+                                    <i class="fa-solid fa-floppy-disk"></i> Enregistrer
+                                </button>
+                            </div>
+                            <textarea id="caption_edit_${cap.id}" rows="2" placeholder="Légende du cliché..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-fuchsia-500 transition leading-relaxed">${escapeHtml(cap.caption || '')}</textarea>
+                            <div class="relative">
+                                <span class="absolute left-2.5 top-2 text-blue-400 text-xs font-mono">#</span>
+                                <input id="tags_edit_${cap.id}" type="text" value="${escapeHtml(tagsStr)}" placeholder="pov, quotidien, ville (séparés par virgules)" class="w-full bg-gray-950 border border-gray-800 rounded-xl py-1.5 pl-6 pr-2.5 text-xs text-blue-300 placeholder-gray-600 focus:outline-none focus:border-fuchsia-500 font-mono transition">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-gray-800 flex items-center justify-between text-xs">
+                        <span class="text-gray-500 font-mono text-[11px]">#${cap.id}</span>
+                        <div class="flex items-center gap-1.5">
+                            ${publishBtn}
+                            ${rejectBtn}
+                            <a href="/captures/${escapeHtml(cap.filename)}" download class="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="Télécharger l'image">
+                                <i class="fa-solid fa-download"></i>
+                            </a>
+                            ${reevalBtn}
+                            <button onclick="deleteCapture(${cap.id})" class="p-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 transition" title="Supprimer définitivement (photo et fichier)">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // CRITICAL FIX: Update DOM smoothly without stopping camera!
         async function sendCapturePayload(formData) {
             try {
                 const res = await fetch('/api/capture/upload', {
@@ -914,9 +1084,11 @@
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    showToast('✓ Cliché POV #' + data.capture_id + ' ingéré & analysé par l\'IA');
-                    // Refresh gallery smoothly after evaluation finishes in background
-                    setTimeout(refreshCapturesData, 2000);
+                    showToast('✓ Cliché POV #' + data.capture_id + ' ingéré & transmis');
+                    // Refresh gallery immediately so snapshot appears without reload!
+                    await refreshCapturesData();
+                    // Second refresh after 2.5s to display VLM evaluation result
+                    setTimeout(refreshCapturesData, 2500);
                 }
             } catch (err) {
                 console.error('[AutoInsta] Erreur transmission capture:', err);
@@ -925,22 +1097,86 @@
 
         async function refreshCapturesData() {
             try {
-                const res = await fetch('/api/captures?limit=30');
+                const res = await fetch('/api/captures?limit=50');
+                if (!res.ok) return;
                 const data = await res.json();
+
                 if (data.stats) {
-                    document.getElementById('statTotalCaptures').textContent = data.stats.total_captures;
-                    document.getElementById('statTotalPublished').textContent = data.stats.total_published;
-                    document.getElementById('statTotalRejected').textContent = data.stats.total_rejected;
+                    const totalEl = document.getElementById('statTotalCaptures');
+                    if (totalEl) totalEl.textContent = data.stats.total_captures;
+
+                    const pendingEl = document.getElementById('statPendingApprovals');
+                    if (pendingEl) pendingEl.textContent = data.stats.total_pending !== undefined ? data.stats.total_pending : 0;
+
+                    const pubEl = document.getElementById('statTotalPublished');
+                    if (pubEl) pubEl.textContent = data.stats.total_published;
+
+                    const rejEl = document.getElementById('statTotalRejected');
+                    if (rejEl) rejEl.textContent = data.stats.total_rejected;
+
                     const badgeCount = document.getElementById('badgeCaptureCount');
                     if (badgeCount) badgeCount.textContent = data.stats.total_captures;
                 }
-                // Prepend or update DOM cards dynamically if needed
+
                 const grid = document.getElementById('capturesGrid');
                 const empty = document.getElementById('emptyGalleryState');
-                if (data.captures && data.captures.length > 0 && empty) {
-                    empty.classList.add('hidden');
+                if (!grid) return;
+
+                if (data.captures && data.captures.length > 0) {
+                    if (empty) empty.classList.add('hidden');
+
+                    // Make sure each capture exists in grid; prepend new ones
+                    for (let i = data.captures.length - 1; i >= 0; i--) {
+                        const cap = data.captures[i];
+                        let card = document.getElementById('capture_card_' + cap.id);
+                        if (!card) {
+                            const temp = document.createElement('div');
+                            temp.innerHTML = renderCaptureCard(cap, hasGeminiKey);
+                            const newEl = temp.firstElementChild;
+                            grid.prepend(newEl);
+                        } else {
+                            // Update status badge if changed
+                            if (card.dataset.status !== cap.status) {
+                                card.dataset.status = cap.status;
+                                const badgeContainer = card.querySelector('.absolute.top-2\\.5.left-2\\.5');
+                                if (badgeContainer) {
+                                    if (cap.status === 'PUBLISHED') {
+                                        badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-check"></i> Publié</span>';
+                                    } else if (cap.status && cap.status.startsWith('REJECT')) {
+                                        badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-ban"></i> Rejeté</span>';
+                                    } else if (cap.status === 'ACCEPTED') {
+                                        badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-blue-500 text-white rounded-full shadow">Accepté IA</span>';
+                                    }
+                                }
+                            }
+                            // Update star score if newly evaluated
+                            if (cap.social_score !== null && cap.social_score !== undefined && !card.querySelector('.fa-star')) {
+                                const imgContainer = card.querySelector('.relative.bg-black');
+                                if (imgContainer) {
+                                    const scoreEl = document.createElement('div');
+                                    scoreEl.className = 'absolute top-2.5 right-2.5 px-2.5 py-1 rounded-xl bg-black/70 backdrop-blur-md text-white font-mono text-xs flex items-center gap-1 border border-white/10 shadow';
+                                    scoreEl.innerHTML = `<i class="fa-solid fa-star text-amber-400"></i><span class="font-bold">${cap.social_score}</span><span class="text-gray-400 text-[10px]">/10</span>`;
+                                    imgContainer.appendChild(scoreEl);
+                                }
+                            }
+                            // Update caption & tags only if user is not currently focusing them
+                            const captionInput = document.getElementById('caption_edit_' + cap.id);
+                            if (captionInput && document.activeElement !== captionInput && (!captionInput.value || captionInput.value.trim() === '')) {
+                                if (cap.caption) captionInput.value = cap.caption;
+                            }
+                            const tagsInput = document.getElementById('tags_edit_' + cap.id);
+                            if (tagsInput && document.activeElement !== tagsInput && (!tagsInput.value || tagsInput.value.trim() === '')) {
+                                if (Array.isArray(cap.hashtags)) tagsInput.value = cap.hashtags.join(', ');
+                                else if (typeof cap.hashtags === 'string') tagsInput.value = cap.hashtags;
+                            }
+                        }
+                    }
+                } else {
+                    if (empty) empty.classList.remove('hidden');
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error('[AutoInsta] Erreur rafraîchissement captures:', e);
+            }
         }
 
         // File upload fallback
@@ -957,7 +1193,7 @@
         }
 
         // ========================================================
-        // 4. ACTIONS GALERIE : PUBLIER, MODIFIER, RÉÉVALUER, SUPPRIMER
+        // 4. ACTIONS GALERIE : PUBLIER, REJETER, ENREGISTRER, RÉÉVALUER, SUPPRIMER
         // ========================================================
         async function approveCapture(id) {
             try {
@@ -966,7 +1202,6 @@
                 if (data.success) {
                     const msg = data.message || 'Cliché archivé dans votre Coffre Privé Local (data/captures)';
                     showToast('✓ ' + msg);
-                    // Update badge visually
                     const card = document.getElementById('capture_card_' + id);
                     if (card) {
                         card.dataset.status = 'PUBLISHED';
@@ -974,6 +1209,8 @@
                         if (badgeContainer) {
                             badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-check"></i> Publié</span>';
                         }
+                        const pubBtn = card.querySelector('button[onclick*="approveCapture"]');
+                        if (pubBtn) pubBtn.remove();
                     }
                     refreshCapturesData();
                 } else {
@@ -984,23 +1221,62 @@
             }
         }
 
-        async function saveCaption(id) {
-            const textarea = document.getElementById('caption_edit_' + id);
-            if (!textarea) return;
+        async function rejectCaptureManual(id) {
+            try {
+                const res = await fetch('/api/captures/' + id + '/reject', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('✓ Cliché #' + id + ' rejeté (conservé sur le disque)');
+                    const card = document.getElementById('capture_card_' + id);
+                    if (card) {
+                        card.dataset.status = 'REJECTED_MANUALLY';
+                        const badgeContainer = card.querySelector('.absolute.top-2\\.5.left-2\\.5');
+                        if (badgeContainer) {
+                            badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-ban"></i> Rejeté</span>';
+                        }
+                        const rejBtn = card.querySelector('button[onclick*="rejectCaptureManual"]');
+                        if (rejBtn) rejBtn.remove();
+                    }
+                    refreshCapturesData();
+                } else {
+                    showToast('Erreur: ' + (data.detail || 'Impossible de rejeter'), true);
+                }
+            } catch (err) {
+                showToast('Erreur rejet: ' + err, true);
+            }
+        }
+
+        async function saveCaptionAndTags(id) {
+            const captionEl = document.getElementById('caption_edit_' + id);
+            const tagsEl = document.getElementById('tags_edit_' + id);
+            if (!captionEl) return;
+
+            const captionVal = captionEl.value;
+            const tagsVal = tagsEl ? tagsEl.value : '';
+
             try {
                 const res = await fetch('/api/captures/' + id + '/caption', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ caption: textarea.value })
+                    body: JSON.stringify({ caption: captionVal, hashtags: tagsVal })
                 });
                 const data = await res.json();
-                if (data.success) showToast('✓ Légende mise à jour pour le cliché #' + id);
+                if (data.success) {
+                    showToast('✓ Légende et tags enregistrés pour le cliché #' + id);
+                } else {
+                    showToast('Erreur: ' + (data.detail || 'Inconnue'), true);
+                }
             } catch (err) {
-                showToast('Erreur enregistrement légende : ' + err, true);
+                showToast('Erreur enregistrement : ' + err, true);
             }
         }
+        function saveCaption(id) { return saveCaptionAndTags(id); }
 
         async function reevaluateCapture(id) {
+            if (!hasGeminiKey) {
+                showToast('Veuillez renseigner votre clé API Gemini dans l\'onglet Options pour activer l\'IA', true);
+                return;
+            }
             try {
                 const res = await fetch('/api/captures/' + id + '/reevaluate', { method: 'POST' });
                 const data = await res.json();

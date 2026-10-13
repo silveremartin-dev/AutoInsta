@@ -344,7 +344,7 @@ Important:
                 "status": "REJECTED",
                 "safety_pass": True,
                 "quality_pass": False,
-                "social_score": 1.0,
+                "social_score": None,
                 "scene_description": "Cadre obscur ou obstrué (probablement dans une poche).",
                 "caption": "",
                 "hashtags": [],
@@ -356,15 +356,15 @@ Important:
         bpm_mention = f" ({sensor_metadata.get('heart_rate_bpm')} bpm)" if sensor_metadata.get('heart_rate_bpm') else ""
 
         return {
-            "status": "ACCEPTED",
+            "status": "PENDING_APPROVAL",
             "safety_pass": True,
             "quality_pass": True,
-            "social_score": 8.4,
-            "scene_description": f"Perspective POV en déplacement dans {city}.",
-            "caption": f"Flânerie impromptue dans les rues de {city}. Lumière d'automne et tempo paisible{bpm_mention}. ✨",
-            "hashtags": ["pov", "dailylife", "streetphotography", "cityvibes"],
+            "social_score": None,
+            "scene_description": f"Perspective POV locale ({city}).",
+            "caption": f"Instants du quotidien à {city}{bpm_mention}.",
+            "hashtags": ["pov", "dailylife"],
             "recommended_action": "POST",
-            "reasoning": "Simulation : Composition équilibrée, absence de données sensibles, conformité vie privée totale."
+            "reasoning": "OFFLINE_NO_API_KEY"
         }
 
 evaluator = VLMEvaluator()

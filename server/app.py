@@ -2,7 +2,7 @@ import os
 import shutil
 import uuid
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Any
 from fastapi import FastAPI, File, UploadFile, Form, Header, HTTPException, BackgroundTasks, Request
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -139,7 +139,8 @@ async def dashboard_view(request: Request):
             "settings": settings,
             "alerts": alerts,
             "hardware": hardware,
-            "storage": storage
+            "storage": storage,
+            "has_gemini_key": bool(settings.gemini_api_key and settings.gemini_api_key.strip())
         }
     )
 
@@ -257,17 +258,30 @@ async def delete_capture(capture_id: int):
 
 class EditCaptionRequest(BaseModel):
     caption: str
-    hashtags: Optional[List[str]] = None
+    hashtags: Optional[Any] = None
 
 @app.put("/api/captures/{capture_id}/caption")
 async def edit_caption(capture_id: int, req: EditCaptionRequest):
-    """Edit caption before manual approval."""
+    """Edit caption and hashtags before manual approval."""
     cap = db.get_capture(capture_id)
     if not cap:
         raise HTTPException(status_code=404, detail="Capture not found")
 
-    db.update_caption(capture_id, req.caption, req.hashtags)
-    return {"success": True, "message": "Caption updated."}
+    parsed_tags = None
+    if req.hashtags is not None:
+        if isinstance(req.hashtags, list):
+            parsed_tags = [str(t).strip().lstrip("#") for t in req.hashtags if str(t).strip()]
+        elif isinstance(req.hashtags, str):
+            cleaned = req.hashtags.replace(",", " ")
+            parsed_tags = [t.strip().lstrip("#") for t in cleaned.split() if t.strip()]
+
+    db.update_caption(capture_id, req.caption, parsed_tags)
+    return {
+        "success": True,
+        "message": "Légende et tags enregistrés avec succès.",
+        "caption": req.caption,
+        "hashtags": parsed_tags
+    }
 
 @app.post("/api/captures/{capture_id}/publish")
 async def manual_publish(capture_id: int):

@@ -9,7 +9,7 @@ sensors:
   enable_gps: true
   enable_accelerometer: false
   enable_light_sensor: false
-  enable_microphone: false
+  enable_microphone: true
   enable_barometer: false
   enable_battery: true
   enable_pedometer: false
