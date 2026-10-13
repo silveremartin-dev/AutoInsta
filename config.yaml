@@ -35,7 +35,7 @@ vlm:
   min_social_score: 7.5
   strict_privacy: true
   require_quality_pass: true
-  persona: witty_minimalist
+  persona: spontaneous_chic
   language: fr
   persona_instructions: 'Tu rédiges des légendes Instagram naturelles, spontanées
     et élégantes à la première personne.

@@ -212,9 +212,12 @@ async def get_capture_detail(capture_id: int):
         raise HTTPException(status_code=404, detail="Capture not found")
     return cap
 
+class ApproveRequest(BaseModel):
+    is_auto: bool = False
+
 @app.post("/api/captures/{capture_id}/approve")
-async def approve_capture(capture_id: int):
-    """Manually approve and publish a capture."""
+async def approve_capture(capture_id: int, req: Optional[ApproveRequest] = None):
+    """Approve and publish a capture. Enforces cooldown in automatic mode."""
     cap = db.get_capture(capture_id)
     if not cap:
         raise HTTPException(status_code=404, detail="Capture not found")
@@ -223,8 +226,10 @@ async def approve_capture(capture_id: int):
     caption = cap.get("caption") or "Authentic moments."
     hashtags = cap.get("hashtags") or []
 
-    # When manually requested by user from the UI, ignore cooldown
-    res = publisher.publish(capture_id, image_path, caption, hashtags, ignore_cooldown=True)
+    # If triggered automatically by countdown timer, enforce cooldown for Instagram
+    # If clicked manually by the user, ignore cooldown to respect user intent
+    ignore_cooldown = not (req and req.is_auto)
+    res = publisher.publish(capture_id, image_path, caption, hashtags, ignore_cooldown=ignore_cooldown)
     return res
 
 @app.post("/api/captures/{capture_id}/reject")

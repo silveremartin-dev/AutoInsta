@@ -1417,7 +1417,11 @@
         async function approveCapture(id, isAuto = false) {
             cancelAutoPublishTimer(id);
             try {
-                const res = await fetch('/api/captures/' + id + '/approve', { method: 'POST' });
+                const res = await fetch('/api/captures/' + id + '/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_auto: isAuto })
+                });
                 const data = await res.json();
                 if (data.success) {
                     const msg = isAuto ? 'Cliché #' + id + ' publié automatiquement' : (data.message || 'Cliché archivé dans votre Coffre Privé Local');
