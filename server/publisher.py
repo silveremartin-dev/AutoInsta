@@ -257,4 +257,41 @@ class InstagramPublisher:
         db.mark_publish_failed(capture_id, err)
         return {"success": False, "error": err}
 
+    def unpublish(self, capture_id: int, cap_data: dict) -> Dict[str, Any]:
+        """Unpublishes a capture: removes local exported files / deletes Instagram post."""
+        publish_mode = cap_data.get("publish_mode") or self.mode
+        post_id = cap_data.get("published_post_id")
+        filename = cap_data.get("filename")
+        removed_files = []
+
+        # 1. Clean up exported files from export_directory
+        try:
+            target_dir = settings.export_directory
+            if target_dir.exists() and filename:
+                for f in target_dir.glob(f"*{filename}*"):
+                    try:
+                        f.unlink()
+                        removed_files.append(f.name)
+                        logger.info(f"Removed exported file on unpublish: {f.name}")
+                    except Exception as e:
+                        logger.warning(f"Failed to delete exported file {f}: {e}")
+        except Exception as e:
+            logger.warning(f"Error while cleaning export files on unpublish: {e}")
+
+        # 2. If Instagram instagrapi, attempt to delete post
+        if publish_mode == "instagrapi" and post_id:
+            try:
+                if self._init_instagrapi() and self.ig_client:
+                    self.ig_client.media_delete(str(post_id))
+                    logger.info(f"Deleted post {post_id} from Instagram.")
+            except Exception as e:
+                logger.warning(f"Failed to delete post {post_id} from Instagram: {e}")
+
+        return {
+            "success": True,
+            "removed_files": removed_files,
+            "mode": publish_mode,
+            "message": "Cliché dépublié avec succès."
+        }
+
 publisher = InstagramPublisher()

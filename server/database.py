@@ -123,6 +123,18 @@ class Database:
             """, (post_id, mode, capture_id))
             conn.commit()
 
+    def mark_unpublished(self, capture_id: int):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE captures SET
+                    status = 'UNPUBLISHED',
+                    published_at = NULL,
+                    published_post_id = NULL
+                WHERE id = ?
+            """, (capture_id,))
+            conn.commit()
+
     def clear_all_captures(self):
         """Clears all historical captures and alerts."""
         with self.get_connection() as conn:
@@ -234,10 +246,10 @@ class Database:
             cursor.execute("SELECT COUNT(*) FROM captures WHERE status = 'PUBLISHED'")
             published = cursor.fetchone()[0]
 
-            cursor.execute("SELECT COUNT(*) FROM captures WHERE status LIKE 'REJECT%'")
+            cursor.execute("SELECT COUNT(*) FROM captures WHERE status LIKE 'REJECT%' OR status = 'UNPUBLISHED'")
             rejected = cursor.fetchone()[0]
 
-            cursor.execute("SELECT COUNT(*) FROM captures WHERE status NOT IN ('PUBLISHED') AND status NOT LIKE 'REJECT%'")
+            cursor.execute("SELECT COUNT(*) FROM captures WHERE status NOT IN ('PUBLISHED', 'UNPUBLISHED') AND status NOT LIKE 'REJECT%'")
             pending = cursor.fetchone()[0]
 
             cursor.execute("SELECT AVG(social_score) FROM captures WHERE social_score IS NOT NULL")

@@ -48,24 +48,11 @@ def process_capture_pipeline(capture_id: int, image_path: Path, sensor_metadata:
             score_pass = (social_score is None) or (social_score >= settings.min_social_score)
 
             if safety_pass and quality_pass and score_pass:
-                if settings.require_manual_confirmation:
-                    eval_result["status"] = "PENDING_APPROVAL"
-                    db.update_evaluation(capture_id, eval_result)
-                    db.log_event("INFO", f"Capture #{capture_id} retenue, en attente de votre accord manuel.")
-                    return
-                else:
-                    eval_result["status"] = "ACCEPTED"
-                    db.update_evaluation(capture_id, eval_result)
-                    caption = eval_result.get("caption", "")
-                    hashtags = eval_result.get("hashtags", [])
-                    pub_res = publisher.publish(capture_id, image_path, caption, hashtags)
-                    if pub_res.get("success"):
-                        db.log_event("INFO", f"Capture #{capture_id} publiée automatiquement (Mode automatique actif).")
-                    else:
-                        reason = pub_res.get("reason") or "Attente de cooldown"
-                        db.update_status(capture_id, "PENDING_APPROVAL")
-                        db.log_event("WARNING", f"Capture #{capture_id} non diffusée immédiatement ({reason}), placée en attente.")
-                    return
+                eval_result["status"] = "PENDING_APPROVAL"
+                db.update_evaluation(capture_id, eval_result)
+                mode_label = "Manuel" if settings.require_manual_confirmation else "Auto (avec temporisation)"
+                db.log_event("INFO", f"Capture #{capture_id} validée et prête pour diffusion (Mode {mode_label}).")
+                return
         
         eval_result["status"] = "REJECTED"
         db.update_evaluation(capture_id, eval_result)
@@ -240,14 +227,28 @@ async def approve_capture(capture_id: int):
 
 @app.post("/api/captures/{capture_id}/reject")
 async def reject_capture(capture_id: int):
-    """Manually reject a capture."""
+    """Manually reject a capture. If already published, unpublishes it."""
     cap = db.get_capture(capture_id)
     if not cap:
-        raise HTTPException(status_code=404, detail="Capture not found")
+        raise HTTPException(status_code=404, detail="Capture introuvable")
 
-    db.update_status(capture_id, "REJECTED_MANUALLY")
-    db.log_event("INFO", f"Capture #{capture_id} rejected manually by user.")
-    return {"success": True, "message": f"Capture #{capture_id} rejected."}
+    if cap.get("status") == "PUBLISHED":
+        res = publisher.unpublish(capture_id, cap)
+        db.mark_unpublished(capture_id)
+        db.log_event("INFO", f"Capture #{capture_id} dépubliée par l'utilisateur (fichiers retirés des exports).")
+        return {
+            "success": True,
+            "action": "UNPUBLISHED",
+            "message": f"Cliché #{capture_id} dépublié avec succès (retiré du dossier export)."
+        }
+    else:
+        db.update_status(capture_id, "REJECTED_MANUALLY")
+        db.log_event("INFO", f"Capture #{capture_id} refusée par l'utilisateur (publication annulée).")
+        return {
+            "success": True,
+            "action": "REJECTED_MANUALLY",
+            "message": f"Cliché #{capture_id} rejeté (publication annulée)."
+        }
 
 @app.delete("/api/captures/{capture_id}")
 async def delete_capture(capture_id: int):

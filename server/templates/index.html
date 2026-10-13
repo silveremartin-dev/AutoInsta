@@ -224,6 +224,10 @@
                                 <span class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1 shadow">
                                     <i class="fa-solid fa-check"></i> Publié
                                 </span>
+                                {% elif cap.status == 'UNPUBLISHED' %}
+                                <span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-950/90 text-rose-300 border border-rose-800/60 rounded-full flex items-center gap-1 shadow">
+                                    <i class="fa-solid fa-arrow-rotate-left"></i> Dépublié
+                                </span>
                                 {% elif cap.status.startswith('REJECT') %}
                                 <span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow">
                                     <i class="fa-solid fa-ban"></i> Rejeté
@@ -231,7 +235,7 @@
                                 {% elif cap.status == 'PENDING_APPROVAL' or cap.status == 'PENDING' or cap.status == 'QUEUED_FOR_EVALUATION' or cap.status == 'ACCEPTED' %}
                                     {% if not settings.require_manual_confirmation %}
                                     <span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow">
-                                        <i class="fa-solid fa-bolt"></i> Traitement auto...
+                                        <i class="fa-solid fa-bolt"></i> Publication auto
                                     </span>
                                     {% else %}
                                     <span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow">
@@ -313,26 +317,33 @@
                                         <span class="absolute left-2.5 top-2 text-blue-400 text-xs font-mono">#</span>
                                         <input id="tags_edit_{{ cap.id }}" oninput="autoSaveCapture({{ cap.id }})" onblur="saveCaptionAndTagsImmediately({{ cap.id }})" type="text" value="{{ cap.hashtags|join(', ') if cap.hashtags else '' }}" placeholder="pov, quotidien, ville (séparés par virgules)" class="w-full bg-gray-950 border border-gray-800 rounded-xl py-1.5 pl-6 pr-2.5 text-xs text-blue-300 placeholder-gray-600 focus:outline-none focus:border-fuchsia-500 font-mono transition">
                                     </div>
+                                <!-- Auto-Publish Countdown Bar (Mode Automatique uniquement) -->
+                                <div id="auto_timer_container_{{ cap.id }}" class="{{ '' if (not settings.require_manual_confirmation and cap.status != 'PUBLISHED' and not cap.status.startswith('REJECT') and cap.status != 'UNPUBLISHED') else 'hidden' }} flex items-center justify-between bg-amber-950/40 border border-amber-800/50 rounded-xl px-3 py-1.5 text-xs text-amber-200">
+                                    <span class="flex items-center gap-1.5 text-[11px]">
+                                        <i class="fa-solid fa-hourglass-half text-amber-400 animate-spin"></i>
+                                        Publication auto dans <strong id="auto_timer_val_{{ cap.id }}" class="font-mono text-white text-xs">60</strong>s
+                                    </span>
+                                    <button onclick="postponeAutoPublish({{ cap.id }})" class="px-2 py-0.5 rounded-lg bg-amber-900/60 hover:bg-amber-800 text-amber-300 border border-amber-700/60 text-[10px] font-bold transition flex items-center gap-1" title="Reporter la publication automatique de 60 secondes">
+                                        <i class="fa-regular fa-clock"></i> +1 min
+                                    </button>
                                 </div>
                             </div>
 
-                            <!-- Footer Actions: Publish, Reject, Download, Re-eval, Delete -->
+                            <!-- Footer Actions: Publish, Reject / Dépublier, Download, Re-eval, Delete -->
                             <div class="pt-3 border-t border-gray-800 flex items-center justify-between text-xs">
                                 <span class="text-gray-500 font-mono text-[11px]">#{{ cap.id }}</span>
                                 <div class="flex items-center gap-1.5">
                                     {% if cap.status != 'PUBLISHED' %}
-                                        {% if settings.require_manual_confirmation %}
-                                        <button onclick="approveCapture({{ cap.id }})" class="publish-btn px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="Publier ou exporter ce cliché">
-                                            <i class="fa-solid fa-paper-plane mr-0.5"></i> Publier
-                                        </button>
-                                        {% else %}
-                                        <button disabled class="publish-btn px-3 py-1.5 rounded-xl bg-gray-800 text-gray-500 border border-gray-700/60 text-xs font-semibold cursor-not-allowed flex items-center gap-1 opacity-50" title="Mode automatique actif : publication sans action manuelle">
-                                            <i class="fa-solid fa-bolt text-amber-400/60 mr-0.5"></i> Auto
-                                        </button>
-                                        {% endif %}
+                                    <button onclick="approveCapture({{ cap.id }})" class="publish-btn px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="Publier immédiatement ce cliché">
+                                        <i class="fa-solid fa-paper-plane mr-0.5"></i> Publier
+                                    </button>
                                     {% endif %}
-                                    {% if not cap.status.startswith('REJECT') %}
-                                    <button onclick="rejectCaptureManual({{ cap.id }})" class="px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="Rejeter ce cliché (conservé sur le disque)">
+                                    {% if cap.status == 'PUBLISHED' %}
+                                    <button onclick="rejectCaptureManual({{ cap.id }})" class="reject-btn px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="Dépublier ce cliché (retirer du dossier export)">
+                                        <i class="fa-solid fa-arrow-rotate-left text-rose-400"></i> Dépublier
+                                    </button>
+                                    {% elif not cap.status.startswith('REJECT') and cap.status != 'UNPUBLISHED' %}
+                                    <button onclick="rejectCaptureManual({{ cap.id }})" class="reject-btn px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="Rejeter ce cliché (refus de publication)">
                                         <i class="fa-solid fa-ban text-rose-400"></i> Rejeter
                                     </button>
                                     {% endif %}
@@ -1033,8 +1044,56 @@
                 .replace(/'/g, '&#039;');
         }
 
+        // ========================================================
+        // 3.5. GESTION DU COMPTE À REBOURS DE PUBLICATION AUTOMATIQUE
+        // ========================================================
+        let autoPublishTimers = {};
+
+        function startAutoPublishTimer(id, seconds = 60) {
+            cancelAutoPublishTimer(id);
+            autoPublishTimers[id] = {
+                remainingSec: seconds,
+                intervalId: setInterval(() => {
+                    if (!autoPublishTimers[id]) return;
+                    autoPublishTimers[id].remainingSec--;
+                    const valEl = document.getElementById('auto_timer_val_' + id);
+                    if (valEl) valEl.textContent = autoPublishTimers[id].remainingSec;
+
+                    if (autoPublishTimers[id].remainingSec <= 0) {
+                        cancelAutoPublishTimer(id);
+                        approveCapture(id, true);
+                    }
+                }, 1000)
+            };
+            const valEl = document.getElementById('auto_timer_val_' + id);
+            if (valEl) valEl.textContent = seconds;
+            const banner = document.getElementById('auto_timer_container_' + id);
+            if (banner) banner.classList.remove('hidden');
+        }
+
+        function postponeAutoPublish(id, addSec = 60) {
+            if (!autoPublishTimers[id]) {
+                startAutoPublishTimer(id, addSec);
+            } else {
+                autoPublishTimers[id].remainingSec += addSec;
+                const valEl = document.getElementById('auto_timer_val_' + id);
+                if (valEl) valEl.textContent = autoPublishTimers[id].remainingSec;
+            }
+            showToast('✓ Cliché #' + id + ' : publication reportée de +1 minute (' + autoPublishTimers[id].remainingSec + 's restantes)');
+        }
+
+        function cancelAutoPublishTimer(id) {
+            if (autoPublishTimers[id]) {
+                clearInterval(autoPublishTimers[id].intervalId);
+                delete autoPublishTimers[id];
+            }
+            const banner = document.getElementById('auto_timer_container_' + id);
+            if (banner) banner.classList.add('hidden');
+        }
+
         function renderCaptureCard(cap, hasGemini) {
             const isPublished = cap.status === 'PUBLISHED';
+            const isUnpublished = cap.status === 'UNPUBLISHED';
             const isRejected = cap.status && cap.status.startsWith('REJECT');
             const isPending = cap.status === 'PENDING_APPROVAL' || cap.status === 'PENDING' || cap.status === 'QUEUED_FOR_EVALUATION' || cap.status === 'ACCEPTED';
 
@@ -1042,11 +1101,13 @@
             let statusBadge = '';
             if (isPublished) {
                 statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-check"></i> Publié</span>';
+            } else if (isUnpublished) {
+                statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-950/90 text-rose-300 border border-rose-800/60 rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-arrow-rotate-left"></i> Dépublié</span>';
             } else if (isRejected) {
                 statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-ban"></i> Rejeté</span>';
             } else if (isPending) {
                 if (!isManualMode) {
-                    statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-bolt"></i> Traitement auto...</span>';
+                    statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-bolt"></i> Publication auto</span>';
                 } else {
                     statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-clock"></i> En attente accord</span>';
                 }
@@ -1107,27 +1168,45 @@
                 </button>`;
             }
 
-            // Publish button
-            let publishBtn = '';
-            if (!isPublished) {
-                if (isManualMode) {
-                    publishBtn = `
-                    <button onclick="approveCapture(${cap.id})" class="publish-btn px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="Publier ou exporter ce cliché">
-                        <i class="fa-solid fa-paper-plane mr-0.5"></i> Publier
-                    </button>`;
-                } else {
-                    publishBtn = `
-                    <button disabled class="publish-btn px-3 py-1.5 rounded-xl bg-gray-800 text-gray-500 border border-gray-700/60 text-xs font-semibold cursor-not-allowed flex items-center gap-1 opacity-50" title="Mode automatique actif : publication sans action manuelle">
-                        <i class="fa-solid fa-bolt text-amber-400/60 mr-0.5"></i> Auto
-                    </button>`;
-                }
+            // Auto-Publish Countdown Bar (Mode Automatique uniquement)
+            const showTimer = (!isManualMode && !isPublished && !isRejected && !isUnpublished);
+            const timerBanner = `
+            <div id="auto_timer_container_${cap.id}" class="${showTimer ? '' : 'hidden'} flex items-center justify-between bg-amber-950/40 border border-amber-800/50 rounded-xl px-3 py-1.5 text-xs text-amber-200">
+                <span class="flex items-center gap-1.5 text-[11px]">
+                    <i class="fa-solid fa-hourglass-half text-amber-400 animate-spin"></i>
+                    Publication auto dans <strong id="auto_timer_val_${cap.id}" class="font-mono text-white text-xs">60</strong>s
+                </span>
+                <button onclick="postponeAutoPublish(${cap.id})" class="px-2 py-0.5 rounded-lg bg-amber-900/60 hover:bg-amber-800 text-amber-300 border border-amber-700/60 text-[10px] font-bold transition flex items-center gap-1" title="Reporter la publication automatique de 60 secondes">
+                    <i class="fa-regular fa-clock"></i> +1 min
+                </button>
+            </div>`;
+
+            // If timer should run, trigger countdown start in background
+            if (showTimer) {
+                setTimeout(() => {
+                    if (!isManualMode) startAutoPublishTimer(cap.id, 60);
+                }, 100);
             }
 
-            // Reject button (keeps on disk)
-            const rejectBtn = !isRejected ? `
-                <button onclick="rejectCaptureManual(${cap.id})" class="px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="Rejeter ce cliché (conservé sur le disque)">
-                    <i class="fa-solid fa-ban text-rose-400"></i> Rejeter
+            // Publish button (Always present and functional when not published)
+            const publishBtn = !isPublished ? `
+                <button onclick="approveCapture(${cap.id})" class="publish-btn px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="Publier immédiatement ce cliché">
+                    <i class="fa-solid fa-paper-plane mr-0.5"></i> Publier
                 </button>` : '';
+
+            // Reject / Dépublier button
+            let rejectBtn = '';
+            if (isPublished) {
+                rejectBtn = `
+                <button onclick="rejectCaptureManual(${cap.id})" class="reject-btn px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="Dépublier ce cliché (retirer du dossier export)">
+                    <i class="fa-solid fa-arrow-rotate-left text-rose-400"></i> Dépublier
+                </button>`;
+            } else if (!isRejected && !isUnpublished) {
+                rejectBtn = `
+                <button onclick="rejectCaptureManual(${cap.id})" class="reject-btn px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="Rejeter ce cliché (refus de publication)">
+                    <i class="fa-solid fa-ban text-rose-400"></i> Rejeter
+                </button>`;
+            }
 
             return `
             <div id="capture_card_${cap.id}" class="capture-card bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-xl transition-all duration-300 hover:border-gray-700" data-status="${escapeHtml(cap.status || '')}">
@@ -1164,6 +1243,8 @@
                                 <input id="tags_edit_${cap.id}" oninput="autoSaveCapture(${cap.id})" onblur="saveCaptionAndTagsImmediately(${cap.id})" type="text" value="${escapeHtml(tagsStr)}" placeholder="pov, quotidien, ville (séparés par virgules)" class="w-full bg-gray-950 border border-gray-800 rounded-xl py-1.5 pl-6 pr-2.5 text-xs text-blue-300 placeholder-gray-600 focus:outline-none focus:border-fuchsia-500 font-mono transition">
                             </div>
                         </div>
+
+                        ${timerBanner}
                     </div>
 
                     <div class="pt-3 border-t border-gray-800 flex items-center justify-between text-xs">
@@ -1252,24 +1333,34 @@
                                 if (badgeContainer) {
                                     if (cap.status === 'PUBLISHED') {
                                         badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-check"></i> Publié</span>';
-                                        // Remove publish / auto button from card since it is already published
                                         const actionsDiv = card.querySelector('.pt-3.border-t .flex.items-center.gap-1\\.5');
                                         if (actionsDiv) {
                                             actionsDiv.querySelectorAll('.publish-btn, button').forEach(btn => {
-                                                if (btn.textContent && (btn.textContent.includes('Publier') || btn.textContent.includes('Auto'))) btn.remove();
+                                                if (btn.textContent && btn.textContent.includes('Publier')) btn.remove();
                                             });
+                                            const rejBtn = actionsDiv.querySelector('.reject-btn, button[onclick*="rejectCaptureManual"]');
+                                            if (rejBtn) {
+                                                rejBtn.className = 'reject-btn px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1';
+                                                rejBtn.innerHTML = '<i class="fa-solid fa-arrow-rotate-left text-rose-400"></i> Dépublier';
+                                                rejBtn.title = 'Dépublier ce cliché (retirer du dossier export)';
+                                            }
                                         }
+                                        cancelAutoPublishTimer(cap.id);
+                                    } else if (cap.status === 'UNPUBLISHED') {
+                                        badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-950/90 text-rose-300 border border-rose-800/60 rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-arrow-rotate-left"></i> Dépublié</span>';
+                                        cancelAutoPublishTimer(cap.id);
                                     } else if (cap.status && cap.status.startsWith('REJECT')) {
                                         badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-ban"></i> Rejeté</span>';
+                                        cancelAutoPublishTimer(cap.id);
                                     } else if (cap.status === 'ACCEPTED' || cap.status === 'PENDING' || cap.status === 'PENDING_APPROVAL' || cap.status === 'QUEUED_FOR_EVALUATION') {
                                         if (!isManualMode) {
-                                            badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-bolt"></i> Traitement auto...</span>';
-                                        } else {
-                                            if (cap.status === 'ACCEPTED') {
-                                                badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-blue-500 text-white rounded-full shadow">Accepté IA</span>';
-                                            } else {
-                                                badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-clock"></i> En attente accord</span>';
+                                            badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-bolt"></i> Publication auto</span>';
+                                            if (!autoPublishTimers[cap.id]) {
+                                                startAutoPublishTimer(cap.id, 60);
                                             }
+                                        } else {
+                                            badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-clock"></i> En attente accord</span>';
+                                            cancelAutoPublishTimer(cap.id);
                                         }
                                     }
                                 }
@@ -1319,14 +1410,15 @@
         }
 
         // ========================================================
-        // 4. ACTIONS GALERIE : PUBLIER, REJETER, AUTO-SAVE, RÉÉVALUER, SUPPRIMER
+        // 4. ACTIONS GALERIE : PUBLIER, DÉPUBLIER, REJETER, AUTO-SAVE
         // ========================================================
-        async function approveCapture(id) {
+        async function approveCapture(id, isAuto = false) {
+            cancelAutoPublishTimer(id);
             try {
                 const res = await fetch('/api/captures/' + id + '/approve', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    const msg = data.message || 'Cliché archivé dans votre Coffre Privé Local (data/captures)';
+                    const msg = isAuto ? 'Cliché #' + id + ' publié automatiquement' : (data.message || 'Cliché archivé dans votre Coffre Privé Local');
                     showToast('✓ ' + msg);
                     const card = document.getElementById('capture_card_' + id);
                     if (card) {
@@ -1335,8 +1427,17 @@
                         if (badgeContainer) {
                             badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-check"></i> Publié</span>';
                         }
-                        const pubBtn = card.querySelector('button[onclick*="approveCapture"]');
+                        const pubBtn = card.querySelector('.publish-btn, button[onclick*="approveCapture"]');
                         if (pubBtn) pubBtn.remove();
+                        const actionsDiv = card.querySelector('.pt-3.border-t .flex.items-center.gap-1\\.5');
+                        if (actionsDiv) {
+                            const rejBtn = actionsDiv.querySelector('.reject-btn, button[onclick*="rejectCaptureManual"]');
+                            if (rejBtn) {
+                                rejBtn.className = 'reject-btn px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1';
+                                rejBtn.innerHTML = '<i class="fa-solid fa-arrow-rotate-left text-rose-400"></i> Dépublier';
+                                rejBtn.title = 'Dépublier ce cliché (retirer du dossier export)';
+                            }
+                        }
                     }
                     refreshCapturesData();
                 } else {
@@ -1348,20 +1449,51 @@
         }
 
         async function rejectCaptureManual(id) {
+            cancelAutoPublishTimer(id);
             try {
                 const res = await fetch('/api/captures/' + id + '/reject', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    showToast('✓ Cliché #' + id + ' rejeté (conservé sur le disque)');
                     const card = document.getElementById('capture_card_' + id);
-                    if (card) {
-                        card.dataset.status = 'REJECTED_MANUALLY';
-                        const badgeContainer = card.querySelector('.absolute.top-2\\.5.left-2\\.5');
-                        if (badgeContainer) {
-                            badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-ban"></i> Rejeté</span>';
+                    if (data.action === 'UNPUBLISHED') {
+                        showToast('✓ ' + (data.message || ('Cliché #' + id + ' dépublié')));
+                        if (card) {
+                            card.dataset.status = 'UNPUBLISHED';
+                            const badgeContainer = card.querySelector('.absolute.top-2\\.5.left-2\\.5');
+                            if (badgeContainer) {
+                                badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-950/90 text-rose-300 border border-rose-800/60 rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-arrow-rotate-left"></i> Dépublié</span>';
+                            }
+                            const actionsDiv = card.querySelector('.pt-3.border-t .flex.items-center.gap-1\\.5');
+                            if (actionsDiv) {
+                                const existingPub = actionsDiv.querySelector('.publish-btn, button[onclick*="approveCapture"]');
+                                if (!existingPub) {
+                                    const pubBtn = document.createElement('button');
+                                    pubBtn.className = 'publish-btn px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20';
+                                    pubBtn.title = 'Publier immédiatement ce cliché';
+                                    pubBtn.onclick = () => approveCapture(id);
+                                    pubBtn.innerHTML = '<i class="fa-solid fa-paper-plane mr-0.5"></i> Publier';
+                                    actionsDiv.prepend(pubBtn);
+                                }
+                                const rejBtn = actionsDiv.querySelector('.reject-btn, button[onclick*="rejectCaptureManual"]');
+                                if (rejBtn) {
+                                    rejBtn.innerHTML = '<i class="fa-solid fa-ban text-rose-400"></i> Rejeter';
+                                    rejBtn.title = 'Rejeter ce cliché (refus de publication)';
+                                }
+                            }
                         }
-                        const rejBtn = card.querySelector('button[onclick*="rejectCaptureManual"]');
-                        if (rejBtn) rejBtn.remove();
+                    } else {
+                        showToast('✓ Cliché #' + id + ' rejeté (publication annulée)');
+                        if (card) {
+                            card.dataset.status = 'REJECTED_MANUALLY';
+                            const badgeContainer = card.querySelector('.absolute.top-2\\.5.left-2\\.5');
+                            if (badgeContainer) {
+                                badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-ban"></i> Rejeté</span>';
+                            }
+                            const pubBtn = card.querySelector('.publish-btn, button[onclick*="approveCapture"]');
+                            if (pubBtn) pubBtn.remove();
+                            const rejBtn = card.querySelector('.reject-btn, button[onclick*="rejectCaptureManual"]');
+                            if (rejBtn) rejBtn.remove();
+                        }
                     }
                     refreshCapturesData();
                 } else {
@@ -1522,25 +1654,21 @@
             // Instantly update all gallery cards according to mode
             document.querySelectorAll('.capture-card').forEach(card => {
                 const status = card.dataset.status || '';
-                if (status !== 'PUBLISHED' && !status.startsWith('REJECT')) {
+                const capId = card.id.replace('capture_card_', '');
+                if (status !== 'PUBLISHED' && !status.startsWith('REJECT') && status !== 'UNPUBLISHED') {
                     const badgeContainer = card.querySelector('.absolute.top-2\\.5.left-2\\.5');
                     if (badgeContainer) {
                         if (isManual) {
                             badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-clock"></i> En attente accord</span>';
                         } else {
-                            badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-bolt"></i> Traitement auto...</span>';
+                            badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-bolt"></i> Publication auto</span>';
                         }
                     }
-                    const actionsDiv = card.querySelector('.pt-3.border-t .flex.items-center.gap-1\\.5');
-                    if (actionsDiv) {
-                        const capId = card.id.replace('capture_card_', '');
-                        const oldBtn = actionsDiv.querySelector('.publish-btn, button[onclick*="approveCapture"]');
-                        if (oldBtn) {
-                            if (isManual) {
-                                oldBtn.outerHTML = `<button onclick="approveCapture(${capId})" class="publish-btn px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="Publier ou exporter ce cliché"><i class="fa-solid fa-paper-plane mr-0.5"></i> Publier</button>`;
-                            } else {
-                                oldBtn.outerHTML = `<button disabled class="publish-btn px-3 py-1.5 rounded-xl bg-gray-800 text-gray-500 border border-gray-700/60 text-xs font-semibold cursor-not-allowed flex items-center gap-1 opacity-50" title="Mode automatique actif : publication sans action manuelle"><i class="fa-solid fa-bolt text-amber-400/60 mr-0.5"></i> Auto</button>`;
-                            }
+                    if (isManual) {
+                        cancelAutoPublishTimer(capId);
+                    } else {
+                        if (!autoPublishTimers[capId]) {
+                            startAutoPublishTimer(capId, 60);
                         }
                     }
                 }
@@ -1817,6 +1945,9 @@
             if (camIntervalInput) {
                 camIntervalInput.value = captureIntervalSec;
             }
+
+            // Apply validation mode UI and start timers if in auto mode
+            applyValidationModeUI(isManualMode);
 
             // Auto-start camera if camera is enabled in settings
             initCamera();
