@@ -334,23 +334,76 @@ async def get_storage_info_api():
 @app.post("/api/storage/open-folder")
 async def open_storage_folder(req: OpenFolderRequest):
     """Opens directory in default OS file explorer (Windows Explorer, macOS Finder, Linux)."""
-    import platform, subprocess
+    import shutil
     target = settings.storage_dir if req.folder_type == "captures" else settings.export_directory
     target.mkdir(parents=True, exist_ok=True)
     target_abs = str(target.resolve())
+    os_name = "Système"
+
     try:
         sys_plat = platform.system().lower()
-        if sys_plat == "windows":
+        is_android = "com.termux" in os.environ.get("PREFIX", "") or os.path.exists("/data/data/com.termux")
+        is_wsl = "microsoft" in platform.uname().release.lower() or os.path.exists("/proc/sys/fs/binfmt_misc/WSL")
+
+        if is_android:
+            # Android / Termux: Use Termux API / termux-open or am start intent
+            os_name = "Android"
+            if shutil.which("termux-open"):
+                subprocess.Popen(["termux-open", target_abs])
+            elif shutil.which("am"):
+                # Launch default Android File Manager / Documents UI intent
+                subprocess.Popen([
+                    "am", "start",
+                    "-a", "android.intent.action.VIEW",
+                    "-d", f"file://{target_abs}",
+                    "-t", "resource/folder"
+                ])
+            else:
+                return {"success": True, "os": "Android", "path": target_abs, "message": f"Dossier accessible dans {target_abs}"}
+
+        elif is_wsl and shutil.which("wslpath"):
+            # Windows Subsystem for Linux (WSL): Convert path and invoke explorer.exe
+            os_name = "Windows (WSL)"
+            try:
+                win_path = subprocess.check_output(["wslpath", "-w", target_abs]).decode().strip()
+                subprocess.Popen(["cmd.exe", "/c", "start", win_path])
+            except Exception:
+                subprocess.Popen(f'explorer.exe "{target_abs}"', shell=True)
+
+        elif sys_plat == "windows":
+            os_name = "Windows"
             try:
                 import os
                 os.startfile(target_abs)
             except Exception:
                 subprocess.Popen(f'explorer.exe "{target_abs}"', shell=True)
+
         elif sys_plat == "darwin":
+            os_name = "macOS Finder"
             subprocess.Popen(["open", target_abs])
+
         else:
-            subprocess.Popen(["xdg-open", target_abs])
-        return {"success": True, "path": target_abs}
+            # Linux Desktop (GNOME, KDE, XFCE, Cinnamon, etc.)
+            os_name = "Linux"
+            if shutil.which("xdg-open"):
+                subprocess.Popen(["xdg-open", target_abs])
+            elif shutil.which("nautilus"):
+                subprocess.Popen(["nautilus", target_abs])
+            elif shutil.which("dolphin"):
+                subprocess.Popen(["dolphin", target_abs])
+            elif shutil.which("thunar"):
+                subprocess.Popen(["thunar", target_abs])
+            elif shutil.which("gio"):
+                subprocess.Popen(["gio", "open", target_abs])
+            else:
+                return {
+                    "success": True, 
+                    "os": "Linux (Serveur)", 
+                    "path": target_abs, 
+                    "message": f"Chemin du dossier : {target_abs}"
+                }
+
+        return {"success": True, "os": os_name, "path": target_abs}
     except Exception as e:
         return {"success": False, "error": str(e), "path": target_abs}
 
