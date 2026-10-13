@@ -1,4 +1,6 @@
 import os
+import platform
+import subprocess
 import shutil
 import uuid
 from pathlib import Path
@@ -345,7 +347,6 @@ async def get_storage_info_api():
 @app.post("/api/storage/open-folder")
 async def open_storage_folder(req: OpenFolderRequest):
     """Opens directory in default OS file explorer (Windows Explorer, macOS Finder, Linux)."""
-    import shutil
     target = settings.storage_dir if req.folder_type == "captures" else settings.export_directory
     target.mkdir(parents=True, exist_ok=True)
     target_abs = str(target.resolve())
@@ -379,15 +380,14 @@ async def open_storage_folder(req: OpenFolderRequest):
                 win_path = subprocess.check_output(["wslpath", "-w", target_abs]).decode().strip()
                 subprocess.Popen(["cmd.exe", "/c", "start", win_path])
             except Exception:
-                subprocess.Popen(f'explorer.exe "{target_abs}"', shell=True)
+                subprocess.Popen(["explorer.exe", target_abs])
 
         elif sys_plat == "windows":
             os_name = "Windows"
             try:
-                import os
                 os.startfile(target_abs)
             except Exception:
-                subprocess.Popen(f'explorer.exe "{target_abs}"', shell=True)
+                subprocess.Popen(["explorer.exe", target_abs])
 
         elif sys_plat == "darwin":
             os_name = "macOS Finder"
