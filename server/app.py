@@ -341,7 +341,11 @@ async def open_storage_folder(req: OpenFolderRequest):
     try:
         sys_plat = platform.system().lower()
         if sys_plat == "windows":
-            subprocess.Popen(["explorer.exe", target_abs])
+            try:
+                import os
+                os.startfile(target_abs)
+            except Exception:
+                subprocess.Popen(f'explorer.exe "{target_abs}"', shell=True)
         elif sys_plat == "darwin":
             subprocess.Popen(["open", target_abs])
         else:

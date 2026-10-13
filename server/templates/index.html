@@ -473,14 +473,19 @@
                     </div>
                 </div>
 
-                <!-- Rate Limits -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 text-xs">
+                <!-- Intervalles & Fréquence -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 text-xs">
                     <div>
-                        <label class="text-[11px] text-gray-400 block mb-1">Intervalle minimum entre publications (minutes) :</label>
+                        <label class="text-[11px] text-gray-400 block mb-1">Fréquence de capture webcam (secondes) :</label>
+                        <input type="number" id="cfg_cam_interval" onchange="updateCameraInterval(this.value)" min="5" max="3600" value="60" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
+                        <span class="text-[9px] text-gray-500 mt-0.5 block">Ex: 60s (1 min), 300s (5 min)</span>
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-gray-400 block mb-1">Délai minimum entre posts (minutes) :</label>
                         <input type="number" id="cfg_min_interval" onchange="autoSaveGeneralSettings()" value="{{ settings.min_interval_minutes }}" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
                     </div>
                     <div>
-                        <label class="text-[11px] text-gray-400 block mb-1">Nombre maximum de posts par 24h :</label>
+                        <label class="text-[11px] text-gray-400 block mb-1">Posts max par 24h :</label>
                         <input type="number" id="cfg_max_daily" onchange="autoSaveGeneralSettings()" value="{{ settings.max_daily_posts }}" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
                     </div>
                 </div>
@@ -798,13 +803,22 @@
         // ========================================================
         let webcamStream = null;
         let webcamCountdown = null;
-        let secRemaining = 30;
-        const CAPTURE_INTERVAL_SEC = 30;
+        let captureIntervalSec = parseInt(localStorage.getItem('autoinsta_cam_interval')) || 60;
+        let secRemaining = captureIntervalSec;
         let isCameraPaused = false;
         let isCameraConfigured = {{ 'true' if settings.enable_camera else 'false' }};
         let isGpsConfigured = {{ 'true' if settings.enable_gps else 'false' }};
         let isMicConfigured = {{ 'true' if settings.enable_microphone else 'false' }};
         let hasGeminiKey = {{ 'true' if has_gemini_key else 'false' }};
+
+        function updateCameraInterval(val) {
+            const num = Math.max(5, parseInt(val) || 60);
+            captureIntervalSec = num;
+            secRemaining = num;
+            localStorage.setItem('autoinsta_cam_interval', num);
+            document.getElementById('camSecLeft').textContent = secRemaining + 's';
+            showToast('✓ Fréquence de capture réglée à ' + num + ' secondes');
+        }
 
         let audioCtx = null;
         let analyser = null;
@@ -870,14 +884,14 @@
                 };
 
                 // Continuous countdown timer
-                secRemaining = CAPTURE_INTERVAL_SEC;
+                secRemaining = captureIntervalSec;
                 document.getElementById('camSecLeft').textContent = secRemaining + 's';
                 if (webcamCountdown) clearInterval(webcamCountdown);
                 webcamCountdown = setInterval(() => {
                     if (isCameraPaused) return;
                     secRemaining--;
                     if (secRemaining <= 0) {
-                        secRemaining = CAPTURE_INTERVAL_SEC;
+                        secRemaining = captureIntervalSec;
                         snapWebcamNow();
                     }
                     document.getElementById('camSecLeft').textContent = secRemaining + 's';
@@ -907,7 +921,7 @@
                 badge.textContent = 'En direct';
                 badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800';
                 countEl.classList.remove('hidden');
-                secRemaining = CAPTURE_INTERVAL_SEC;
+                secRemaining = captureIntervalSec;
                 showToast('Flux caméra repris');
             }
         }
@@ -1724,6 +1738,11 @@
             const savedTab = localStorage.getItem('autoinsta_active_tab');
             if (savedTab === 'settings') {
                 switchTab('settings');
+            }
+
+            const camIntervalInput = document.getElementById('cfg_cam_interval');
+            if (camIntervalInput) {
+                camIntervalInput.value = captureIntervalSec;
             }
 
             // Auto-start camera if camera is enabled in settings

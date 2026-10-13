@@ -361,8 +361,8 @@ Important:
             "quality_pass": True,
             "social_score": None,
             "scene_description": f"Perspective POV locale ({city}).",
-            "caption": f"Instants du quotidien à {city}{bpm_mention}.",
-            "hashtags": ["pov", "dailylife"],
+            "caption": "",
+            "hashtags": [],
             "recommended_action": "POST",
             "reasoning": "OFFLINE_NO_API_KEY"
         }

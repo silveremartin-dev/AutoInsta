@@ -101,6 +101,51 @@ class InstagramPublisher:
         else:
             return self._publish_local_only(capture_id, image_path, full_caption)
 
+    def _build_sidecar_text(self, capture_id: int, full_caption: str) -> str:
+        """Builds a rich, formatted metadata text sidecar containing date, sensors, caption and tags."""
+        cap = db.get_capture(capture_id) or {}
+        sensors = cap.get("sensor_metadata") or {}
+        timestamp = cap.get("timestamp") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        lines = [
+            f"📅 Date & Heure : {timestamp}",
+            f"📸 Cliché AutoInsta #{capture_id}"
+        ]
+
+        # Detailed Sensor metrics
+        sensor_details = []
+        if sensors.get("latitude") and sensors.get("longitude"):
+            sensor_details.append(f"GPS : {sensors.get('latitude')}, {sensors.get('longitude')}")
+        if sensors.get("city"):
+            sensor_details.append(f"Ville : {sensors.get('city')}")
+        if sensors.get("battery_pct") is not None:
+            sensor_details.append(f"Batterie : {sensors.get('battery_pct')}%")
+        if sensors.get("mic_db") or sensors.get("ambient_noise"):
+            sensor_details.append(f"Micro Ambiance : {sensors.get('mic_db') or sensors.get('ambient_noise')} dB")
+        if sensors.get("heart_rate_bpm"):
+            sensor_details.append(f"Pouls : {sensors.get('heart_rate_bpm')} BPM")
+        if sensors.get("steps") or sensors.get("step_cadence"):
+            sensor_details.append(f"Pas : {sensors.get('steps') or sensors.get('step_cadence')}")
+
+        if sensor_details:
+            lines.append("📡 Capteurs : " + " | ".join(sensor_details))
+        else:
+            lines.append("📡 Capteurs : Aucun capteur actif")
+
+        # Caption and Tags
+        lines.append("")
+        lines.append("📝 Légende :")
+        clean_text = cap.get("caption") or full_caption or "Aucune légende saisie."
+        lines.append(clean_text)
+
+        # Tags
+        tags = cap.get("hashtags") or []
+        if tags:
+            lines.append("")
+            lines.append("🏷️ Tags : " + ", ".join([f"#{t.lstrip('#')}" for t in tags]))
+
+        return "\n".join(lines) + "\n"
+
     def _publish_google_photos(self, capture_id: int, image_path: Path, full_caption: str) -> Dict[str, Any]:
         """Copies photo into a user-specified synced folder (Google Photos / Drive / Nextcloud)."""
         import shutil
@@ -112,7 +157,7 @@ class InstagramPublisher:
 
         # Write sidecar description
         sidecar = target_dir / f"{dest_filename}.txt"
-        sidecar.write_text(full_caption, encoding="utf-8")
+        sidecar.write_text(self._build_sidecar_text(capture_id, full_caption), encoding="utf-8")
 
         post_id = f"gphotos_{dest_filename}"
         logger.info(f"[SYNCHRO PRIVÉE] Cliché #{capture_id} exporté vers le dossier synchronisé : {dest_path}")
@@ -137,7 +182,7 @@ class InstagramPublisher:
             import shutil
             shutil.copy2(image_path, dest_path)
             sidecar = target_dir / f"{dest_filename}.txt"
-            sidecar.write_text(full_caption, encoding="utf-8")
+            sidecar.write_text(self._build_sidecar_text(capture_id, full_caption), encoding="utf-8")
         except Exception as e:
             logger.warning(f"Failed to copy to export_directory: {e}")
 
