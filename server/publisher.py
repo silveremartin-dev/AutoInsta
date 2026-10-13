@@ -135,6 +135,7 @@ class InstagramPublisher:
             "success": True,
             "mode": "local_only",
             "post_id": local_post_id,
+            "message": "Archivé dans votre Coffre Privé Local (aucun compte Instagram configuré).",
             "caption": full_caption
         }
 
@@ -148,14 +149,15 @@ class InstagramPublisher:
             "success": True,
             "mode": "dry_run",
             "post_id": simulated_post_id,
+            "message": "Simulation réussie (aucun envoi réel externe).",
             "caption": full_caption
         }
 
     def _publish_instagrapi(self, capture_id: int, image_path: Path, full_caption: str) -> Dict[str, Any]:
         if not self._init_instagrapi():
-            err = "Instagrapi login failed. Check credentials or challenge."
+            err = "Connexion Instagram échouée. Vérifiez vos identifiants ou le challenge de sécurité."
             db.mark_publish_failed(capture_id, err)
-            return {"success": False, "error": err}
+            return {"success": False, "error": err, "message": err}
 
         try:
             if settings.target_type == "story":
@@ -166,12 +168,17 @@ class InstagramPublisher:
             post_id = str(media.pk) if hasattr(media, "pk") else f"ig_{int(time.time())}"
             db.mark_published(capture_id, post_id, "instagrapi")
             db.log_event("INFO", f"Published post {post_id} to Instagram via instagrapi")
-            return {"success": True, "mode": "instagrapi", "post_id": post_id}
+            return {
+                "success": True,
+                "mode": "instagrapi",
+                "post_id": post_id,
+                "message": f"Publié avec succès sur votre compte Instagram (@{settings.instagram_username}) !"
+            }
         except Exception as e:
-            err = f"Instagrapi upload error: {str(e)}"
+            err = f"Erreur de publication Instagram: {str(e)}"
             logger.error(err, exc_info=True)
             db.mark_publish_failed(capture_id, err)
-            return {"success": False, "error": err}
+            return {"success": False, "error": err, "message": err}
 
     def _publish_meta_graph(self, capture_id: int, image_path: Path, full_caption: str) -> Dict[str, Any]:
         # Official Meta Graph API flow requires a publicly accessible image URL

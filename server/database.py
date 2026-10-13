@@ -234,7 +234,7 @@ class Database:
             cursor.execute("SELECT COUNT(*) FROM captures WHERE status = 'PUBLISHED'")
             published = cursor.fetchone()[0]
 
-            cursor.execute("SELECT COUNT(*) FROM captures WHERE status = 'REJECTED'")
+            cursor.execute("SELECT COUNT(*) FROM captures WHERE status LIKE 'REJECT%'")
             rejected = cursor.fetchone()[0]
 
             cursor.execute("SELECT AVG(social_score) FROM captures WHERE social_score IS NOT NULL")

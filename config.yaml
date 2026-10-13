@@ -7,8 +7,8 @@ server:
 sensors:
   enable_camera: true
   enable_gps: true
-  enable_accelerometer: true
-  enable_light_sensor: true
+  enable_accelerometer: false
+  enable_light_sensor: false
   enable_microphone: false
   enable_barometer: false
   enable_battery: true

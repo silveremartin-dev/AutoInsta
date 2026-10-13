@@ -346,6 +346,59 @@ async def update_storage_paths(req: StorageUpdateRequest):
     settings.save()
     return {"success": True, "storage": get_storage_details()}
 
+@app.get("/api/diagnostic/gemini")
+async def diagnostic_gemini():
+    """Validates Gemini API Key by testing the client connection."""
+    if not settings.gemini_api_key or settings.gemini_api_key.startswith("your_"):
+        return {"valid": False, "message": "Aucune clé Gemini renseignée (Mode simulation locale actif)."}
+
+    try:
+        if hasattr(evaluator, "client") and evaluator.client and hasattr(evaluator, "sdk_type") and evaluator.sdk_type == "google-genai":
+            res = evaluator.client.models.generate_content(
+                model=settings.vlm_model,
+                contents="Ping. Réponds OK."
+            )
+            return {"valid": True, "message": f"Clé Google AI Studio opérationnelle ({settings.vlm_model})."}
+        elif hasattr(evaluator, "legacy_model") and evaluator.legacy_model:
+            res = evaluator.legacy_model.generate_content("Ping. Réponds OK.")
+            return {"valid": True, "message": f"Clé Google AI Studio opérationnelle ({settings.vlm_model})."}
+        else:
+            return {"valid": False, "message": "Client Gemini non initialisé. Vérifiez votre clé."}
+    except Exception as e:
+        err = str(e)
+        if "401" in err or "UNAUTHENTICATED" in err or "API_KEY_INVALID" in err:
+            return {"valid": False, "message": "Clé Google Gemini invalide ou expirée (Erreur 401)."}
+        return {"valid": False, "message": f"Erreur API Gemini : {err[:80]}"}
+
+@app.get("/api/diagnostic/storage")
+async def diagnostic_storage():
+    """Validates read/write permissions for storage directories."""
+    storage_ok = False
+    export_ok = False
+    try:
+        settings.storage_dir.mkdir(parents=True, exist_ok=True)
+        test_file = settings.storage_dir / ".write_test"
+        test_file.write_text("ok")
+        test_file.unlink()
+        storage_ok = True
+    except Exception:
+        storage_ok = False
+
+    try:
+        settings.export_directory.mkdir(parents=True, exist_ok=True)
+        test_file2 = settings.export_directory / ".write_test"
+        test_file2.write_text("ok")
+        test_file2.unlink()
+        export_ok = True
+    except Exception:
+        export_ok = False
+
+    return {
+        "storage_ok": storage_ok,
+        "export_ok": export_ok,
+        "message": "Dossiers de stockage vérifiés et accessibles en écriture." if (storage_ok and export_ok) else "Problème d'accès aux dossiers de stockage."
+    }
+
 @app.get("/api/stats")
 async def get_stats():
     return db.get_stats()
