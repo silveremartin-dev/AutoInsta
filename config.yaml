@@ -51,7 +51,7 @@ vlm:
 publisher:
   mode: local_only
   export_directory: data/my_private_photos
-  require_manual_confirmation: true
+  require_manual_confirmation: false
   target_type: feed
   min_interval_minutes: 60
   max_daily_posts: 4

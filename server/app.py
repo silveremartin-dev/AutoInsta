@@ -40,21 +40,31 @@ def process_capture_pipeline(capture_id: int, image_path: Path, sensor_metadata:
         
         # Determine status based on manual confirmation setting
         if eval_result.get("recommended_action") == "POST":
-            social_score = eval_result.get("social_score", 0.0)
-            safety_pass = eval_result.get("safety_pass", False)
-            quality_pass = eval_result.get("quality_pass", False)
+            social_score = eval_result.get("social_score")
+            safety_pass = eval_result.get("safety_pass", True)
+            quality_pass = eval_result.get("quality_pass", True)
 
-            if safety_pass and quality_pass and social_score >= settings.min_social_score:
+            # Pass condition: score meets threshold, or offline mode where score is None
+            score_pass = (social_score is None) or (social_score >= settings.min_social_score)
+
+            if safety_pass and quality_pass and score_pass:
                 if settings.require_manual_confirmation:
                     eval_result["status"] = "PENDING_APPROVAL"
                     db.update_evaluation(capture_id, eval_result)
-                    db.log_event("INFO", f"Capture #{capture_id} approved by AI, waiting for user manual confirmation.")
+                    db.log_event("INFO", f"Capture #{capture_id} retenue, en attente de votre accord manuel.")
                     return
                 else:
+                    eval_result["status"] = "ACCEPTED"
                     db.update_evaluation(capture_id, eval_result)
                     caption = eval_result.get("caption", "")
                     hashtags = eval_result.get("hashtags", [])
-                    publisher.publish(capture_id, image_path, caption, hashtags)
+                    pub_res = publisher.publish(capture_id, image_path, caption, hashtags)
+                    if pub_res.get("success"):
+                        db.log_event("INFO", f"Capture #{capture_id} publiée automatiquement (Mode automatique actif).")
+                    else:
+                        reason = pub_res.get("reason") or "Attente de cooldown"
+                        db.update_status(capture_id, "PENDING_APPROVAL")
+                        db.log_event("WARNING", f"Capture #{capture_id} non diffusée immédiatement ({reason}), placée en attente.")
                     return
         
         eval_result["status"] = "REJECTED"

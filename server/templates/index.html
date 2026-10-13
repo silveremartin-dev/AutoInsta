@@ -228,14 +228,16 @@
                                 <span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow">
                                     <i class="fa-solid fa-ban"></i> Rejeté
                                 </span>
-                                {% elif cap.status == 'PENDING_APPROVAL' or cap.status == 'PENDING' or cap.status == 'QUEUED_FOR_EVALUATION' %}
-                                <span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow">
-                                    <i class="fa-solid fa-clock"></i> En attente accord
-                                </span>
-                                {% elif cap.status == 'ACCEPTED' %}
-                                <span class="px-2.5 py-1 text-[11px] font-semibold bg-blue-500 text-white rounded-full shadow">
-                                    Accepté IA
-                                </span>
+                                {% elif cap.status == 'PENDING_APPROVAL' or cap.status == 'PENDING' or cap.status == 'QUEUED_FOR_EVALUATION' or cap.status == 'ACCEPTED' %}
+                                    {% if not settings.require_manual_confirmation %}
+                                    <span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow">
+                                        <i class="fa-solid fa-bolt"></i> Traitement auto...
+                                    </span>
+                                    {% else %}
+                                    <span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow">
+                                        <i class="fa-solid fa-clock"></i> En attente accord
+                                    </span>
+                                    {% endif %}
                                 {% else %}
                                 <span class="px-2.5 py-1 text-[11px] font-semibold bg-gray-600 text-white rounded-full shadow">
                                     {{ cap.status }}
@@ -319,9 +321,15 @@
                                 <span class="text-gray-500 font-mono text-[11px]">#{{ cap.id }}</span>
                                 <div class="flex items-center gap-1.5">
                                     {% if cap.status != 'PUBLISHED' %}
-                                    <button onclick="approveCapture({{ cap.id }})" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="Publier ou exporter ce cliché">
-                                        <i class="fa-solid fa-paper-plane mr-0.5"></i> Publier
-                                    </button>
+                                        {% if settings.require_manual_confirmation %}
+                                        <button onclick="approveCapture({{ cap.id }})" class="publish-btn px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="Publier ou exporter ce cliché">
+                                            <i class="fa-solid fa-paper-plane mr-0.5"></i> Publier
+                                        </button>
+                                        {% else %}
+                                        <button disabled class="publish-btn px-3 py-1.5 rounded-xl bg-gray-800 text-gray-500 border border-gray-700/60 text-xs font-semibold cursor-not-allowed flex items-center gap-1 opacity-50" title="Mode automatique actif : publication sans action manuelle">
+                                            <i class="fa-solid fa-bolt text-amber-400/60 mr-0.5"></i> Auto
+                                        </button>
+                                        {% endif %}
                                     {% endif %}
                                     {% if not cap.status.startswith('REJECT') %}
                                     <button onclick="rejectCaptureManual({{ cap.id }})" class="px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="Rejeter ce cliché (conservé sur le disque)">
@@ -810,6 +818,7 @@
         let isGpsConfigured = {{ 'true' if settings.enable_gps else 'false' }};
         let isMicConfigured = {{ 'true' if settings.enable_microphone else 'false' }};
         let hasGeminiKey = {{ 'true' if has_gemini_key else 'false' }};
+        let isManualMode = {{ 'true' if settings.require_manual_confirmation else 'false' }};
 
         function updateCameraInterval(val) {
             const num = Math.max(5, parseInt(val) || 60);
@@ -1027,8 +1036,7 @@
         function renderCaptureCard(cap, hasGemini) {
             const isPublished = cap.status === 'PUBLISHED';
             const isRejected = cap.status && cap.status.startsWith('REJECT');
-            const isPending = cap.status === 'PENDING_APPROVAL' || cap.status === 'PENDING' || cap.status === 'QUEUED_FOR_EVALUATION';
-            const isAccepted = cap.status === 'ACCEPTED';
+            const isPending = cap.status === 'PENDING_APPROVAL' || cap.status === 'PENDING' || cap.status === 'QUEUED_FOR_EVALUATION' || cap.status === 'ACCEPTED';
 
             // Status badge
             let statusBadge = '';
@@ -1037,9 +1045,11 @@
             } else if (isRejected) {
                 statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-ban"></i> Rejeté</span>';
             } else if (isPending) {
-                statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-clock"></i> En attente accord</span>';
-            } else if (isAccepted) {
-                statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-blue-500 text-white rounded-full shadow">Accepté IA</span>';
+                if (!isManualMode) {
+                    statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-bolt"></i> Traitement auto...</span>';
+                } else {
+                    statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-clock"></i> En attente accord</span>';
+                }
             } else {
                 statusBadge = `<span class="px-2.5 py-1 text-[11px] font-semibold bg-gray-600 text-white rounded-full shadow">${escapeHtml(cap.status || 'En cours')}</span>`;
             }
@@ -1098,10 +1108,20 @@
             }
 
             // Publish button
-            const publishBtn = !isPublished ? `
-                <button onclick="approveCapture(${cap.id})" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="Publier ou exporter ce cliché">
-                    <i class="fa-solid fa-paper-plane mr-0.5"></i> Publier
-                </button>` : '';
+            let publishBtn = '';
+            if (!isPublished) {
+                if (isManualMode) {
+                    publishBtn = `
+                    <button onclick="approveCapture(${cap.id})" class="publish-btn px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="Publier ou exporter ce cliché">
+                        <i class="fa-solid fa-paper-plane mr-0.5"></i> Publier
+                    </button>`;
+                } else {
+                    publishBtn = `
+                    <button disabled class="publish-btn px-3 py-1.5 rounded-xl bg-gray-800 text-gray-500 border border-gray-700/60 text-xs font-semibold cursor-not-allowed flex items-center gap-1 opacity-50" title="Mode automatique actif : publication sans action manuelle">
+                        <i class="fa-solid fa-bolt text-amber-400/60 mr-0.5"></i> Auto
+                    </button>`;
+                }
+            }
 
             // Reject button (keeps on disk)
             const rejectBtn = !isRejected ? `
@@ -1232,10 +1252,25 @@
                                 if (badgeContainer) {
                                     if (cap.status === 'PUBLISHED') {
                                         badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-check"></i> Publié</span>';
+                                        // Remove publish / auto button from card since it is already published
+                                        const actionsDiv = card.querySelector('.pt-3.border-t .flex.items-center.gap-1\\.5');
+                                        if (actionsDiv) {
+                                            actionsDiv.querySelectorAll('.publish-btn, button').forEach(btn => {
+                                                if (btn.textContent && (btn.textContent.includes('Publier') || btn.textContent.includes('Auto'))) btn.remove();
+                                            });
+                                        }
                                     } else if (cap.status && cap.status.startsWith('REJECT')) {
                                         badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-ban"></i> Rejeté</span>';
-                                    } else if (cap.status === 'ACCEPTED') {
-                                        badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-blue-500 text-white rounded-full shadow">Accepté IA</span>';
+                                    } else if (cap.status === 'ACCEPTED' || cap.status === 'PENDING' || cap.status === 'PENDING_APPROVAL' || cap.status === 'QUEUED_FOR_EVALUATION') {
+                                        if (!isManualMode) {
+                                            badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-bolt"></i> Traitement auto...</span>';
+                                        } else {
+                                            if (cap.status === 'ACCEPTED') {
+                                                badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-blue-500 text-white rounded-full shadow">Accepté IA</span>';
+                                            } else {
+                                                badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-clock"></i> En attente accord</span>';
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1465,28 +1500,60 @@
         // ========================================================
         // 5. VALIDATION INSTANTANÉE (OPTIONS & PARAMÈTRES)
         // ========================================================
+        function applyValidationModeUI(isManual) {
+            isManualMode = isManual;
+            const btn = document.getElementById('validationToggleBtn');
+            const dot = document.getElementById('validationDot');
+            const label = document.getElementById('validationToggleLabel');
+            if (btn && dot && label) {
+                if (isManual) {
+                    btn.className = 'hidden sm:flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60';
+                    dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+                    label.textContent = 'Manuelle';
+                } else {
+                    btn.className = 'hidden sm:flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60';
+                    dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+                    label.textContent = 'Automatique';
+                }
+            }
+            const chk = document.getElementById('require_approval');
+            if (chk) chk.checked = isManual;
+
+            // Instantly update all gallery cards according to mode
+            document.querySelectorAll('.capture-card').forEach(card => {
+                const status = card.dataset.status || '';
+                if (status !== 'PUBLISHED' && !status.startsWith('REJECT')) {
+                    const badgeContainer = card.querySelector('.absolute.top-2\\.5.left-2\\.5');
+                    if (badgeContainer) {
+                        if (isManual) {
+                            badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-clock"></i> En attente accord</span>';
+                        } else {
+                            badgeContainer.innerHTML = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-bolt"></i> Traitement auto...</span>';
+                        }
+                    }
+                    const actionsDiv = card.querySelector('.pt-3.border-t .flex.items-center.gap-1\\.5');
+                    if (actionsDiv) {
+                        const capId = card.id.replace('capture_card_', '');
+                        const oldBtn = actionsDiv.querySelector('.publish-btn, button[onclick*="approveCapture"]');
+                        if (oldBtn) {
+                            if (isManual) {
+                                oldBtn.outerHTML = `<button onclick="approveCapture(${capId})" class="publish-btn px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="Publier ou exporter ce cliché"><i class="fa-solid fa-paper-plane mr-0.5"></i> Publier</button>`;
+                            } else {
+                                oldBtn.outerHTML = `<button disabled class="publish-btn px-3 py-1.5 rounded-xl bg-gray-800 text-gray-500 border border-gray-700/60 text-xs font-semibold cursor-not-allowed flex items-center gap-1 opacity-50" title="Mode automatique actif : publication sans action manuelle"><i class="fa-solid fa-bolt text-amber-400/60 mr-0.5"></i> Auto</button>`;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         async function toggleValidationMode() {
             try {
                 const res = await fetch('/api/settings/toggle-validation', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    const btn = document.getElementById('validationToggleBtn');
-                    const dot = document.getElementById('validationDot');
-                    const label = document.getElementById('validationToggleLabel');
-                    const isManual = data.require_manual_confirmation;
-
-                    if (isManual) {
-                        btn.className = 'hidden sm:flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60';
-                        dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
-                        label.textContent = 'Manuelle';
-                    } else {
-                        btn.className = 'hidden sm:flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60';
-                        dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
-                        label.textContent = 'Automatique';
-                    }
-                    const chk = document.getElementById('require_approval');
-                    if (chk) chk.checked = isManual;
-                    showToast('✓ Mode de validation basculé en : ' + (isManual ? 'Manuelle' : 'Automatique'));
+                    applyValidationModeUI(data.require_manual_confirmation);
+                    showToast('✓ Mode de validation basculé en : ' + (data.require_manual_confirmation ? 'Manuelle' : 'Automatique'));
                 }
             } catch (err) {}
         }
@@ -1495,13 +1562,15 @@
         function autoSaveGeneralSettings() {
             if (autoSaveTimer) clearTimeout(autoSaveTimer);
             autoSaveTimer = setTimeout(async () => {
+                const isManual = document.getElementById('require_approval').checked;
+                applyValidationModeUI(isManual);
                 const payload = {
                     persona: document.getElementById('cfg_persona').value,
                     min_social_score: parseFloat(document.getElementById('cfg_min_score').value) || 7.0,
                     language: document.getElementById('cfg_language').value,
                     persona_instructions: document.getElementById('cfg_instructions').value,
                     publish_mode: document.getElementById('cred_mode').value,
-                    require_manual_confirmation: document.getElementById('require_approval').checked,
+                    require_manual_confirmation: isManual,
                     min_interval_minutes: parseInt(document.getElementById('cfg_min_interval').value) || 60,
                     max_daily_posts: parseInt(document.getElementById('cfg_max_daily').value) || 4
                 };
@@ -1520,6 +1589,8 @@
         function autoSaveSensorConfig() {
             if (autoSaveTimer) clearTimeout(autoSaveTimer);
             autoSaveTimer = setTimeout(async () => {
+                const isManual = document.getElementById('require_approval').checked;
+                applyValidationModeUI(isManual);
                 const payload = {
                     enable_camera: document.getElementById('sensor_cam').checked,
                     enable_gps: document.getElementById('sensor_gps').checked,
@@ -1535,7 +1606,7 @@
                     hr_max_bpm: parseInt(document.getElementById('hr_max').value) || 145,
                     hr_countdown_seconds: parseInt(document.getElementById('hr_countdown').value) || 10,
                     hr_webhook_url: document.getElementById('hr_webhook').value,
-                    require_manual_confirmation: document.getElementById('require_approval').checked
+                    require_manual_confirmation: isManual
                 };
 
                 try {
