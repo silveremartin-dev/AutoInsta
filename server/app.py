@@ -185,7 +185,7 @@ async def upload_capture(
     """
     token_provided = api_key or auth_token
     if settings.client_api_key and token_provided != settings.client_api_key:
-        pass
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid or missing client API key")
 
     # Parse sensor metadata if provided
     sensor_dict = {}
@@ -196,8 +196,10 @@ async def upload_capture(
         except Exception:
             sensor_dict = {}
 
-    # Generate unique filename
-    ext = Path(file.filename or "frame.jpg").suffix or ".jpg"
+    # Validate image extension against whitelist to prevent path traversal
+    allowed_exts = {".jpg", ".jpeg", ".png", ".webp"}
+    raw_ext = Path(file.filename or "frame.jpg").suffix.lower()
+    ext = raw_ext if raw_ext in allowed_exts else ".jpg"
     unique_filename = f"{uuid.uuid4().hex[:12]}_{source}{ext}"
     dest_path = settings.storage_dir / unique_filename
 

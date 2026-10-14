@@ -3,7 +3,7 @@ chcp 65001 >nul
 title AutoInsta - Windows Launcher
 
 echo ====================================================================
-echo                   AUTOINSTA - LANCEUR WINDOWS
+echo                   AUTOINSTA - WINDOWS LAUNCHER
 echo ====================================================================
 
 set PYTHON_CMD=
@@ -28,9 +28,9 @@ if %ERRORLEVEL% equ 0 (
     goto :found_python
 )
 
-echo [!] ERREUR : Python est introuvable sur votre système !
-echo     Veuillez installer Python 3.10+ depuis https://www.python.org/
-echo     et cocher la case "Add Python to PATH".
+echo [!] ERROR: Python is not found on your system!
+echo     Please install Python 3.10+ from https://www.python.org/
+echo     and ensure "Add Python to PATH" is checked during setup.
 pause
 exit /b 1
 
@@ -48,6 +48,6 @@ if not "%~1"=="" (
 :done
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo [!] Le programme s'est arrêté avec une erreur.
+    echo [!] Program terminated with an error.
     pause
 )

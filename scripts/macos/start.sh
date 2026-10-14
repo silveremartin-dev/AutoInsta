@@ -10,8 +10,8 @@ if command -v python3 >/dev/null 2>&1; then
 elif command -v python >/dev/null 2>&1; then
     PYTHON_CMD="python"
 else
-    echo "[!] Erreur : Python est introuvable sur votre Mac."
-    echo "    Veuillez installer Python 3.10+ (ex: brew install python3)."
+    echo "[!] Error: Python is not found on your Mac."
+    echo "    Please install Python 3.10+ (e.g. brew install python3)."
     exit 1
 fi
 

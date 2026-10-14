@@ -43,7 +43,7 @@ def get_local_ip() -> str:
 
 def check_and_install_dependencies():
     """Checks required dependencies and installs missing ones."""
-    print("\n[*] Verification des dependances requises...")
+    print("\n[*] Checking required dependencies...")
     missing = []
     
     modules = {
@@ -54,7 +54,8 @@ def check_and_install_dependencies():
         "pydantic": "pydantic",
         "dotenv": "python-dotenv",
         "multipart": "python-multipart",
-        "yaml": "pyyaml"
+        "yaml": "pyyaml",
+        "cryptography": "cryptography"
     }
     
     for mod, pkg in modules.items():
@@ -64,22 +65,22 @@ def check_and_install_dependencies():
             missing.append(pkg)
             
     if missing:
-        print(f"[!] Dependances manquantes detectees : {', '.join(missing)}")
-        print("[*] Installation automatique via pip...")
+        print(f"[!] Missing dependencies detected: {', '.join(missing)}")
+        print("[*] Installing automatically via pip...")
         cmd = [sys.executable, "-m", "pip", "install", *missing]
         res = subprocess.run(cmd)
         if res.returncode == 0:
-            print("[✓] Toutes les dependances ont ete installees avec succes !\n")
+            print("[✓] All dependencies installed successfully!\n")
         else:
-            print("[!] Erreur lors de l'installation. Veuillez executer : pip install -r requirements.txt\n")
+            print("[!] Installation error. Please run: pip install -r requirements.txt\n")
     else:
-        print("[✓] Toutes les dependances requises sont pretes.\n")
+        print("[✓] All required dependencies are present.\n")
 
 def open_browser_delayed(url: str, delay: float = 1.5):
     """Opens default web browser after server starts."""
     def _open():
         time.sleep(delay)
-        print(f"[*] Ouverture de l'interface dans votre navigateur : {url}")
+        print(f"[*] Opening dashboard in default browser: {url}")
         webbrowser.open(url)
     t = threading.Thread(target=_open, daemon=True)
     t.start()
@@ -97,7 +98,7 @@ def ensure_port_is_free(port: int = 8000):
                     pids.add(parts[-1])
             for pid in pids:
                 if pid != "0" and int(pid) != os.getpid():
-                    print(f"[*] Port {port} occupe par l'ancien processus #{pid}. Liberation automatique...")
+                    print(f"[*] Port {port} occupied by previous process #{pid}. Releasing...")
                     subprocess.run(f"taskkill /F /PID {pid}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     time.sleep(1)
         except Exception:
@@ -108,35 +109,54 @@ def ensure_port_is_free(port: int = 8000):
             pids = subprocess.check_output(cmd, shell=True).decode().strip().splitlines()
             for pid in pids:
                 if pid and int(pid) != os.getpid():
-                    print(f"[*] Liberation du port {port} (processus #{pid})...")
+                    print(f"[*] Releasing port {port} (process #{pid})...")
                     subprocess.run(f"kill -9 {pid}", shell=True)
                     time.sleep(1)
         except Exception:
             pass
 
-def run_server(host: str = "0.0.0.0", port: int = 8000, auto_open: bool = True):
-    """Starts FastAPI/Uvicorn server."""
+def ensure_ssl_certs():
+    """Generates self-signed SSL certs if they don't already exist."""
+    cert_path = PROJECT_ROOT / "certs" / "cert.pem"
+    key_path = PROJECT_ROOT / "certs" / "key.pem"
+    if not cert_path.exists() or not key_path.exists():
+        print("[*] SSL certificate not found. Generating TLS cert with Subject Alternative Names (SAN)...")
+        from scripts.generate_ssl_certs import generate_self_signed_cert
+        generate_self_signed_cert()
+    return cert_path, key_path
+
+def run_server(host: str = "0.0.0.0", port: int = 8000, auto_open: bool = True, use_ssl: bool = False):
+    """Starts FastAPI/Uvicorn server with optional TLS/HTTPS."""
     ensure_port_is_free(port)
     local_ip = get_local_ip()
-    url_localhost = f"http://localhost:{port}"
-    url_network = f"http://{local_ip}:{port}"
+    proto = "https" if use_ssl else "http"
+    url_localhost = f"{proto}://localhost:{port}"
+    url_network = f"{proto}://{local_ip}:{port}"
     
     print("\n" + "=" * 68)
-    print(" 🚀 AUTOINSTA - SERVEUR LOCAL & TABLEAU DE BORD DEMARRE ")
+    print(f" 🚀 AUTOINSTA - LOCAL SERVER & DASHBOARD STARTED ({proto.upper()}) ")
     print("=" * 68)
-    print(f"  💻 Acces depuis ce PC   : {url_localhost}")
-    print(f"  📱 Acces depuis Mobile  : {url_network}")
-    print(f"  📚 Documentation API    : {url_localhost}/docs")
+    print(f"  💻 PC Access          : {url_localhost}")
+    print(f"  📱 Mobile LAN Access  : {url_network}")
+    print(f"  📚 API Documentation  : {url_localhost}/docs")
+    if use_ssl:
+        print(f"  🔒 TLS Encryption     : Enabled (Self-Signed / SAN)")
     print("-" * 68)
-    print("  👉 Sur votre smartphone (Termux ou navigateur sur le meme Wi-Fi) :")
-    print(f"     Utilisez l'URL : {url_network}")
+    print("  👉 On your smartphone (Termux or browser on the same Wi-Fi):")
+    print(f"     Navigate to: {url_network}")
+    if use_ssl:
+        print("     (Accept the self-signed certificate warning on first mobile connection)")
     print("=" * 68 + "\n")
     
     if auto_open:
         open_browser_delayed(url_localhost)
         
     import uvicorn
-    uvicorn.run("server.app:app", host=host, port=port, reload=True)
+    if use_ssl:
+        cert_path, key_path = ensure_ssl_certs()
+        uvicorn.run("server.app:app", host=host, port=port, reload=True, ssl_certfile=str(cert_path), ssl_keyfile=str(key_path))
+    else:
+        uvicorn.run("server.app:app", host=host, port=port, reload=True)
 
 def run_demo_simulation(port: int = 8000):
     """Runs demo simulation posting test captures periodically."""
@@ -149,12 +169,12 @@ def run_demo_simulation(port: int = 8000):
     url_localhost = f"http://localhost:{port}"
     
     print("\n" + "=" * 68)
-    print(" 🎭 MODE DEMO & SIMULATION INTERACTIVE AUTOINSTA ")
+    print(" 🎭 AUTOINSTA - DEMO & INTERACTIVE SIMULATION MODE ")
     print("=" * 68)
-    print("  Ce mode demarre le serveur ET simule l'activite d'un smartphone :")
-    print("  - Injection automatique de captures d'ecran / photos de test")
-    print("  - Donnees capteurs realistes (BPM cardiaque, Lux, Batterie, GPS)")
-    print(f"  💻 Tableau de bord : {url_localhost}")
+    print("  This mode runs the server AND simulates smartphone captures:")
+    print("  - Automatic POV test frame injection")
+    print("  - Realistic telemetry (BPM, Lux, Battery %, GPS)")
+    print(f"  💻 Dashboard : {url_localhost}")
     print("=" * 68 + "\n")
     
     open_browser_delayed(url_localhost)
@@ -169,15 +189,15 @@ def run_demo_simulation(port: int = 8000):
     time.sleep(2)
     
     scenes = [
-        ("Terrasse de cafe ensoleillee", "Paris, France", 48.8566, 2.3522, 650, 72),
-        ("Seance de marche rapide", "Parc des Buttes-Chaumont", 48.8809, 2.3828, 420, 118),
-        ("Session de travail sur laptop", "Espace Coworking", 48.8606, 2.3376, 210, 68),
-        ("Promenade nocturne", "Quais de Seine", 48.8584, 2.2945, 15, 64)
+        ("Sunny cafe terrace", "Paris, France", 48.8566, 2.3522, 650, 72),
+        ("Brisk walk session", "Parc des Buttes-Chaumont", 48.8809, 2.3828, 420, 118),
+        ("Deep work on laptop", "Coworking Space", 48.8606, 2.3376, 210, 68),
+        ("Night city stroll", "Seine Riverbanks", 48.8584, 2.2945, 15, 64)
     ]
     
     step = 0
-    print("[*] Simulateur actif. Envoi d'une capture toutes les 25 secondes...")
-    print("    (Appuyez sur Ctrl+C pour arreter le mode demo a tout moment)\n")
+    print("[*] Simulator active. Posting test capture every 25 seconds...")
+    print("    (Press Ctrl+C to stop demo mode at any time)\n")
     
     try:
         while True:
@@ -188,9 +208,9 @@ def run_demo_simulation(port: int = 8000):
             draw = ImageDraw.Draw(img)
             draw.rectangle([20, 20, 620, 460], outline=(255, 255, 255), width=3)
             draw.text((40, 50), f"AutoInsta POV Demo - #{step}", fill=(255, 255, 255))
-            draw.text((40, 90), f"Contexte : {scene_name}", fill=(220, 240, 255))
-            draw.text((40, 130), f"Lieu     : {loc_city}", fill=(200, 220, 240))
-            draw.text((40, 170), f"Heure    : {time.strftime('%H:%M:%S')}", fill=(200, 220, 240))
+            draw.text((40, 90), f"Context : {scene_name}", fill=(220, 240, 255))
+            draw.text((40, 130), f"Place   : {loc_city}", fill=(200, 220, 240))
+            draw.text((40, 170), f"Time    : {time.strftime('%H:%M:%S')}", fill=(200, 220, 240))
             
             buf = io.BytesIO()
             img.save(buf, format="JPEG")
@@ -211,47 +231,53 @@ def run_demo_simulation(port: int = 8000):
             try:
                 r = requests.post(
                     f"http://127.0.0.1:{port}/api/capture/upload",
-                    headers={"X-Device-Token": "autoinsta_device_secret_token_123"},
+                    headers={"X-API-Key": "autoinsta_device_secret_token_123"},
                     files=files,
                     data=data,
                     timeout=5
                 )
                 if r.status_code == 200:
                     resp_json = r.json()
-                    print(f"[{time.strftime('%H:%M:%S')}] ✓ Capture #{resp_json.get('capture_id')} envoyee : {scene_name} ({base_bpm} BPM, {lux} Lux)")
+                    print(f"[{time.strftime('%H:%M:%S')}] ✓ Demo capture #{resp_json.get('capture_id')} uploaded: {scene_name} ({base_bpm} BPM, {lux} Lux)")
                 else:
-                    print(f"[!] Echec upload : {r.status_code}")
+                    print(f"[!] Upload failed with HTTP {r.status_code}")
             except Exception as e:
-                print(f"[!] Erreur envoi demo : {e}")
+                print(f"[!] Upload error: {e}")
                 
             time.sleep(25)
     except KeyboardInterrupt:
-        print("\n[*] Arret du Mode Demo.")
+        print("\n[*] Demo Mode stopped.")
 
-def run_all_in_one(port: int = 8000):
+def run_all_in_one(port: int = 8000, use_ssl: bool = False):
     """Starts both Server and background Webcam capture in a single process."""
     ensure_port_is_free(port)
     check_and_install_dependencies()
+    proto = "https" if use_ssl else "http"
     print("\n" + "=" * 68)
-    print(" 📷 DEMARRAGE TOUT-EN-UN : SERVEUR + WEBCAM PC ")
+    print(" 📷 ALL-IN-ONE MODE: SERVER + PC WEBCAM ")
     print("=" * 68)
-    print("  Le serveur et la capture webcam locale sont lances ensemble.")
+    print(f"  Server and local webcam capture running concurrently ({proto.upper()}).")
     print("=" * 68 + "\n")
     
     import uvicorn
+    ssl_kwargs = {}
+    if use_ssl:
+        cert_path, key_path = ensure_ssl_certs()
+        ssl_kwargs = {"ssl_certfile": str(cert_path), "ssl_keyfile": str(key_path)}
+        
     server_thread = threading.Thread(
-        target=lambda: uvicorn.run("server.app:app", host="0.0.0.0", port=port, log_level="warning"),
+        target=lambda: uvicorn.run("server.app:app", host="0.0.0.0", port=port, log_level="warning", **ssl_kwargs),
         daemon=True
     )
     server_thread.start()
     time.sleep(2)
-    open_browser_delayed(f"http://localhost:{port}")
+    open_browser_delayed(f"{proto}://localhost:{port}")
     
     try:
         from client.python_cam.cam_client import run_cam_client
-        run_cam_client(server_url=f"http://127.0.0.1:{port}/api/capture/upload")
+        run_cam_client(server_url=f"{proto}://127.0.0.1:{port}/api/capture/upload")
     except KeyboardInterrupt:
-        print("\n[*] Arret du mode Tout-en-Un.")
+        print("\n[*] All-in-One mode stopped.")
 
 def run_tests():
     """Runs the complete test suite."""
@@ -270,64 +296,77 @@ def manage_autostart(enable: bool):
     subprocess.run([sys.executable, str(autostart_script), action])
 
 def interactive_menu():
-    """Interactive command-line menu without unprintable characters."""
+    """Interactive command-line menu."""
     while True:
         print("\n" + "=" * 68)
-        print("          AUTOINSTA - MENU PRINCIPAL DE DEMARRAGE")
+        print("          AUTOINSTA - MAIN LAUNCHER MENU")
         print("=" * 68)
-        print("  [1] Demarrer AutoInsta (Serveur + Interface Web avec Camera Integree) [Recommande]")
-        print("  [2] Demarrer AutoInsta Tout-en-Un (Serveur + Webcam locale en arriere-plan)")
-        print("  [3] Mode Demo (Simulation photos & capteurs de test)")
-        print("  [4] Executer la Suite de Tests Complete")
-        print("  [5] Installer ou Mettre a jour les dependances requises")
-        print("  [6] Activer l'Autodemarrage au Boot (Windows / macOS / Linux)")
-        print("  [7] Desactiver l'Autodemarrage")
-        print("  [0] Quitter")
+        print("  [1] Start AutoInsta HTTP (Server + Web UI) [Default]")
+        print("  [2] Start AutoInsta HTTPS (Encrypted TLS for PC <-> Phone)")
+        print("  [3] Start AutoInsta All-in-One (Server + PC Webcam)")
+        print("  [4] Demo Simulation Mode (Periodic test frames & telemetry)")
+        print("  [5] Run Full Test Suite")
+        print("  [6] Install or Update Required Dependencies")
+        print("  [7] Generate / Refresh SSL TLS Certificates")
+        print("  [8] Toggle System Boot Autostart (Windows / macOS / Linux)")
+        print("  [0] Exit")
         print("=" * 68)
         
         try:
-            choice = input("Votre choix [1-7, 0] (defaut: 1) : ").strip()
+            choice = input("Select an option [0-8] (default: 1): ").strip()
         except EOFError:
             choice = "1"
             
         if choice in ("", "1"):
             check_and_install_dependencies()
-            run_server(auto_open=True)
+            run_server(auto_open=True, use_ssl=False)
             break
         elif choice == "2":
-            run_all_in_one()
+            check_and_install_dependencies()
+            run_server(auto_open=True, use_ssl=True)
             break
         elif choice == "3":
+            run_all_in_one()
+            break
+        elif choice == "4":
             check_and_install_dependencies()
             run_demo_simulation()
             break
-        elif choice == "4":
+        elif choice == "5":
             run_tests()
             break
-        elif choice == "5":
-            check_and_install_dependencies()
         elif choice == "6":
-            manage_autostart(True)
+            check_and_install_dependencies()
         elif choice == "7":
-            manage_autostart(False)
+            from scripts.generate_ssl_certs import generate_self_signed_cert
+            generate_self_signed_cert()
+        elif choice == "8":
+            enable = input("Enable autostart? (y/n): ").strip().lower().startswith("y")
+            manage_autostart(enable)
         elif choice == "0":
-            print("\nAu revoir !")
+            print("\nGoodbye!")
             sys.exit(0)
         else:
-            print("[!] Choix non reconnu. Veuillez reessayer.")
+            print("[!] Invalid option. Please try again.")
 
 def main():
     parser = argparse.ArgumentParser(description="AutoInsta Multiplatform Launcher")
-    parser.add_argument("--mode", choices=["server", "demo", "test", "cam", "autostart-enable", "autostart-disable"], help="Mode d'execution direct")
-    parser.add_argument("--host", default="0.0.0.0", help="Adresse IP d'ecoute (defaut: 0.0.0.0)")
-    parser.add_argument("--port", type=int, default=8000, help="Port HTTP (defaut: 8000)")
-    parser.add_argument("--no-browser", action="store_true", help="Ne pas ouvrir automatiquement le navigateur")
-    parser.add_argument("--install", action="store_true", help="Verifier et installer les dependances requises")
+    parser.add_argument("--mode", choices=["server", "demo", "test", "cam", "autostart-enable", "autostart-disable", "ssl-gen"], help="Direct execution mode")
+    parser.add_argument("--host", default="0.0.0.0", help="Listen host address (default: 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=8000, help="Listen port (default: 8000)")
+    parser.add_argument("--ssl", action="store_true", help="Enable TLS/HTTPS encryption with local certificates")
+    parser.add_argument("--no-browser", action="store_true", help="Do not automatically open default browser")
+    parser.add_argument("--install", action="store_true", help="Check and install required dependencies")
     
     args = parser.parse_args()
     
     if args.install:
         check_and_install_dependencies()
+        return
+
+    if args.mode == "ssl-gen":
+        from scripts.generate_ssl_certs import generate_self_signed_cert
+        generate_self_signed_cert()
         return
 
     if args.mode == "demo":
@@ -342,9 +381,10 @@ def main():
     elif args.mode == "autostart-disable":
         manage_autostart(False)
     else:
-        # Default behavior: directly start the application and open browser!
+        # Check environment variable or argument for SSL
+        use_ssl = args.ssl or os.getenv("USE_HTTPS", "").lower() in ("true", "1", "yes")
         check_and_install_dependencies()
-        run_server(host=args.host, port=args.port, auto_open=not args.no_browser)
+        run_server(host=args.host, port=args.port, auto_open=not args.no_browser, use_ssl=use_ssl)
 
 if __name__ == "__main__":
     main()

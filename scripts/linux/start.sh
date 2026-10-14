@@ -10,8 +10,8 @@ if command -v python3 >/dev/null 2>&1; then
 elif command -v python >/dev/null 2>&1; then
     PYTHON_CMD="python"
 else
-    echo "[!] Erreur : Python est introuvable sur votre système Linux."
-    echo "    Veuillez installer Python 3.10+ (ex: sudo apt install python3 python3-pip)."
+    echo "[!] Error: Python is not found on your Linux system."
+    echo "    Please install Python 3.10+ (e.g. sudo apt install python3 python3-pip)."
     exit 1
 fi
 

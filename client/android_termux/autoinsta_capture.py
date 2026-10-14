@@ -95,8 +95,8 @@ def capture_photo(camera_id=0, output_path="/data/data/com.termux/files/home/aut
         print(f"[!] Camera capture exception: {e}")
     return None
 
-def upload_capture(server_url: str, api_key: str, image_path: str, sensor_dict: dict):
-    """POSTs image and sensor metadata to AutoInsta server."""
+def upload_capture(server_url: str, api_key: str, image_path: str, sensor_dict: dict, insecure: bool = True):
+    """POSTs image and sensor metadata to AutoInsta server with HTTPS support."""
     headers = {"X-API-Key": api_key}
     with open(image_path, "rb") as f:
         files = {"file": ("pov_android.jpg", f, "image/jpeg")}
@@ -105,7 +105,10 @@ def upload_capture(server_url: str, api_key: str, image_path: str, sensor_dict: 
             "sensors": json.dumps(sensor_dict)
         }
         try:
-            r = requests.post(server_url, files=files, data=data, headers=headers, timeout=20)
+            # If HTTPS is used on local network, allow self-signed certificates without erroring
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            r = requests.post(server_url, files=files, data=data, headers=headers, timeout=20, verify=not insecure if server_url.startswith("https") else True)
             if r.status_code == 200:
                 print(f"[+] Capture sent successfully! Capture ID: {r.json().get('capture_id')}")
             else:
@@ -120,6 +123,7 @@ def main():
     parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL_SECONDS, help="Interval between photos (s)")
     parser.add_argument("--camera", type=int, default=int(DEFAULT_CAMERA_ID), help="Camera ID (0=Back, 1=Front)")
     parser.add_argument("--min-lux", type=float, default=DEFAULT_MIN_LUX, help="Min ambient lux threshold (0 = disabled)")
+    parser.add_argument("--strict-ssl", action="store_true", help="Enforce CA-signed certificates (disables self-signed LAN support)")
     args = parser.parse_args()
 
     print("==============================================")
@@ -160,7 +164,7 @@ def main():
             print(f"[*] Capturing POV snapshot #{shot_count} (lux: {lux:.1f})...")
             img_path = capture_photo(camera_id=args.camera)
             if img_path:
-                upload_capture(args.server, args.key, img_path, sensor_payload)
+                upload_capture(args.server, args.key, img_path, sensor_payload, insecure=not args.strict_ssl)
             else:
                 print(f"[!] Failed to capture snapshot #{shot_count}")
 

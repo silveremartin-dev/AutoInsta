@@ -45,6 +45,9 @@ class Config:
         self.storage_dir = BASE_DIR / server_cfg.get("storage_dir", "data/captures")
         self.db_path = BASE_DIR / server_cfg.get("db_path", "data/autoinsta.db")
         self.client_api_key = os.getenv("CLIENT_API_KEY", server_cfg.get("client_api_key", "autoinsta_device_secret_token_123"))
+        self.use_https = os.getenv("USE_HTTPS", "").lower() in ("true", "1", "yes") or bool(server_cfg.get("use_https", False))
+        self.ssl_cert_path = BASE_DIR / os.getenv("SSL_CERT_PATH", server_cfg.get("ssl_cert_path", "certs/cert.pem"))
+        self.ssl_key_path = BASE_DIR / os.getenv("SSL_KEY_PATH", server_cfg.get("ssl_key_path", "certs/key.pem"))
 
         # Ensure directories exist
         self.storage_dir.mkdir(parents=True, exist_ok=True)
@@ -129,7 +132,10 @@ class Config:
                 "port": self.server_port,
                 "storage_dir": format_path(self.storage_dir),
                 "db_path": format_path(self.db_path),
-                "client_api_key": self.client_api_key
+                "client_api_key": self.client_api_key,
+                "use_https": self.use_https,
+                "ssl_cert_path": format_path(self.ssl_cert_path),
+                "ssl_key_path": format_path(self.ssl_key_path)
             },
             "sensors": {
                 "enable_camera": self.enable_camera,

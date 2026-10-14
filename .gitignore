@@ -15,6 +15,10 @@ ENV/
 config.local.yaml
 *.session
 session.json
+certs/
+*.pem
+*.crt
+*.key
 
 # Storage & Captures
 data/
