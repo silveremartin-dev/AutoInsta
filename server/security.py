@@ -89,7 +89,8 @@ class SecurityVault:
             salt = base64.b64decode(parts[0])
             expected_hash = base64.b64decode(parts[1])
             test_hash = hashlib.pbkdf2_hmac('sha256', pin.encode('utf-8'), salt, 100000)
-            return test_hash == expected_hash
+            import hmac
+            return hmac.compare_digest(test_hash, expected_hash)
         except Exception:
             return False
 

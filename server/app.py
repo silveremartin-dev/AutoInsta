@@ -77,9 +77,22 @@ def process_capture_pipeline(capture_id: int, image_path: Path, sensor_metadata:
                 db.log_event("INFO", f"Capture #{capture_id} validée et prête pour diffusion (Mode {mode_label}).")
                 return
         
+        action = eval_result.get("recommended_action")
+        if action == "REJECT_PRIVATE":
+            eval_result["status"] = "PURGED_FOR_PRIVACY"
+            # Instantly securely wipe private images (banking, IDs, intimate spaces) from disk
+            try:
+                if image_path.exists():
+                    image_path.unlink()
+            except Exception:
+                pass
+            db.update_evaluation(capture_id, eval_result)
+            db.log_event("WARNING", f"Capture #{capture_id} wiped from storage due to strict privacy rules (Sensitive content detected).")
+            return
+
         eval_result["status"] = "REJECTED"
         db.update_evaluation(capture_id, eval_result)
-        db.log_event("INFO", f"Capture #{capture_id} rejected by VLM ({eval_result.get('recommended_action')}).")
+        db.log_event("INFO", f"Capture #{capture_id} rejected by VLM ({action}).")
 
     except Exception as e:
         db.log_event("ERROR", f"Pipeline error on capture #{capture_id}", str(e))
@@ -130,14 +143,28 @@ def get_storage_details() -> dict:
 
 @app.get("/captures/{filename}")
 async def get_capture_image_file(filename: str):
-    """Dynamic capture file serving with storage_dir fallback."""
-    file_path = settings.storage_dir / filename
-    if file_path.exists():
-        return FileResponse(str(file_path))
-    fallback = BASE_DIR / "data" / "captures" / filename
-    if fallback.exists():
-        return FileResponse(str(fallback))
-    raise HTTPException(status_code=404, detail="Image capture introuvable")
+    """Dynamic capture file serving with path traversal protection."""
+    # Prevent path traversal attacks (SEC-03)
+    if ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename format")
+
+    storage_root = settings.storage_dir.resolve()
+    file_path = (settings.storage_dir / filename).resolve()
+    try:
+        if file_path.is_file() and file_path.is_relative_to(storage_root):
+            return FileResponse(str(file_path))
+    except Exception:
+        pass
+
+    fallback_root = (BASE_DIR / "data" / "captures").resolve()
+    fallback = (fallback_root / filename).resolve()
+    try:
+        if fallback.is_file() and fallback.is_relative_to(fallback_root):
+            return FileResponse(str(fallback))
+    except Exception:
+        pass
+
+    raise HTTPException(status_code=404, detail="Image capture not found")
 
 def is_valid_gemini_key(key: Optional[str]) -> bool:
     """Verifies that the Gemini API key has the real Google AI Studio format."""
