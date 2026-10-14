@@ -77,11 +77,20 @@ def capture_photo(output_path="/data/data/com.termux/files/home/autoinsta_temp.j
         if os.path.exists(output_path):
             os.remove(output_path)
         cmd = ["termux-camera-photo", "-c", str(CAMERA_ID), output_path]
-        subprocess.run(cmd, check=True, timeout=12)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=12)
+        if proc.returncode != 0:
+            if "android.permission.CAMERA" in proc.stderr:
+                print("\n[!] ATTENTION : Permission Caméra requise !")
+                print("    👉 Allez dans Paramètres Android > Applications > Termux:API > Autorisations")
+                print("    👉 Activez 'Appareil photo' (Caméra).\n")
+            else:
+                print(f"[!] Erreur capture caméra ({proc.returncode}): {proc.stderr.strip()}")
+            return None
+
         if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
             return output_path
     except Exception as e:
-        print(f"[!] Camera capture error: {e}")
+        print(f"[!] Erreur capture caméra: {e}")
     return None
 
 def upload_capture(image_path: str, sensor_dict: dict):
