@@ -37,7 +37,6 @@ chmod +x "$HOME/AutoInsta/client/android_termux/"*.sh
 echo ""
 echo "=========================================================="
 echo " [✓] Installation completed successfully!"
-echo " To start AutoInsta in autonomous mode:"
+echo " To start AutoInsta in autonomous mode, run:"
 echo "   bash client/android_termux/run_autonomous.sh"
-echo " Or tap the AutoInsta widget on your Android home screen!"
 echo "=========================================================="
