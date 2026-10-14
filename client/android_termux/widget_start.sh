@@ -1,7 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# Termux:Widget Quick Launch - Start AutoInsta
-termux-wake-lock
-cd "$HOME/AutoInsta" || cd "/data/data/com.termux/files/home"
-python client/android_termux/autoinsta_capture.py > "$HOME/autoinsta.log" 2>&1 &
-echo $! > "$HOME/autoinsta.pid"
-termux-toast "AutoInsta: Capture Active"
+# ========================================================
+# AutoInsta Widget Quick Launch - START 1-CLIC AUTONOME
+# ========================================================
+cd "$HOME/AutoInsta" || cd "/data/data/com.termux/files/home/AutoInsta"
+bash client/android_termux/run_autonomous.sh

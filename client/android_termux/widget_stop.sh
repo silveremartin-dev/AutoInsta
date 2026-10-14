@@ -1,9 +1,21 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# Termux:Widget Quick Launch - Stop AutoInsta
-if [ -f "$HOME/autoinsta.pid" ]; then
-    kill $(cat "$HOME/autoinsta.pid") 2>/dev/null
-    rm -f "$HOME/autoinsta.pid"
+# ========================================================
+# AutoInsta Widget Quick Launch - STOP 1-CLIC
+# ========================================================
+if [ -f "$HOME/autoinsta_capture.pid" ]; then
+    kill $(cat "$HOME/autoinsta_capture.pid") 2>/dev/null
+    rm -f "$HOME/autoinsta_capture.pid"
 fi
-pkill -f "autoinsta_capture.py"
+
+if [ -f "$HOME/autoinsta_server.pid" ]; then
+    kill $(cat "$HOME/autoinsta_server.pid") 2>/dev/null
+    rm -f "$HOME/autoinsta_server.pid"
+fi
+
+# Sécurité : arrêt de tous les processus résiduels
+pkill -f "autoinsta_capture.py" 2>/dev/null
+pkill -f "uvicorn server.app:app" 2>/dev/null
+
 termux-wake-unlock
-termux-toast "AutoInsta: Capture Arrêtée"
+termux-toast "AutoInsta: Entièrement Arrêté"
+echo "[✓] AutoInsta arrêté avec succès."
