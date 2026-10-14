@@ -96,62 +96,62 @@ AutoInsta features a modern responsive UI (desktop and mobile PWA) with live mul
 
 ---
 
-## 🚀 Guide de Démarrage Rapide
+## 🚀 Quick Start Guide
 
-### ⚠️ Différence Essentielle : `INSTALL` vs `START`
+### ⚠️ Essential Distinction: `INSTALL` vs `START`
 
-| Étape | Rôle | Quand l'exécuter ? |
+| Step | Purpose | When to Run? |
 | :--- | :--- | :--- |
-| **`INSTALL`** | Télécharge et installe les bibliothèques requises (`fastapi`, `uvicorn`, `pillow`, etc.) et initialise le fichier de configuration `.env`. | **Une seule fois**, lors de la première installation. |
-| **`START`** | Démarre le serveur local, active l'écoute des capteurs, ouvre le tableau de bord web et prépare la file d'approbation. | **À chaque utilisation**, quand vous voulez faire tourner AutoInsta. |
+| **`INSTALL`** | Downloads and installs required dependencies (`fastapi`, `uvicorn`, `pillow`, etc.) and initializes the `.env` configuration file. | **Once**, during initial setup. |
+| **`START`** | Boots the local server, activates sensor listeners, opens the web dashboard, and prepares the approval queue. | **Every time** you want to run AutoInsta. |
 
 ---
 
-### 💻 Utilisation par Plateforme (Dossier `scripts/`)
+### 💻 Platform-Specific Launchers (`scripts/` folder)
 
-Tous les scripts ont été regroupés proprement dans le sous-dossier [`scripts/`](file:///c:/Silvere/Encours/Developpement/AutoInsta/scripts/) par système d'exploitation :
+All helper scripts are organized in the [`scripts/`](scripts/) folder by operating system:
 
-#### 🪟 Windows :
-- **1. Installation initiale (1 seule fois)** :
-  Double-cliquez sur [`scripts/windows/install.bat`](file:///c:/Silvere/Encours/Developpement/AutoInsta/scripts/windows/install.bat).
-- **2. Lancement au quotidien** :
-  Double-cliquez sur le raccourci [**`start.bat`**](file:///c:/Silvere/Encours/Developpement/AutoInsta/start.bat) à la racine du projet (ou [`scripts/windows/start.bat`](file:///c:/Silvere/Encours/Developpement/AutoInsta/scripts/windows/start.bat)).
-- **Menu interactif proposé** :
+#### 🪟 Windows:
+- **1. Initial Setup (once)**:
+  Double-click [`scripts/windows/install.bat`](scripts/windows/install.bat).
+- **2. Everyday Run**:
+  Double-click the [**`start.bat`**](start.bat) shortcut in the root directory (or [`scripts/windows/start.bat`](scripts/windows/start.bat)).
+- **Interactive Menu Options**:
   ```text
-  [1] Démarrer le Serveur Web & Ouvrir le Tableau de bord (Recommandé)
-  [2] Démarrer le Serveur en Mode Démo (Simulation photos & capteurs)
-  [3] Lancer le Client Caméra PC (Webcam locale)
-  [4] Exécuter la Suite de Tests Complète
-  [5] Installer ou Mettre à jour les dépendances requises
-  [6] Activer l'Autodémarrage au Boot (Windows / macOS / Linux)
-  [7] Désactiver l'Autodémarrage
+  [1] Start Web Server & Open Dashboard (Recommended)
+  [2] Start Server in Demo Mode (Mock photos & sensors)
+  [3] Launch PC Camera Client (Local webcam)
+  [4] Run Full Test Suite
+  [5] Install or Update Dependencies
+  [6] Enable Autostart on Boot (Windows / macOS / Linux)
+  [7] Disable Autostart
   ```
 
-#### 🐧 Linux :
+#### 🐧 Linux:
 ```bash
-# 1. Installation initiale (1 seule fois)
+# 1. Initial setup (once)
 ./scripts/linux/install.sh
 
-# 2. Lancement au quotidien
+# 2. Everyday run
 ./scripts/linux/start.sh
 ```
 
-#### 🍏 macOS :
+#### 🍏 macOS:
 ```bash
-# 1. Installation initiale (1 seule fois)
+# 1. Initial setup (once)
 ./scripts/macos/install.sh
 
-# 2. Lancement au quotidien
+# 2. Everyday run
 ./scripts/macos/start.sh
 ```
 
 ---
 
-### 🌐 Accès à l'Interface Web & Dashboard
+### 🌐 Accessing the Web Dashboard
 
-Dès que le serveur est démarré :
-- **Sur votre ordinateur** : Accédez à [**`http://localhost:8000`**](http://localhost:8000)
-- **Sur votre téléphone / montre connectée (même réseau Wi-Fi)** : Accédez à **`http://<IP_DU_PC>:8000`** *(l'adresse IP locale de votre machine est affichée automatiquement dans la console au démarrage).*
+Once the server is running:
+- **On your computer**: Open [**`http://localhost:8000`**](http://localhost:8000)
+- **On your phone or wearable (same Wi-Fi network)**: Open **`http://<PC_LOCAL_IP>:8000`** *(your computer's local IP address is automatically printed in the console on startup).*
 
 
 
@@ -182,7 +182,7 @@ AutoInsta provides flexible ways to capture and control the agent from your mobi
 
 ### 1. Instant Mobile App (PWA - Recommended for Zero Setup)
 No installation from an app store or command line needed:
-- Open `http://<IP_DU_PC>:8000` (or `https://...`) in Chrome or Safari on your phone.
+- Open `http://<PC_LOCAL_IP>:8000` (or `https://...`) in Chrome or Safari on your phone.
 - Tap **"Add to Home Screen"** / **"Install App"**.
 - AutoInsta runs in full screen as a standalone web application with instant camera snapshot upload and push notifications.
 
