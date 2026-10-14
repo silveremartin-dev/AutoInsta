@@ -114,7 +114,7 @@ class VLMEvaluator:
                     f"Alerte : {alert_type}\n"
                     f"Rythme cardiaque : {bpm} BPM\n"
                     f"Localisation de secours : {location_str or 'Inconnue'}\n"
-                    f"Compte à rebours homme mort expiré."
+                    f"Délai de sécurité SOS expiré."
                 )
                 tg_url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
                 r = requests.post(tg_url, json={"chat_id": settings.telegram_chat_id, "text": tg_msg}, timeout=5)

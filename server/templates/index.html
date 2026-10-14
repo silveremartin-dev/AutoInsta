@@ -88,7 +88,7 @@
                         ALERTE RYTHME CARDIAQUE CRITIQUE !
                         <span id="countdownTimer" class="px-2 py-0.5 rounded-lg bg-black/40 font-mono text-yellow-300 font-bold">10s</span>
                     </h3>
-                    <p class="text-xs text-rose-100">Bouton de l'homme mort actif : secours et coordonnées envoyés si vous n'annulez pas.</p>
+                    <p class="text-xs text-rose-100">Dispositif de sécurité SOS actif : secours et coordonnées envoyés si vous n'annulez pas.</p>
                 </div>
             </div>
             <button onclick="abortEmergencySOS()" class="px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold text-xs shadow-lg transition flex items-center gap-2 transform active:scale-95">
@@ -133,9 +133,19 @@
                 </div>
 
                 <!-- Right Quick Controls -->
-                <div class="flex items-center gap-2.5 w-full md:w-auto justify-end flex-wrap">
-                    <button id="btnSnapNow" onclick="snapWebcamNow()" class="px-4 py-2 rounded-xl text-xs font-bold bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-600/20 transition flex items-center gap-2">
-                        <i class="fa-solid fa-camera-retro"></i> Déclencher maintenant
+                <div class="flex items-center gap-2 w-full md:w-auto justify-end flex-wrap">
+                    <!-- Mobile Native Camera POV Trigger (Direct hardware camera, works 100% on HTTP on Android & iOS) -->
+                    <label id="btnMobileSnap" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-600/20 transition flex items-center gap-1.5 cursor-pointer" title="Prendre une photo POV directement avec l'appareil photo du smartphone">
+                        <i class="fa-solid fa-mobile-screen-button"></i> Photo Smartphone
+                        <input type="file" id="mobileCameraInput" accept="image/*" capture="environment" onchange="handleMobileCameraCapture(event)" class="hidden">
+                    </label>
+
+                    <button id="btnFlipCam" onclick="switchCameraFacing()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition flex items-center gap-1" title="Basculer entre caméra arrière (POV) et avant (Selfie)">
+                        <i class="fa-solid fa-camera-rotate"></i>
+                    </button>
+
+                    <button id="btnSnapNow" onclick="snapWebcamNow()" class="px-4 py-2 rounded-xl text-xs font-bold bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-600/20 transition flex items-center gap-2" title="Prendre un cliché depuis le flux direct">
+                        <i class="fa-solid fa-camera-retro"></i> Déclencher
                     </button>
                     <button id="btnToggleCam" onclick="toggleCameraManual()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center gap-1.5">
                         <i class="fa-solid fa-pause"></i> Pause
@@ -610,7 +620,7 @@
                 </div>
             </div>
 
-            <!-- Section 4 : Sécurité Cardiaque & Bouton Homme Mort -->
+            <!-- Section 4 : Sécurité Cardiaque & Dispositif d'Urgence SOS -->
             <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-6 shadow-xl space-y-5">
                 <div class="flex items-center justify-between border-b border-gray-800 pb-4">
                     <div class="flex items-center gap-3">
@@ -618,8 +628,8 @@
                             <i class="fa-solid fa-heart-pulse"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-white">Sécurité Cardiaque & Bouton de l'Homme Mort</h3>
-                            <p class="text-xs text-gray-400">Détection d'anomalies de rythme cardiaque et procédure de secours</p>
+                            <h3 class="text-base font-bold text-white">Sécurité Cardiaque & Dispositif d'Urgence SOS</h3>
+                            <p class="text-xs text-gray-400">Détection d'anomalies de rythme cardiaque et procédure de secours automatique</p>
                         </div>
                     </div>
                     <label class="flex items-center gap-2 cursor-pointer">
@@ -644,7 +654,7 @@
                             <input type="number" id="hr_max" onchange="autoSaveSensorConfig()" value="{{ settings.hr_max_bpm }}" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
                         </div>
                         <div>
-                            <label class="text-[10px] text-gray-400 block mb-1">Délai Homme Mort (sec) :</label>
+                            <label class="text-[10px] text-gray-400 block mb-1">Délai de Sécurité SOS (sec) :</label>
                             <input type="number" id="hr_countdown" onchange="autoSaveSensorConfig()" value="{{ settings.hr_countdown_seconds }}" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
                         </div>
                     </div>
@@ -656,7 +666,7 @@
 
                     <div class="pt-2">
                         <button onclick="testEmergencyAlert()" class="px-4 py-2 rounded-xl bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-bold transition flex items-center gap-2">
-                            <i class="fa-solid fa-triangle-exclamation"></i> Simuler l'alerte Homme Mort (10s)
+                            <i class="fa-solid fa-triangle-exclamation"></i> Tester l'Alerte d'Urgence SOS (10s)
                         </button>
                     </div>
                 </div>
@@ -897,6 +907,48 @@
             return Math.round(35 + (avg / 255) * 55);
         }
 
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        let currentFacingMode = isMobileDevice ? 'environment' : 'user';
+
+        async function switchCameraFacing() {
+            currentFacingMode = (currentFacingMode === 'user' || currentFacingMode === 'facing user') ? 'environment' : 'user';
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+            const label = (currentFacingMode === 'environment') ? 'Caméra Arrière (POV)' : 'Caméra Avant (Selfie)';
+            showToast('Bascule sur : ' + label);
+            await initCamera();
+        }
+
+        async function handleMobileCameraCapture(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            showToast('✓ Cliché smartphone capturé, transmission en cours...');
+
+            const formData = new FormData();
+            formData.append('file', file, 'pov_mobile_' + Date.now() + '.jpg');
+            formData.append('source', isMobileDevice ? 'android_mobile' : 'webcam_mobile');
+
+            const sensors = {};
+            if (navigator.getBattery) {
+                try {
+                    const b = await navigator.getBattery();
+                    sensors.battery_pct = Math.round(b.level * 100);
+                } catch (e) {}
+            }
+
+            if (isGpsConfigured && lastKnownGps) {
+                sensors.latitude = lastKnownGps.latitude;
+                sensors.longitude = lastKnownGps.longitude;
+            }
+
+            formData.append('sensors', JSON.stringify(sensors));
+            await sendCapturePayload(formData);
+            event.target.value = '';
+        }
+
         async function initCamera() {
             if (isMicConfigured) initMicrophone();
             if (!isCameraConfigured) {
@@ -910,15 +962,28 @@
             const livePill = document.getElementById('camLivePill');
             const countEl = document.getElementById('camNextCountdown');
 
+            // Detect if mediaDevices is blocked because of insecure HTTP context on mobile
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                if (isMobileDevice) {
+                    badge.textContent = 'Mode Mobile (HTTP)';
+                    badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800';
+                    showToast('Astuce Android : Utilisez le bouton vert "Photo Smartphone" pour capturer directement avec votre caméra !');
+                } else {
+                    badge.textContent = 'Non supportée';
+                    badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-rose-950 text-rose-400 border border-rose-800';
+                }
+                return;
+            }
+
             try {
                 webcamStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: currentFacingMode }
                 });
                 video.srcObject = webcamStream;
                 video.classList.remove('hidden');
                 placeholder.classList.add('hidden');
                 livePill.classList.remove('hidden');
-                badge.textContent = 'En direct';
+                badge.textContent = (currentFacingMode === 'environment') ? 'En direct (Dorsale POV)' : 'En direct (Frontale)';
                 badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800';
                 countEl.classList.remove('hidden');
 
@@ -944,9 +1009,15 @@
                 }, 1000);
 
             } catch (err) {
-                badge.textContent = 'Non autorisée';
-                badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-rose-950 text-rose-400 border border-rose-800';
-                showToast('Accès caméra refusé : autorisez la webcam dans le navigateur', true);
+                if (isMobileDevice) {
+                    badge.textContent = 'Mode Mobile (HTTP)';
+                    badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800';
+                    showToast('Cliquez sur le bouton vert "Photo Smartphone" pour capturer avec la caméra de votre téléphone', false);
+                } else {
+                    badge.textContent = 'Non autorisée';
+                    badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-rose-950 text-rose-400 border border-rose-800';
+                    showToast('Accès caméra refusé : autorisez la webcam dans le navigateur', true);
+                }
             }
         }
 
@@ -1006,7 +1077,7 @@
                 if (!blob) return;
                 const formData = new FormData();
                 formData.append('file', blob, 'pov_' + Date.now() + '.jpg');
-                formData.append('source', 'webcam_pc');
+                formData.append('source', isMobileDevice ? 'android_mobile' : 'webcam_pc');
 
                 const sensors = {};
                 if (navigator.getBattery) {
