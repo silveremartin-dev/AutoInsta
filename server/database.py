@@ -72,9 +72,10 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             meta_json = json.dumps(sensor_metadata or {})
+            local_now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             cursor.execute(
-                "INSERT INTO captures (filename, filepath, source, status, sensor_metadata) VALUES (?, ?, ?, 'PENDING', ?)",
-                (filename, str(filepath), source, meta_json)
+                "INSERT INTO captures (filename, filepath, source, timestamp, status, sensor_metadata) VALUES (?, ?, ?, ?, 'PENDING', ?)",
+                (filename, str(filepath), source, local_now, meta_json)
             )
             conn.commit()
             return cursor.lastrowid

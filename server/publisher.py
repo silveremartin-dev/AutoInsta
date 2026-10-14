@@ -33,9 +33,9 @@ class InstagramPublisher:
             if row and row[0]:
                 try:
                     last_time = datetime.fromisoformat(row[0])
-                    cooldown = timedelta(minutes=settings.min_interval_minutes)
-                    if datetime.utcnow() - last_time < cooldown:
-                        remaining = int((cooldown - (datetime.utcnow() - last_time)).total_seconds() / 60)
+                    now_dt = datetime.now()
+                    if now_dt - last_time < cooldown:
+                        remaining = int((cooldown - (now_dt - last_time)).total_seconds() / 60)
                         return False, f"Cooldown active. Next post allowed in {remaining} minutes."
                 except Exception:
                     pass

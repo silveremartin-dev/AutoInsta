@@ -1,51 +1,51 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ========================================================
-# AutoInsta - Mode 100% Autonome Smartphone (Sans PC)
+# AutoInsta - 100% Autonomous Mode on Smartphone
 # ========================================================
-# Lance le serveur FastAPI, la base SQLite locale, l'IA Gemini
-# et le rig de capture caméra & capteurs directement sur Android.
+# Runs FastAPI server, SQLite database, Gemini AI evaluation,
+# and camera capture loop natively on Android via Termux.
 
 termux-wake-lock
 cd "$HOME/AutoInsta" || cd "/data/data/com.termux/files/home/AutoInsta"
 
-# 1. Arrêter d'anciens processus s'ils tournent
+echo "=========================================================="
+echo "   AutoInsta Autonomous Mobile Stack                      "
+echo "=========================================================="
+
+# 1. Clean up any leftover background processes
 pkill -f "autoinsta_capture.py" 2>/dev/null
 pkill -f "uvicorn server.app:app" 2>/dev/null
 sleep 1
 
-# 2. Démarrage du serveur local AutoInsta sur 0.0.0.0:8000
-echo "[*] Démarrage du serveur local AutoInsta (FastAPI + SQLite)..."
-python -m uvicorn server.app:app --host 0.0.0.0 --port 8000 > "$HOME/autoinsta_server.log" 2>&1 &
-SERVER_PID=$!
-echo $SERVER_PID > "$HOME/autoinsta_server.pid"
-
-# Attente brève pour l'initialisation du serveur
-sleep 2
-
-# Vérification que le serveur tourne bien
-if ! kill -0 $SERVER_PID 2>/dev/null; then
-    echo "[!] ERREUR : Le serveur n'a pas pu démarrer !"
-    echo "--- Journal d'erreur ($HOME/autoinsta_server.log) ---"
-    cat "$HOME/autoinsta_server.log"
-    echo "----------------------------------------------------"
-    exit 1
-fi
-echo "[+] Serveur web opérationnel sur http://localhost:8000"
-
-# 3. Démarrage du rig de capture (min-lux=5.0 anti-poche restauré)
-echo "[*] Démarrage de la capture caméra & capteurs..."
-python client/android_termux/autoinsta_capture.py --server http://127.0.0.1:8000/api/capture/upload --min-lux 5.0 --interval 30 > "$HOME/autoinsta_capture.log" 2>&1 &
+# 2. Start camera capture rig in background (5.0 lux threshold)
+echo "[*] Starting POV camera & sensor capture loop in background..."
+python client/android_termux/autoinsta_capture.py --server http://127.0.0.1:8000/api/capture/upload --min-lux 5.0 --interval 30 &
 CAPTURE_PID=$!
 echo $CAPTURE_PID > "$HOME/autoinsta_capture.pid"
 
-# 4. Feedback visuel et ouverture de l'application
-termux-toast "AutoInsta Autonome Actif (localhost:8000)"
+# 3. Notification & open browser to local UI
+termux-toast "AutoInsta Active (http://localhost:8000)"
+sleep 1
 termux-open-url "http://localhost:8000"
 
+echo ""
+echo "[✓] Web UI accessible at: http://localhost:8000"
+echo "[*] Press Ctrl+C at any time to stop AutoInsta."
 echo "=========================================================="
-echo " [✓] AutoInsta fonctionne en TOTALE AUTONOMIE sur ce smartphone !"
-echo "     - Interface : http://localhost:8000"
-echo "     - Serveur PID : $SERVER_PID"
-echo "     - Capture PID : $CAPTURE_PID"
-echo "     - Pour tout arrêter : bash client/android_termux/widget_stop.sh"
-echo "=========================================================="
+echo ""
+
+# 4. Graceful shutdown handler
+cleanup() {
+    echo ""
+    echo "[*] Shutting down AutoInsta..."
+    kill $CAPTURE_PID 2>/dev/null
+    rm -f "$HOME/autoinsta_capture.pid"
+    pkill -f "autoinsta_capture.py" 2>/dev/null
+    termux-wake-unlock
+    echo "[✓] AutoInsta stopped successfully."
+    exit 0
+}
+trap cleanup INT TERM
+
+# 5. Run Uvicorn server in foreground so Termux session stays active
+python -m uvicorn server.app:app --host 0.0.0.0 --port 8000

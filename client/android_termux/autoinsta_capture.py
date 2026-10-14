@@ -66,12 +66,12 @@ def check_heart_rate_and_alert(bpm: int, location_info: dict):
 
     if bpm < 45 or bpm > 145:
         coords = f"{location_info.get('latitude', '')},{location_info.get('longitude', '')}"
-        msg = f"[ALERTE AUTOINSTA] Rythme cardiaque critique : {bpm} BPM. Localisation : https://maps.google.com/?q={coords}"
-        print(f"[!] ENVOI DU SMS D'URGENCE à {EMERGENCY_CONTACT}: {msg}")
+        msg = f"[AUTOINSTA ALERT] Critical heart rate: {bpm} BPM. Location: https://maps.google.com/?q={coords}"
+        print(f"[!] SENDING EMERGENCY SMS to {EMERGENCY_CONTACT}: {msg}")
         try:
             subprocess.run(["termux-sms-send", "-n", EMERGENCY_CONTACT, msg], timeout=10)
         except Exception as e:
-            print(f"[!] Échec de l'envoi du SMS d'urgence: {e}")
+            print(f"[!] Failed to send emergency SMS: {e}")
 
 def capture_photo(camera_id=0, output_path="/data/data/com.termux/files/home/autoinsta_temp.jpg") -> str:
     """Takes silent snapshot using Termux Camera API."""
@@ -82,17 +82,17 @@ def capture_photo(camera_id=0, output_path="/data/data/com.termux/files/home/aut
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=12)
         if proc.returncode != 0:
             if "android.permission.CAMERA" in proc.stderr:
-                print("\n[!] ATTENTION : Permission Caméra requise !")
-                print("    👉 Allez dans Paramètres Android > Applications > Termux:API > Autorisations")
-                print("    👉 Activez 'Appareil photo' (Caméra).\n")
+                print("\n[!] WARNING: Camera permission required!")
+                print("    👉 Go to Android Settings > Apps > Termux:API > Permissions")
+                print("    👉 Enable 'Camera' permission.\n")
             else:
-                print(f"[!] Erreur capture caméra ({proc.returncode}): {proc.stderr.strip()}")
+                print(f"[!] Camera capture error ({proc.returncode}): {proc.stderr.strip()}")
             return None
 
         if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
             return output_path
     except Exception as e:
-        print(f"[!] Erreur capture caméra: {e}")
+        print(f"[!] Camera capture exception: {e}")
     return None
 
 def upload_capture(server_url: str, api_key: str, image_path: str, sensor_dict: dict):
@@ -107,70 +107,70 @@ def upload_capture(server_url: str, api_key: str, image_path: str, sensor_dict: 
         try:
             r = requests.post(server_url, files=files, data=data, headers=headers, timeout=20)
             if r.status_code == 200:
-                print(f"[+] Cliché envoyé avec succès ! Capture ID: {r.json().get('capture_id')}")
+                print(f"[+] Capture sent successfully! Capture ID: {r.json().get('capture_id')}")
             else:
-                print(f"[!] Réponse serveur ({r.status_code}): {r.text}")
+                print(f"[!] Server response ({r.status_code}): {r.text}")
         except Exception as e:
-            print(f"[!] Échec de l'envoi au serveur : {e}")
+            print(f"[!] Failed to send to server: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description="AutoInsta Android Multi-Sensor Rig")
-    parser.add_argument("--server", default=DEFAULT_SERVER_URL, help="URL d'upload AutoInsta")
-    parser.add_argument("--key", default=DEFAULT_API_KEY, help="Clé API secrète")
-    parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL_SECONDS, help="Intervalle entre photos (s)")
-    parser.add_argument("--camera", type=int, default=int(DEFAULT_CAMERA_ID), help="Caméra (0=Arrière, 1=Avant)")
-    parser.add_argument("--min-lux", type=float, default=DEFAULT_MIN_LUX, help="Seuil min de lux (0 = désactivé)")
+    parser.add_argument("--server", default=DEFAULT_SERVER_URL, help="AutoInsta upload endpoint")
+    parser.add_argument("--key", default=DEFAULT_API_KEY, help="Secret API key")
+    parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL_SECONDS, help="Interval between photos (s)")
+    parser.add_argument("--camera", type=int, default=int(DEFAULT_CAMERA_ID), help="Camera ID (0=Back, 1=Front)")
+    parser.add_argument("--min-lux", type=float, default=DEFAULT_MIN_LUX, help="Min ambient lux threshold (0 = disabled)")
     args = parser.parse_args()
 
     print("==============================================")
     print("   AutoInsta Android Multi-Sensor Rig        ")
     print("==============================================")
-    print(f"Cible Serveur  : {args.server}")
-    print(f"Intervalle     : {args.interval}s")
-    print(f"Caméra ID      : {args.camera} ({'Arrière' if args.camera == 0 else 'Avant/Selfie'})")
-    print(f"Seuil Lux      : {args.min_lux} lux ({'Actif' if args.min_lux > 0 else 'Désactivé pour tests'})")
-    print(f"GPS Actif      : {ENABLE_GPS}")
-    print(f"Cardio Actif   : {ENABLE_HEART_RATE}")
+    print(f"Target Server  : {args.server}")
+    print(f"Interval       : {args.interval}s")
+    print(f"Camera ID      : {args.camera} ({'Back/POV' if args.camera == 0 else 'Front/Selfie'})")
+    print(f"Lux Threshold  : {args.min_lux} lux ({'Active' if args.min_lux > 0 else 'Disabled'})")
+    print(f"GPS Active     : {ENABLE_GPS}")
+    print(f"Heart Rate Mon : {ENABLE_HEART_RATE}")
     print("==============================================")
 
     shot_count = 0
     while True:
         try:
-            # 1. Anti-poche : vérification de luminosité (uniquement si seuil > 0)
+            # 1. Pocket darkness check (only if min_lux > 0)
             lux = get_light_level()
             if args.min_lux > 0 and lux < args.min_lux:
-                print(f"[-] Luminosité trop faible ({lux:.1f} lux < {args.min_lux} lux) - Téléphone dans la poche ou posé à plat. Pause de {args.interval}s...")
+                print(f"[-] Ambient light too low ({lux:.1f} lux < {args.min_lux} lux) - Phone in pocket or face down. Pausing {args.interval}s...")
                 time.sleep(args.interval)
                 continue
 
-            # 2. Lecture GPS
+            # 2. GPS Location
             loc_data = get_gps_location()
 
-            # 3. Métadonnées capteurs
+            # 3. Sensor metadata
             sensor_payload = {
                 "light_lux": lux,
                 "latitude": loc_data.get("latitude"),
                 "longitude": loc_data.get("longitude"),
                 "speed_kmh": loc_data.get("speed_kmh", 0),
-                "activity_state": "En déplacement" if (loc_data.get("speed_kmh", 0) > 3) else "Statique"
+                "activity_state": "Moving" if (loc_data.get("speed_kmh", 0) > 3) else "Static"
             }
 
-            # 4. Prise de vue
+            # 4. Snap POV photo
             shot_count += 1
-            print(f"[*] Cliché #{shot_count} en cours de capture (lux: {lux:.1f})...")
+            print(f"[*] Capturing POV snapshot #{shot_count} (lux: {lux:.1f})...")
             img_path = capture_photo(camera_id=args.camera)
             if img_path:
                 upload_capture(args.server, args.key, img_path, sensor_payload)
             else:
-                print(f"[!] Échec de prise de vue du cliché #{shot_count}")
+                print(f"[!] Failed to capture snapshot #{shot_count}")
 
-            print(f"[*] Prochain cliché dans {args.interval}s (Ctrl+C pour quitter)...")
+            print(f"[*] Next snapshot in {args.interval}s (Press Ctrl+C to exit)...")
             time.sleep(args.interval)
         except KeyboardInterrupt:
-            print("\n[*] Arrêt d'AutoInsta.")
+            print("\n[*] AutoInsta stopped.")
             break
         except Exception as e:
-            print(f"[!] Erreur boucle : {e}")
+            print(f"[!] Capture loop error: {e}")
             time.sleep(10)
 
 if __name__ == "__main__":
