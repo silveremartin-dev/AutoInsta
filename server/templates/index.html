@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoInsta POV — Centre de Contrôle</title>
+    <title id="pageTitle">AutoInsta POV — Control Center</title>
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#030712">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -97,14 +97,14 @@
                 <i class="fa-solid fa-triangle-exclamation text-2xl text-yellow-300 animate-bounce"></i>
                 <div>
                     <h3 class="font-extrabold text-sm sm:text-base tracking-wide flex items-center gap-2">
-                        ALERTE RYTHME CARDIAQUE CRITIQUE !
+                        <span data-i18n="sos_title">ALERTE RYTHME CARDIAQUE CRITIQUE !</span>
                         <span id="countdownTimer" class="px-2 py-0.5 rounded-lg bg-black/40 font-mono text-yellow-300 font-bold">10s</span>
                     </h3>
-                    <p class="text-xs text-rose-100">Dispositif de sécurité SOS actif : secours et coordonnées envoyés si vous n'annulez pas.</p>
+                    <p class="text-xs text-rose-100" data-i18n="sos_desc">Dispositif de sécurité SOS actif : secours et coordonnées envoyés si vous n'annulez pas.</p>
                 </div>
             </div>
             <button onclick="abortEmergencySOS()" class="px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold text-xs shadow-lg transition flex items-center gap-2 transform active:scale-95">
-                <i class="fa-solid fa-hand"></i> J'AI LE CONTRÔLE - ANNULER L'ALERTE
+                <i class="fa-solid fa-hand"></i> <span data-i18n="sos_btn">J'AI LE CONTRÔLE - ANNULER L'ALERTE</span>
             </button>
         </div>
     </div>
@@ -126,10 +126,10 @@
                         <canvas id="webcamCanvas" class="hidden"></canvas>
                         <div id="webcamPlaceholder" class="text-gray-500 text-xs flex flex-col items-center">
                             <i class="fa-solid fa-camera-slash text-xl text-gray-600 mb-1"></i>
-                            <span class="text-[10px]">Caméra OFF</span>
+                            <span class="text-[10px]" data-i18n="cam_off">Caméra OFF</span>
                         </div>
                         <div id="camLivePill" class="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center gap-1 hidden shadow">
-                            <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span> DIRECT
+                            <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span> <span data-i18n="btn_live">DIRECT</span>
                         </div>
                     </div>
                     <div>
@@ -139,7 +139,7 @@
                         </h3>
                         <p class="text-xs text-gray-400 mt-0.5" data-i18n="cam_subtitle">Captures automatiques périodiques sans interrompre la vidéo.</p>
                         <p id="camNextCountdown" class="text-xs text-fuchsia-400 font-mono mt-1 hidden">
-                            <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Prochain cliché dans : <strong id="camSecLeft">30s</strong>
+                            <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> <span data-i18n="cam_next_shot">Prochain cliché dans :</span> <strong id="camSecLeft">30s</strong>
                         </p>
                     </div>
                 </div>
@@ -164,7 +164,7 @@
                     </button>
                     <!-- Small discreet file upload fallback -->
                     <label class="px-3 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition flex items-center gap-1.5 cursor-pointer" title="Importer une image de test depuis votre PC">
-                        <i class="fa-solid fa-upload"></i> Fichier
+                        <i class="fa-solid fa-upload"></i> <span data-i18n="btn_file">Fichier</span>
                         <input type="file" id="discreetFileInput" accept="image/*" onchange="handleFileSelect(event)" class="hidden">
                     </label>
                 </div>
@@ -328,9 +328,9 @@
                                 <!-- Inline Auto-Saved Caption & Hashtags -->
                                 <div class="space-y-2">
                                     <div class="flex items-center justify-between">
-                                        <label class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Légende & Tags :</label>
+                                        <label class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="card_caption_label">Légende & Tags :</label>
                                         <span id="save_indicator_{{ cap.id }}" class="text-[10px] text-emerald-400 font-medium transition-opacity duration-300 opacity-0 flex items-center gap-1">
-                                            <i class="fa-solid fa-check text-[9px]"></i> Enregistré
+                                            <i class="fa-solid fa-check text-[9px]"></i> <span data-i18n="card_saved">Enregistré</span>
                                         </span>
                                     </div>
                                     <textarea id="caption_edit_{{ cap.id }}" oninput="autoSaveCapture({{ cap.id }})" onblur="saveCaptionAndTagsImmediately({{ cap.id }})" rows="2" placeholder="Légende du cliché..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-fuchsia-500 transition leading-relaxed">{{ cap.caption or '' }}</textarea>
@@ -398,8 +398,8 @@
                     <div class="w-14 h-14 rounded-full bg-fuchsia-600/10 text-fuchsia-400 mx-auto flex items-center justify-center text-2xl">
                         <i class="fa-solid fa-camera"></i>
                     </div>
-                    <h3 class="text-base font-bold text-white">Aucun cliché pour le moment</h3>
-                    <p class="text-xs text-gray-400 max-w-sm mx-auto">La caméra intégrée est active. Un cliché sera pris automatiquement ou cliquez sur « Déclencher maintenant ».</p>
+                    <h3 class="text-base font-bold text-white" data-i18n="empty_title">Aucun cliché pour le moment</h3>
+                    <p class="text-xs text-gray-400 max-w-sm mx-auto" data-i18n="empty_desc">La caméra intégrée est active. Un cliché sera pris automatiquement ou cliquez sur « Déclencher maintenant ».</p>
                 </div>
 
             </div>
@@ -436,7 +436,7 @@
                             <span class="text-xs font-bold text-gray-200 flex items-center gap-2">
                                 <i class="fa-solid fa-camera text-fuchsia-400"></i> <span data-i18n="sec1_raw_title">Dossier des Captures Brutes</span>
                             </span>
-                            <span id="storageCapturesCount" class="text-[10px] font-mono text-gray-400">{{ storage.captures_count }} fichiers &bull; {{ storage.captures_size_mb }} Mo</span>
+                            <span id="storageCapturesCount" class="text-[10px] font-mono text-gray-400" data-count="{{ storage.captures_count }}" data-mb="{{ storage.captures_size_mb }}">{{ storage.captures_count }} files &bull; {{ storage.captures_size_mb }} MB</span>
                         </div>
                         <p class="text-[11px] text-gray-400" data-i18n="sec1_raw_desc">Emplacement où toutes les photos de la webcam sont enregistrées.</p>
                         
@@ -464,7 +464,7 @@
                             <span class="text-xs font-bold text-gray-200 flex items-center gap-2">
                                 <i class="fa-solid fa-vault text-emerald-400"></i> <span data-i18n="sec1_export_title">Dossier Coffre & Synchronisation Privée</span>
                             </span>
-                            <span id="storageExportCount" class="text-[10px] font-mono text-gray-400">{{ storage.export_count }} fichiers &bull; {{ storage.export_size_mb }} Mo</span>
+                            <span id="storageExportCount" class="text-[10px] font-mono text-gray-400" data-count="{{ storage.export_count }}" data-mb="{{ storage.export_size_mb }}">{{ storage.export_count }} files &bull; {{ storage.export_size_mb }} MB</span>
                         </div>
                         <p class="text-[11px] text-gray-400" data-i18n="sec1_export_desc">Dossier export pour les photos publiées (Google Photos, Drive, Nextcloud).</p>
                         
@@ -517,11 +517,11 @@
                     <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-1.5">
                         <label class="text-xs font-bold text-gray-200 block" data-i18n="sec2_mode_label">Mode de Diffusion actif :</label>
                         <select id="cred_mode" onchange="autoSaveGeneralSettings()" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-xs text-white">
-                            <option value="local_only" {{ 'selected' if settings.publish_mode == 'local_only' }}>Coffre Privé Local (Archivage local, sans compte Instagram)</option>
-                            <option value="google_photos" {{ 'selected' if settings.publish_mode == 'google_photos' }}>Synchronisation Privée (Copie dans le dossier export)</option>
-                            <option value="dry_run" {{ 'selected' if settings.publish_mode == 'dry_run' }}>Simulation Dry-Run (Aperçu virtuel sans envoi)</option>
-                            <option value="instagrapi" {{ 'selected' if settings.publish_mode == 'instagrapi' }}>Instagram Mobile (Instagrapi)</option>
-                            <option value="meta_graph" {{ 'selected' if settings.publish_mode == 'meta_graph' }}>Meta Graph API (Compte Pro / Facebook)</option>
+                            <option value="local_only" data-i18n="opt_mode_local" {{ 'selected' if settings.publish_mode == 'local_only' }}>Coffre Privé Local (Archivage local, sans compte Instagram)</option>
+                            <option value="google_photos" data-i18n="opt_mode_sync" {{ 'selected' if settings.publish_mode == 'google_photos' }}>Synchronisation Privée (Copie dans le dossier export)</option>
+                            <option value="dry_run" data-i18n="opt_mode_dryrun" {{ 'selected' if settings.publish_mode == 'dry_run' }}>Simulation Dry-Run (Aperçu virtuel sans envoi)</option>
+                            <option value="instagrapi" data-i18n="opt_mode_instagrapi" {{ 'selected' if settings.publish_mode == 'instagrapi' }}>Instagram Mobile (Instagrapi)</option>
+                            <option value="meta_graph" data-i18n="opt_mode_metagraph" {{ 'selected' if settings.publish_mode == 'meta_graph' }}>Meta Graph API (Compte Pro / Facebook)</option>
                         </select>
                     </div>
                 </div>
@@ -531,7 +531,7 @@
                     <div>
                         <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec2_freq_cam">Fréquence de capture webcam (secondes) :</label>
                         <input type="number" id="cfg_cam_interval" onchange="updateCameraInterval(this.value)" min="5" max="3600" value="60" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
-                        <span class="text-[9px] text-gray-500 mt-0.5 block">Ex: 60s (1 min), 300s (5 min)</span>
+                        <span class="text-[9px] text-gray-500 mt-0.5 block" data-i18n="sec2_freq_hint">Ex: 60s (1 min), 300s (5 min)</span>
                     </div>
                     <div>
                         <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec2_min_interval">Délai minimum entre posts (minutes) :</label>
@@ -565,8 +565,8 @@
                     <!-- Caméra POV -->
                     <label class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <div class="flex flex-col">
-                            <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-camera text-fuchsia-400 mr-2"></i> Caméra POV</span>
-                            <span class="text-[10px] text-emerald-400 ml-6">✓ Détectée et active</span>
+                            <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-camera text-fuchsia-400 mr-2"></i> <span data-i18n="s_cam_label">Caméra POV</span></span>
+                            <span class="text-[10px] text-emerald-400 ml-6" data-i18n="s_cam_status">✓ Détectée et active</span>
                         </div>
                         <input type="checkbox" id="sensor_cam" onchange="autoSaveSensorConfig()" class="accent-fuchsia-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_camera }}>
                     </label>
@@ -574,8 +574,8 @@
                     <!-- GPS & Vitesse -->
                     <label class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <div class="flex flex-col">
-                            <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-location-dot text-emerald-400 mr-2"></i> GPS & Vitesse</span>
-                            <span class="text-[10px] text-emerald-400 ml-6">✓ Détecté (Navigateur / Réseau)</span>
+                            <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-location-dot text-emerald-400 mr-2"></i> <span data-i18n="s_gps_label">GPS & Vitesse</span></span>
+                            <span class="text-[10px] text-emerald-400 ml-6" data-i18n="s_gps_status">✓ Détecté (Navigateur / Réseau)</span>
                         </div>
                         <input type="checkbox" id="sensor_gps" onchange="autoSaveSensorConfig()" class="accent-fuchsia-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_gps }}>
                     </label>
@@ -583,8 +583,8 @@
                     <!-- Microphone -->
                     <label class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <div class="flex flex-col">
-                            <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-microphone text-teal-400 mr-2"></i> Microphone (dB Ambiance)</span>
-                            <span class="text-[10px] text-emerald-400 ml-6">✓ Détecté</span>
+                            <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-microphone text-teal-400 mr-2"></i> <span data-i18n="s_mic_label">Microphone (dB Ambiance)</span></span>
+                            <span class="text-[10px] text-emerald-400 ml-6" data-i18n="s_mic_status">✓ Détecté</span>
                         </div>
                         <input type="checkbox" id="sensor_mic" onchange="autoSaveSensorConfig()" class="accent-teal-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_microphone }}>
                     </label>
@@ -593,16 +593,16 @@
                     {% if hardware.battery %}
                     <label class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950 border border-gray-800 cursor-pointer">
                         <div class="flex flex-col">
-                            <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-battery-half text-green-400 mr-2"></i> Batterie (Alimentation)</span>
-                            <span class="text-[10px] text-emerald-400 ml-6">✓ Détectée</span>
+                            <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-battery-half text-green-400 mr-2"></i> <span data-i18n="s_bat_label">Batterie (Alimentation)</span></span>
+                            <span class="text-[10px] text-emerald-400 ml-6" data-i18n="s_bat_status">✓ Détectée</span>
                         </div>
                         <input type="checkbox" id="sensor_bat" onchange="autoSaveSensorConfig()" class="accent-green-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_battery }}>
                     </label>
                     {% else %}
                     <div class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed">
                         <div class="flex flex-col">
-                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-battery-half text-gray-600 mr-2"></i> Batterie</span>
-                            <span class="text-[9px] text-gray-500 italic ml-6">PC sur secteur fixe</span>
+                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-battery-half text-gray-600 mr-2"></i> <span data-i18n="s_bat_label">Batterie (Alimentation)</span></span>
+                            <span class="text-[9px] text-gray-500 italic ml-6" data-i18n="s_bat_ac">PC sur secteur fixe</span>
                         </div>
                         <input type="checkbox" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
                     </div>
@@ -617,8 +617,8 @@
                     {% else %}
                     <div class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="Non disponible sur ce PC (Requis smartphone)">
                         <div class="flex flex-col">
-                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-person-walking text-gray-600 mr-2"></i> Accéléromètre</span>
-                            <span class="text-[9px] text-gray-500 italic ml-6">Non détecté sur ce PC (Requis mobile)</span>
+                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-person-walking text-gray-600 mr-2"></i> <span data-i18n="s_accel_label">Accéléromètre</span></span>
+                            <span class="text-[9px] text-gray-500 italic ml-6" data-i18n="s_accel_none">Non détecté sur ce PC (Requis mobile)</span>
                         </div>
                         <input type="checkbox" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
                     </div>
@@ -627,14 +627,14 @@
                     <!-- Podomètre (Non PC) -->
                     {% if hardware.pedometer %}
                     <label class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950 border border-gray-800 cursor-pointer">
-                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-shoe-prints text-orange-400 mr-2"></i> Podomètre (Pas du jour)</span>
+                        <span class="text-xs font-medium text-gray-200"><i class="fa-solid fa-shoe-prints text-orange-400 mr-2"></i> <span data-i18n="s_step_label">Podomètre (Pas du jour)</span></span>
                         <input type="checkbox" id="sensor_step" onchange="autoSaveSensorConfig()" class="accent-orange-500 w-4 h-4 cursor-pointer" {{ 'checked' if settings.enable_pedometer }}>
                     </label>
                     {% else %}
                     <div class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-950/40 border border-gray-800/40 opacity-40 cursor-not-allowed" title="Non disponible sur PC">
                         <div class="flex flex-col">
-                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-shoe-prints text-gray-600 mr-2"></i> Podomètre (Pas du jour)</span>
-                            <span class="text-[9px] text-gray-500 italic ml-6">Non détecté sur ce PC (Requis smartphone/montre)</span>
+                            <span class="text-xs font-medium text-gray-400"><i class="fa-solid fa-shoe-prints text-gray-600 mr-2"></i> <span data-i18n="s_step_label">Podomètre (Pas du jour)</span></span>
+                            <span class="text-[9px] text-gray-500 italic ml-6" data-i18n="s_step_none">Non détecté sur ce PC (Requis smartphone/montre)</span>
                         </div>
                         <input type="checkbox" disabled class="w-4 h-4 opacity-30 cursor-not-allowed">
                     </div>
@@ -668,21 +668,21 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                         <div>
-                            <label class="text-[10px] text-gray-400 block mb-1">Seuil Bas (&lt; BPM) :</label>
+                            <label class="text-[10px] text-gray-400 block mb-1" data-i18n="sec4_min_bpm">Seuil Bas (&lt; BPM) :</label>
                             <input type="number" id="hr_min" onchange="autoSaveSensorConfig()" value="{{ settings.hr_min_bpm }}" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
                         </div>
                         <div>
-                            <label class="text-[10px] text-gray-400 block mb-1">Seuil Haut (&gt; BPM) :</label>
+                            <label class="text-[10px] text-gray-400 block mb-1" data-i18n="sec4_max_bpm">Seuil Haut (&gt; BPM) :</label>
                             <input type="number" id="hr_max" onchange="autoSaveSensorConfig()" value="{{ settings.hr_max_bpm }}" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
                         </div>
                         <div>
-                            <label class="text-[10px] text-gray-400 block mb-1">Délai de Sécurité SOS (sec) :</label>
+                            <label class="text-[10px] text-gray-400 block mb-1" data-i18n="sec4_countdown">Délai de Sécurité SOS (sec) :</label>
                             <input type="number" id="hr_countdown" onchange="autoSaveSensorConfig()" value="{{ settings.hr_countdown_seconds }}" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
                         </div>
                     </div>
 
                     <div>
-                        <label class="text-[10px] text-gray-400 block mb-1">Webhook URL d'urgence (Optionnel) :</label>
+                        <label class="text-[10px] text-gray-400 block mb-1" data-i18n="sec4_webhook">Webhook URL d'urgence (Optionnel) :</label>
                         <input type="text" id="hr_webhook" onchange="autoSaveSensorConfig()" value="{{ settings.hr_webhook_url }}" placeholder="https://..." class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-xs text-white">
                     </div>
 
@@ -739,7 +739,7 @@
                 </div>
 
                 <div>
-                    <label class="text-[11px] text-gray-400 block mb-1">Consignes spécifiques de rédaction pour l'IA :</label>
+                    <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec5_instructions_label">Consignes spécifiques de rédaction pour l'IA :</label>
                     <textarea id="cfg_instructions" onchange="autoSaveGeneralSettings()" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-fuchsia-500">{{ settings.persona_instructions }}</textarea>
                 </div>
             </div>
@@ -760,17 +760,17 @@
 
                 <div class="space-y-4 text-xs">
                     <div>
-                        <label class="text-[11px] text-gray-400 block mb-1">Clé API Google Gemini (Google AI Studio) :</label>
+                        <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec6_gemini_key">Clé API Google Gemini (Google AI Studio) :</label>
                         <input type="password" id="cred_gemini" value="{{ settings.gemini_api_key }}" placeholder="AIzaSy..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white font-mono focus:outline-none focus:border-emerald-500">
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="text-[11px] text-gray-400 block mb-1">Nom d'utilisateur Instagram (Optionnel) :</label>
+                            <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec6_ig_user">Nom d'utilisateur Instagram (Optionnel) :</label>
                             <input type="text" id="cred_ig_user" value="{{ settings.instagram_username }}" placeholder="Laisser vide pour mode coffre privé" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
                         </div>
                         <div>
-                            <label class="text-[11px] text-gray-400 block mb-1">Mot de passe Instagram (Optionnel) :</label>
+                            <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec6_ig_pass">Mot de passe Instagram (Optionnel) :</label>
                             <input type="password" id="cred_ig_pass" value="{{ settings.instagram_password }}" placeholder="••••••••" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
                         </div>
                     </div>
@@ -779,20 +779,20 @@
                     <div class="p-3.5 rounded-2xl bg-gray-950 border border-gray-800 space-y-3">
                         <div class="flex items-center gap-2">
                             <i class="fa-brands fa-facebook text-blue-500 text-sm"></i>
-                            <span class="text-xs font-bold text-gray-200">Meta Graph API & Page Facebook (Mode Meta Graph)</span>
+                            <span class="text-xs font-bold text-gray-200" data-i18n="sec6_meta_title">Meta Graph API & Page Facebook (Mode Meta Graph)</span>
                         </div>
                         <div class="space-y-2">
                             <div>
-                                <label class="text-[10px] text-gray-400 block mb-0.5">Jeton d'accès Meta (Page Access Token) :</label>
+                                <label class="text-[10px] text-gray-400 block mb-0.5" data-i18n="sec6_meta_token">Jeton d'accès Meta (Page Access Token) :</label>
                                 <input type="password" id="cred_meta_token" value="{{ settings.meta_access_token }}" placeholder="EAA..." class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500">
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label class="text-[10px] text-gray-400 block mb-0.5">ID de la Page Facebook :</label>
+                                    <label class="text-[10px] text-gray-400 block mb-0.5" data-i18n="sec6_fb_page">ID de la Page Facebook :</label>
                                     <input type="text" id="cred_fb_page" value="{{ settings.facebook_page_id }}" placeholder="1029384756..." class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-xs text-white">
                                 </div>
                                 <div>
-                                    <label class="text-[10px] text-gray-400 block mb-0.5">ID Compte Instagram Pro (Optionnel) :</label>
+                                    <label class="text-[10px] text-gray-400 block mb-0.5" data-i18n="sec6_ig_acc">ID Compte Instagram Pro (Optionnel) :</label>
                                     <input type="text" id="cred_ig_acc_id" value="{{ settings.instagram_account_id }}" placeholder="178414..." class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-xs text-white">
                                 </div>
                             </div>
@@ -801,17 +801,17 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="text-[11px] text-gray-400 block mb-1">Téléphone Destinataire SMS SOS :</label>
+                            <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec6_sos_phone">Téléphone Destinataire SMS SOS :</label>
                             <input type="text" id="cred_phone" value="{{ settings.emergency_phone }}" placeholder="+33612345678" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
                         </div>
                         <div>
-                            <label class="text-[11px] text-gray-400 block mb-1">Telegram Chat ID SOS (Optionnel) :</label>
+                            <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec6_sos_tg">Telegram Chat ID SOS (Optionnel) :</label>
                             <input type="text" id="cred_tg_chat" value="{{ settings.telegram_chat_id }}" placeholder="987654321" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
                         </div>
                     </div>
 
                     <button onclick="saveCredentials()" class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
-                        <i class="fa-solid fa-floppy-disk"></i> Enregistrer les Clés & Identifiants en Sécurité
+                        <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="sec6_btn_save">Enregistrer les Clés & Identifiants en Sécurité</span>
                     </button>
             </div>
 
@@ -1052,7 +1052,7 @@
         async function initCamera() {
             if (isMicConfigured) initMicrophone();
             if (!isCameraConfigured) {
-                document.getElementById('camStatusBadge').textContent = 'Désactivée dans les options';
+                const dict = I18N[currentUILang] || I18N.en; document.getElementById('camStatusBadge').textContent = dict.cam_disabled;
                 return;
             }
 
@@ -1065,11 +1065,11 @@
             // Detect if mediaDevices is blocked because of insecure HTTP context on mobile
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 if (isMobileDevice) {
-                    badge.textContent = 'Mode Mobile (HTTP)';
+                    const dict = I18N[currentUILang] || I18N.en; badge.textContent = dict.cam_mobile_mode;
                     badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800';
                     showToast('Astuce Android : Utilisez le bouton vert "Photo Smartphone" pour capturer directement avec votre caméra !');
                 } else {
-                    badge.textContent = 'Non supportée';
+                    const dict = I18N[currentUILang] || I18N.en; badge.textContent = dict.cam_unsupported;
                     badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-rose-950 text-rose-400 border border-rose-800';
                 }
                 return;
@@ -1083,7 +1083,7 @@
                 video.classList.remove('hidden');
                 placeholder.classList.add('hidden');
                 livePill.classList.remove('hidden');
-                badge.textContent = (currentFacingMode === 'environment') ? 'En direct (Dorsale POV)' : 'En direct (Frontale)';
+                const dict = I18N[currentUILang] || I18N.en; badge.textContent = (currentFacingMode === 'environment') ? dict.cam_live_back : dict.cam_live_front;
                 badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800';
                 countEl.classList.remove('hidden');
 
@@ -1109,14 +1109,15 @@
                 }, 1000);
 
             } catch (err) {
+                const dict = I18N[currentUILang] || I18N.en;
                 if (isMobileDevice) {
-                    badge.textContent = 'Mode Mobile (HTTP)';
+                    badge.textContent = dict.cam_mobile_mode;
                     badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800';
-                    showToast('Cliquez sur le bouton vert "Photo Smartphone" pour capturer avec la caméra de votre téléphone', false);
+                    showToast(dict.toast_cam_mobile_hint, false);
                 } else {
-                    badge.textContent = 'Non autorisée';
+                    badge.textContent = dict.cam_denied;
                     badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-rose-950 text-rose-400 border border-rose-800';
-                    showToast('Accès caméra refusé : autorisez la webcam dans le navigateur', true);
+                    showToast(dict.toast_cam_denied, true);
                 }
             }
         }
@@ -1127,15 +1128,16 @@
             const countEl = document.getElementById('camNextCountdown');
 
             isCameraPaused = !isCameraPaused;
+            const dict = I18N[currentUILang] || I18N.en;
             if (isCameraPaused) {
-                btn.innerHTML = '<i class="fa-solid fa-play"></i> Reprendre';
-                badge.textContent = 'En pause';
+                btn.innerHTML = `<i class="fa-solid fa-play"></i> ${dict.btn_resume}`;
+                badge.textContent = dict.cam_paused;
                 badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-950 text-amber-400 border border-amber-800';
                 countEl.classList.add('hidden');
                 showToast('Flux caméra mis en pause');
             } else {
-                btn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
-                badge.textContent = 'En direct';
+                btn.innerHTML = `<i class="fa-solid fa-pause"></i> ${dict.btn_pause}`;
+                badge.textContent = dict.cam_live;
                 badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800';
                 countEl.classList.remove('hidden');
                 secRemaining = captureIntervalSec;
@@ -1289,6 +1291,7 @@
         }
 
         function renderCaptureCard(cap, hasGemini) {
+            const dict = I18N[currentUILang] || I18N.en;
             const isPublished = cap.status === 'PUBLISHED';
             const isUnpublished = cap.status === 'UNPUBLISHED';
             const isRejected = cap.status && cap.status.startsWith('REJECT');
@@ -1297,19 +1300,19 @@
             // Status badge
             let statusBadge = '';
             if (isPublished) {
-                statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-check"></i> Publié</span>';
+                statusBadge = `<span class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-500 text-black rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-check"></i> ${dict.badge_published}</span>`;
             } else if (isUnpublished) {
-                statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-950/90 text-rose-300 border border-rose-800/60 rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-arrow-rotate-left"></i> Dépublié</span>';
+                statusBadge = `<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-950/90 text-rose-300 border border-rose-800/60 rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-arrow-rotate-left"></i> ${dict.badge_unpublished}</span>`;
             } else if (isRejected) {
-                statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-ban"></i> Rejeté</span>';
+                statusBadge = `<span class="px-2.5 py-1 text-[11px] font-semibold bg-rose-500 text-white rounded-full flex items-center gap-1 shadow"><i class="fa-solid fa-ban"></i> ${dict.badge_rejected}</span>`;
             } else if (isPending) {
                 if (!isManualMode) {
-                    statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-bolt"></i> Publication auto</span>';
+                    statusBadge = `<span class="px-2.5 py-1 text-[11px] font-semibold bg-sky-500 text-white rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-bolt"></i> ${dict.badge_auto_publish}</span>`;
                 } else {
-                    statusBadge = '<span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-clock"></i> En attente accord</span>';
+                    statusBadge = `<span class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500 text-black rounded-full flex items-center gap-1 animate-pulse shadow"><i class="fa-solid fa-clock"></i> ${dict.badge_pending}</span>`;
                 }
             } else {
-                statusBadge = `<span class="px-2.5 py-1 text-[11px] font-semibold bg-gray-600 text-white rounded-full shadow">${escapeHtml(cap.status || 'En cours')}</span>`;
+                statusBadge = `<span class="px-2.5 py-1 text-[11px] font-semibold bg-gray-600 text-white rounded-full shadow">${escapeHtml(cap.status || '')}</span>`;
             }
 
             // Star score (ONLY shown if social_score is not null/undefined)
@@ -1340,7 +1343,7 @@
                 sensorsHtml += `<span class="flex items-center gap-1 text-rose-400 font-semibold"><i class="fa-solid fa-heart-pulse"></i> ${meta.heart_rate_bpm} BPM</span>`;
             }
             if (meta.step_cadence || meta.steps) {
-                sensorsHtml += `<span class="flex items-center gap-1 text-amber-400"><i class="fa-solid fa-shoe-prints"></i> ${meta.step_cadence || meta.steps} pas</span>`;
+                sensorsHtml += `<span class="flex items-center gap-1 text-amber-400"><i class="fa-solid fa-shoe-prints"></i> ${meta.step_cadence || meta.steps} ${dict.unit_steps}</span>`;
             }
 
             // Hashtags string
@@ -1355,12 +1358,12 @@
             let reevalBtn = '';
             if (hasGemini) {
                 reevalBtn = `
-                <button onclick="reevaluateCapture(${cap.id})" class="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="Ré-évaluer par l'IA Gemini">
+                <button onclick="reevaluateCapture(${cap.id})" class="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="${dict.card_tip_reeval}">
                     <i class="fa-solid fa-wand-magic-sparkles text-fuchsia-400"></i>
                 </button>`;
             } else {
                 reevalBtn = `
-                <button disabled class="p-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-600 opacity-40 cursor-not-allowed" title="Ré-évaluation désactivée : Clé Gemini non configurée dans Options">
+                <button disabled class="p-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-600 opacity-40 cursor-not-allowed" title="${dict.card_tip_reeval_disabled}">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                 </button>`;
             }
@@ -1371,10 +1374,10 @@
             <div id="auto_timer_container_${cap.id}" class="${showTimer ? '' : 'hidden'} flex items-center justify-between bg-amber-950/40 border border-amber-800/50 rounded-xl px-3 py-1.5 text-xs text-amber-200">
                 <span class="flex items-center gap-1.5 text-[11px]">
                     <i class="fa-solid fa-hourglass-half text-amber-400 animate-spin"></i>
-                    Publication auto dans <strong id="auto_timer_val_${cap.id}" class="font-mono text-white text-xs">60</strong>s
+                    ${dict.card_auto_publish_in} <strong id="auto_timer_val_${cap.id}" class="font-mono text-white text-xs">60</strong>s
                 </span>
-                <button onclick="postponeAutoPublish(${cap.id})" class="px-2 py-0.5 rounded-lg bg-amber-900/60 hover:bg-amber-800 text-amber-300 border border-amber-700/60 text-[10px] font-bold transition flex items-center gap-1" title="Reporter la publication automatique de 60 secondes">
-                    <i class="fa-regular fa-clock"></i> +1 min
+                <button onclick="postponeAutoPublish(${cap.id})" class="px-2 py-0.5 rounded-lg bg-amber-900/60 hover:bg-amber-800 text-amber-300 border border-amber-700/60 text-[10px] font-bold transition flex items-center gap-1" title="${dict.card_postpone}">
+                    <i class="fa-regular fa-clock"></i> ${dict.card_postpone}
                 </button>
             </div>`;
 
@@ -1387,21 +1390,21 @@
 
             // Publish button (Always present and functional when not published)
             const publishBtn = !isPublished ? `
-                <button onclick="approveCapture(${cap.id})" class="publish-btn px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="Publier immédiatement ce cliché">
-                    <i class="fa-solid fa-paper-plane mr-0.5"></i> Publier
+                <button onclick="approveCapture(${cap.id})" class="publish-btn px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-md shadow-emerald-600/20" title="${dict.card_tip_publish}">
+                    <i class="fa-solid fa-paper-plane mr-0.5"></i> ${dict.card_btn_publish}
                 </button>` : '';
 
             // Reject / Dépublier button
             let rejectBtn = '';
             if (isPublished) {
                 rejectBtn = `
-                <button onclick="rejectCaptureManual(${cap.id})" class="reject-btn px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="Dépublier ce cliché (retirer du dossier export)">
-                    <i class="fa-solid fa-arrow-rotate-left text-rose-400"></i> Dépublier
+                <button onclick="rejectCaptureManual(${cap.id})" class="reject-btn px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="${dict.card_tip_unpublish}">
+                    <i class="fa-solid fa-arrow-rotate-left text-rose-400"></i> ${dict.card_btn_unpublish}
                 </button>`;
             } else if (!isRejected && !isUnpublished) {
                 rejectBtn = `
-                <button onclick="rejectCaptureManual(${cap.id})" class="reject-btn px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="Rejeter ce cliché (refus de publication)">
-                    <i class="fa-solid fa-ban text-rose-400"></i> Rejeter
+                <button onclick="rejectCaptureManual(${cap.id})" class="reject-btn px-2.5 py-1.5 rounded-xl bg-gray-800 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-800/60 text-gray-300 border border-gray-700 text-xs font-semibold transition flex items-center gap-1" title="${dict.card_tip_reject}">
+                    <i class="fa-solid fa-ban text-rose-400"></i> ${dict.card_btn_reject}
                 </button>`;
             }
 
@@ -1429,15 +1432,15 @@
 
                         <div class="space-y-2">
                             <div class="flex items-center justify-between">
-                                <label class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Légende & Tags :</label>
+                                <label class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">${dict.card_caption_label}</label>
                                 <span id="save_indicator_${cap.id}" class="text-[10px] text-emerald-400 font-medium transition-opacity duration-300 opacity-0 flex items-center gap-1">
-                                    <i class="fa-solid fa-check text-[9px]"></i> Enregistré
+                                    <i class="fa-solid fa-check text-[9px]"></i> ${dict.card_saved}
                                 </span>
                             </div>
-                            <textarea id="caption_edit_${cap.id}" oninput="autoSaveCapture(${cap.id})" onblur="saveCaptionAndTagsImmediately(${cap.id})" rows="2" placeholder="Légende du cliché..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-fuchsia-500 transition leading-relaxed">${escapeHtml(cap.caption || '')}</textarea>
+                            <textarea id="caption_edit_${cap.id}" oninput="autoSaveCapture(${cap.id})" onblur="saveCaptionAndTagsImmediately(${cap.id})" rows="2" placeholder="${dict.card_caption_placeholder}" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-gray-100 focus:outline-none focus:border-fuchsia-500 transition leading-relaxed">${escapeHtml(cap.caption || '')}</textarea>
                             <div class="relative">
                                 <span class="absolute left-2.5 top-2 text-blue-400 text-xs font-mono">#</span>
-                                <input id="tags_edit_${cap.id}" oninput="autoSaveCapture(${cap.id})" onblur="saveCaptionAndTagsImmediately(${cap.id})" type="text" value="${escapeHtml(tagsStr)}" placeholder="pov, quotidien, ville (séparés par virgules)" class="w-full bg-gray-950 border border-gray-800 rounded-xl py-1.5 pl-6 pr-2.5 text-xs text-blue-300 placeholder-gray-600 focus:outline-none focus:border-fuchsia-500 font-mono transition">
+                                <input id="tags_edit_${cap.id}" oninput="autoSaveCapture(${cap.id})" onblur="saveCaptionAndTagsImmediately(${cap.id})" type="text" value="${escapeHtml(tagsStr)}" placeholder="${dict.card_tags_placeholder}" class="w-full bg-gray-950 border border-gray-800 rounded-xl py-1.5 pl-6 pr-2.5 text-xs text-blue-300 placeholder-gray-600 focus:outline-none focus:border-fuchsia-500 font-mono transition">
                             </div>
                         </div>
 
@@ -1449,11 +1452,11 @@
                         <div class="flex items-center gap-1.5">
                             ${publishBtn}
                             ${rejectBtn}
-                            <a href="/captures/${escapeHtml(cap.filename)}" download class="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="Télécharger l'image">
+                            <a href="/captures/${escapeHtml(cap.filename)}" download class="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="${dict.card_tip_download}">
                                 <i class="fa-solid fa-download"></i>
                             </a>
                             ${reevalBtn}
-                            <button onclick="deleteCapture(${cap.id})" class="p-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 transition" title="Supprimer définitivement (photo et fichier)">
+                            <button onclick="deleteCapture(${cap.id})" class="p-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 transition" title="${dict.card_tip_delete}">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </div>
@@ -1483,6 +1486,20 @@
             }
         }
 
+                function renderAllGalleryCards(captures) {
+            window.latestCapturesList = captures;
+            const grid = document.getElementById('capturesGrid');
+            const empty = document.getElementById('emptyGalleryState');
+            if (!grid) return;
+            if (!captures || captures.length === 0) {
+                if (empty) empty.classList.remove('hidden');
+                grid.innerHTML = '';
+                return;
+            }
+            if (empty) empty.classList.add('hidden');
+            grid.innerHTML = captures.map(c => renderCaptureCard(c, hasGeminiKey)).join('');
+        }
+
         async function refreshCapturesData() {
             try {
                 const res = await fetch('/api/captures?limit=50');
@@ -1510,10 +1527,11 @@
                 const empty = document.getElementById('emptyGalleryState');
                 if (!grid) return;
 
-                if (data.captures && data.captures.length > 0) {
-                    if (empty) empty.classList.add('hidden');
-
-                    // Make sure each capture exists in grid; prepend new ones
+                if (data.captures) {
+                    window.latestCapturesList = data.captures;
+                    renderAllGalleryCards(data.captures);
+                }
+                if (false) {
                     for (let i = data.captures.length - 1; i >= 0; i--) {
                         const cap = data.captures[i];
                         let card = document.getElementById('capture_card_' + cap.id);
@@ -1835,6 +1853,7 @@
         // ========================================================
         function applyValidationModeUI(isManual) {
             isManualMode = isManual;
+            const dict = I18N[currentUILang] || I18N.en;
             const btn = document.getElementById('validationToggleBtn');
             const dot = document.getElementById('validationDot');
             const label = document.getElementById('validationToggleLabel');
@@ -1842,11 +1861,11 @@
                 if (isManual) {
                     btn.className = 'flex items-center space-x-1.5 sm:space-x-2 text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border transition bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60';
                     dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
-                    label.textContent = 'Manuelle';
+                    label.textContent = dict.val_manual;
                 } else {
                     btn.className = 'flex items-center space-x-1.5 sm:space-x-2 text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border transition bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60';
                     dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
-                    label.textContent = 'Automatique';
+                    label.textContent = dict.val_auto;
                 }
             }
             const chk = document.getElementById('require_approval');
@@ -2137,24 +2156,41 @@
         }
 
         // ========================================================
-        // 8. INTERNATIONALISATION (i18n) BILINGUE (FR / EN)
+                // 8. INTERNATIONALISATION (i18n) BILINGUE (FR / EN)
         // ========================================================
-        let currentUILang = localStorage.getItem('autoinsta_ui_lang') || 'fr';
+        let currentUILang = localStorage.getItem('autoinsta_ui_lang') || 'en';
 
         const I18N = {
             fr: {
+                app_title: "AutoInsta POV — Centre de Contrôle",
                 header_subtitle: "Agent autonome d'ingestion égocentrique",
                 tab_captures: "Photos & Historique",
                 tab_settings: "Options & Paramètres",
                 val_prefix: "Validation : ",
                 val_manual: "Manuelle",
                 val_auto: "Automatique",
+                btn_file: "Fichier",
+                btn_live: "DIRECT",
+                cam_off: "Caméra OFF",
+                cam_init: "Initialisation...",
+                cam_disabled: "Désactivée dans les options",
+                cam_mobile_mode: "Mode Mobile (HTTP)",
+                cam_unsupported: "Non supportée",
+                cam_live_back: "En direct (Dorsale POV)",
+                cam_live_front: "En direct (Frontale)",
+                cam_denied: "Non autorisée",
+                cam_paused: "En pause",
+                cam_live: "En direct",
                 cam_title: "Flux Caméra POV",
                 cam_subtitle: "Captures automatiques périodiques sans interrompre la vidéo.",
+                cam_next_shot: "Prochain cliché dans :",
                 btn_snap: "Déclencher",
                 btn_snap_mobile: "Photo Smartphone",
                 btn_pause: "Pause",
                 btn_resume: "Reprendre",
+                sos_title: "ALERTE RYTHME CARDIAQUE CRITIQUE !",
+                sos_desc: "Dispositif de sécurité SOS actif : secours et coordonnées envoyés si vous n'annulez pas.",
+                sos_btn: "J'AI LE CONTRÔLE - ANNULER L'ALERTE",
                 stat_captures: "Clichés Capturés",
                 stat_pending: "À Publier / En Attente",
                 stat_published: "Publiés / Archivés",
@@ -2165,6 +2201,32 @@
                 filter_pending: "À Publier",
                 filter_published: "Publiés",
                 filter_rejected: "Rejetés",
+                empty_title: "Aucun cliché pour le moment",
+                empty_desc: "La caméra intégrée est active. Un cliché sera pris automatiquement ou cliquez sur « Déclencher maintenant ».",
+                badge_published: "Publié",
+                badge_unpublished: "Dépublié",
+                badge_rejected: "Rejeté",
+                badge_pending: "En attente accord",
+                badge_auto_publish: "Publication auto",
+                card_caption_label: "Légende & Tags :",
+                card_caption_placeholder: "Légende du cliché...",
+                card_tags_placeholder: "pov, quotidien, ville (séparés par virgules)",
+                card_saved: "Enregistré",
+                card_auto_publish_in: "Publication auto dans",
+                card_postpone: "+1 min",
+                card_btn_publish: "Publier",
+                card_btn_reject: "Rejeter",
+                card_btn_unpublish: "Dépublier",
+                card_tip_publish: "Publier immédiatement ce cliché",
+                card_tip_reject: "Rejeter ce cliché (refus de publication)",
+                card_tip_unpublish: "Dépublier ce cliché (retirer du dossier export)",
+                card_tip_download: "Télécharger l'image",
+                card_tip_reeval: "Ré-évaluer par l'IA Gemini",
+                card_tip_reeval_disabled: "Ré-évaluation désactivée : Clé Gemini non configurée dans Options",
+                card_tip_delete: "Supprimer définitivement (photo et fichier)",
+                unit_steps: "pas",
+                unit_files: "fichiers",
+                unit_mb: "Mo",
                 sec1_title: "Emplacements de Sauvegarde & Stockage",
                 sec1_sub: "Gestion des dossiers locaux et synchronisation privée",
                 sec1_btn_diag: "Tester l'accès écriture",
@@ -2180,17 +2242,59 @@
                 sec2_val_manual: "Validation manuelle avant publication",
                 sec2_val_desc: "Si activé, l'IA attend votre accord. Si désactivé, la publication est autonome dès que la note >= 7.0.",
                 sec2_mode_label: "Mode de Diffusion actif :",
+                opt_mode_local: "Coffre Privé Local (Archivage local, sans compte Instagram)",
+                opt_mode_sync: "Synchronisation Privée (Copie dans le dossier export)",
+                opt_mode_dryrun: "Simulation Dry-Run (Aperçu virtuel sans envoi)",
+                opt_mode_instagrapi: "Instagram Mobile (Instagrapi)",
+                opt_mode_metagraph: "Meta Graph API (Compte Pro / Facebook)",
                 sec2_freq_cam: "Fréquence de capture webcam (secondes) :",
+                sec2_freq_hint: "Ex: 60s (1 min), 300s (5 min)",
                 sec2_min_interval: "Délai minimum entre posts (minutes) :",
                 sec2_max_daily: "Posts max par 24h :",
                 sec3_title: "Capteurs & Détection Matérielle",
                 sec3_sub: "Les capteurs absents sur PC sont grisés et désactivés",
+                sec3_btn_gps: "Tester le GPS",
+                s_cam_label: "Caméra POV",
+                s_cam_status: "✓ Détectée et active",
+                s_gps_label: "GPS & Vitesse",
+                s_gps_status: "✓ Détecté (Navigateur / Réseau)",
+                s_mic_label: "Microphone (dB Ambiance)",
+                s_mic_status: "✓ Détecté",
+                s_bat_label: "Batterie (Alimentation)",
+                s_bat_status: "✓ Détectée",
+                s_bat_ac: "PC sur secteur fixe",
+                s_accel_label: "Accéléromètre",
+                s_accel_none: "Non détecté sur ce PC (Requis mobile)",
+                s_step_label: "Podomètre (Pas du jour)",
+                s_step_none: "Non détecté sur ce PC (Requis smartphone/montre)",
                 sec4_title: "Sécurité Cardiaque & Dispositif d'Urgence SOS",
                 sec4_sub: "Détection d'anomalies de rythme cardiaque et procédure de secours automatique",
+                sec4_enable_label: "Activer le monitoring :",
+                sec4_alert_label: "Alerte automatique si BPM anormal (Tachycardie / Bradycardie)",
+                sec4_min_bpm: "Seuil Bas (< BPM) :",
+                sec4_max_bpm: "Seuil Haut (> BPM) :",
+                sec4_countdown: "Délai de Sécurité SOS (sec) :",
+                sec4_webhook: "Webhook URL d'urgence (Optionnel) :",
+                sec4_btn_test: "Tester l'Alerte d'Urgence SOS (10s)",
                 sec5_title: "IA Multimodale & Personas de Rédaction",
                 sec5_sub: "Modèle Gemini 1.5 Flash & Calibrage stylistique",
+                sec5_btn_test: "Tester la clé Gemini",
+                sec5_persona_label: "Style de Persona :",
+                sec5_min_score: "Seuil Social Minimum (/10) :",
+                sec5_lang_label: "Langue des Légendes :",
+                sec5_instructions_label: "Consignes spécifiques de rédaction pour l'IA :",
                 sec6_title: "Coffre-fort des Clés & Identifiants (.env)",
                 sec6_sub: "Stockage 100% sécurisé et local sur votre machine",
+                sec6_gemini_key: "Clé API Google Gemini (Google AI Studio) :",
+                sec6_ig_user: "Nom d'utilisateur Instagram (Optionnel) :",
+                sec6_ig_pass: "Mot de passe Instagram (Optionnel) :",
+                sec6_meta_title: "Meta Graph API & Page Facebook (Mode Meta Graph)",
+                sec6_meta_token: "Jeton d'accès Meta (Page Access Token) :",
+                sec6_fb_page: "ID de la Page Facebook :",
+                sec6_ig_acc: "ID Compte Instagram Pro (Optionnel) :",
+                sec6_sos_phone: "Téléphone Destinataire SMS SOS :",
+                sec6_sos_tg: "Telegram Chat ID SOS (Optionnel) :",
+                sec6_btn_save: "Enregistrer les Clés & Identifiants en Sécurité",
                 sec7_title: "Guide Smartphone Android & Mode 100% Autonome",
                 sec7_sub: "Faites tourner AutoInsta en totale mobilité sans aucun PC",
                 mode_a_title: "Mode A : Smartphone Client -> PC Serveur",
@@ -2204,21 +2308,40 @@
                 step2_desc: "Cela démarre le serveur local, active la capture caméra (seuil 5 lux) et ouvre automatiquement l'application sur http://localhost:8000.",
                 step3_title: "Étape 3 : Arrêter l'application à tout moment :",
                 widget_tip_title: "💡 Astuce 1-Clic sur l'écran d'accueil :",
-                widget_tip_desc: "Installez l'application Termux:Widget (depuis F-Droid). Les raccourcis AutoInsta_START et AutoInsta_STOP sont créés automatiquement pour piloter l'application d'une seule touche depuis votre bureau Android !"
+                widget_tip_desc: "Installez l'application Termux:Widget (depuis F-Droid). Les raccourcis AutoInsta_START et AutoInsta_STOP sont créés automatiquement pour piloter l'application d'une seule touche depuis votre bureau Android !",
+                toast_cam_mobile_hint: "Cliquez sur le bouton vert 'Photo Smartphone' pour capturer avec la caméra de votre téléphone",
+                toast_cam_denied: "Accès caméra refusé : autorisez la webcam dans le navigateur"
             },
             en: {
+                app_title: "AutoInsta POV — Control Center",
                 header_subtitle: "Autonomous Egocentric Lifelogging Agent",
                 tab_captures: "Photos & History",
                 tab_settings: "Settings & Options",
                 val_prefix: "Validation: ",
                 val_manual: "Manual",
                 val_auto: "Automatic",
+                btn_file: "File",
+                btn_live: "LIVE",
+                cam_off: "Camera OFF",
+                cam_init: "Initializing...",
+                cam_disabled: "Disabled in settings",
+                cam_mobile_mode: "Mobile Mode (HTTP)",
+                cam_unsupported: "Unsupported",
+                cam_live_back: "Live (Rear POV)",
+                cam_live_front: "Live (Front Selfie)",
+                cam_denied: "Permission denied",
+                cam_paused: "Paused",
+                cam_live: "Live",
                 cam_title: "POV Camera Feed",
                 cam_subtitle: "Periodic autonomous captures without interrupting video stream.",
+                cam_next_shot: "Next snapshot in:",
                 btn_snap: "Snap Now",
                 btn_snap_mobile: "Mobile Snap",
                 btn_pause: "Pause",
                 btn_resume: "Resume",
+                sos_title: "CRITICAL HEART RATE ALERT!",
+                sos_desc: "Emergency SOS active: rescue alerts and coordinates sent if not canceled.",
+                sos_btn: "I'M OK - CANCEL ALERT",
                 stat_captures: "Captured Shots",
                 stat_pending: "To Publish / Pending",
                 stat_published: "Published / Archived",
@@ -2229,6 +2352,32 @@
                 filter_pending: "To Publish",
                 filter_published: "Published",
                 filter_rejected: "Rejected",
+                empty_title: "No snapshots yet",
+                empty_desc: "Integrated camera is active. A snapshot will be taken automatically or click 'Snap Now'.",
+                badge_published: "Published",
+                badge_unpublished: "Unpublished",
+                badge_rejected: "Rejected",
+                badge_pending: "Pending approval",
+                badge_auto_publish: "Auto-publishing",
+                card_caption_label: "Caption & Tags:",
+                card_caption_placeholder: "Snapshot caption...",
+                card_tags_placeholder: "pov, daily, city (comma separated)",
+                card_saved: "Saved",
+                card_auto_publish_in: "Auto-publishing in",
+                card_postpone: "+1 min",
+                card_btn_publish: "Publish",
+                card_btn_reject: "Reject",
+                card_btn_unpublish: "Unpublish",
+                card_tip_publish: "Publish this snapshot now",
+                card_tip_reject: "Reject this snapshot",
+                card_tip_unpublish: "Unpublish this snapshot",
+                card_tip_download: "Download image",
+                card_tip_reeval: "Re-evaluate with Gemini AI",
+                card_tip_reeval_disabled: "Re-evaluation disabled: Gemini key not configured in Settings",
+                card_tip_delete: "Permanently delete (photo and file)",
+                unit_steps: "steps",
+                unit_files: "files",
+                unit_mb: "MB",
                 sec1_title: "Storage & Backup Folders",
                 sec1_sub: "Local directories management and private synchronization",
                 sec1_btn_diag: "Test Write Access",
@@ -2244,17 +2393,59 @@
                 sec2_val_manual: "Manual validation before publishing",
                 sec2_val_desc: "If enabled, AI waits for your consent. If disabled, publishing is autonomous once score >= 7.0.",
                 sec2_mode_label: "Active Publishing Mode:",
+                opt_mode_local: "Local Private Vault (Local archive, no Instagram account)",
+                opt_mode_sync: "Private Sync (Copy to export folder)",
+                opt_mode_dryrun: "Dry-Run Simulation (Virtual preview, no send)",
+                opt_mode_instagrapi: "Instagram Mobile (Instagrapi)",
+                opt_mode_metagraph: "Meta Graph API (Pro Account / Facebook)",
                 sec2_freq_cam: "Webcam capture interval (seconds):",
+                sec2_freq_hint: "Ex: 60s (1 min), 300s (5 min)",
                 sec2_min_interval: "Minimum cooldown between posts (minutes):",
                 sec2_max_daily: "Maximum posts per 24h:",
                 sec3_title: "Hardware Sensors & Detection",
                 sec3_sub: "Sensors absent on PC are greyed out and disabled",
+                sec3_btn_gps: "Test GPS",
+                s_cam_label: "POV Camera",
+                s_cam_status: "✓ Detected and active",
+                s_gps_label: "GPS & Speed",
+                s_gps_status: "✓ Detected (Browser / Network)",
+                s_mic_label: "Microphone (Ambient dB)",
+                s_mic_status: "✓ Detected",
+                s_bat_label: "Battery (Power)",
+                s_bat_status: "✓ Detected",
+                s_bat_ac: "PC on AC power",
+                s_accel_label: "Accelerometer",
+                s_accel_none: "Not detected on this PC (Requires mobile)",
+                s_step_label: "Pedometer (Daily steps)",
+                s_step_none: "Not detected on this PC (Requires smartphone/watch)",
                 sec4_title: "Cardiac Safety & SOS Emergency Device",
                 sec4_sub: "Heart rate anomaly detection and automated emergency procedure",
+                sec4_enable_label: "Enable monitoring:",
+                sec4_alert_label: "Automatic alert if abnormal BPM (Tachycardia / Bradycardia)",
+                sec4_min_bpm: "Low Threshold (< BPM):",
+                sec4_max_bpm: "High Threshold (> BPM):",
+                sec4_countdown: "SOS Safety Delay (sec):",
+                sec4_webhook: "Emergency Webhook URL (Optional):",
+                sec4_btn_test: "Test SOS Emergency Alert (10s)",
                 sec5_title: "Multimodal AI & Persona Profiles",
                 sec5_sub: "Gemini 1.5 Flash Vision Model & Stylistic tuning",
+                sec5_btn_test: "Test Gemini Key",
+                sec5_persona_label: "Persona Style:",
+                sec5_min_score: "Minimum Social Score (/10):",
+                sec5_lang_label: "Caption Language:",
+                sec5_instructions_label: "Specific writing instructions for AI:",
                 sec6_title: "Keys & Credentials Vault (.env)",
                 sec6_sub: "100% secure local storage on your device",
+                sec6_gemini_key: "Google Gemini API Key (Google AI Studio):",
+                sec6_ig_user: "Instagram Username (Optional):",
+                sec6_ig_pass: "Instagram Password (Optional):",
+                sec6_meta_title: "Meta Graph API & Facebook Page (Meta Graph Mode)",
+                sec6_meta_token: "Meta Page Access Token:",
+                sec6_fb_page: "Facebook Page ID:",
+                sec6_ig_acc: "Pro Instagram Account ID (Optional):",
+                sec6_sos_phone: "SOS Emergency SMS Recipient Phone:",
+                sec6_sos_tg: "SOS Telegram Chat ID (Optional):",
+                sec6_btn_save: "Save Keys & Credentials Securely",
                 sec7_title: "Android Smartphone Guide & Autonomous Mode",
                 sec7_sub: "Run AutoInsta in complete mobility without any PC",
                 mode_a_title: "Mode A: Smartphone Client -> PC Server",
@@ -2268,7 +2459,9 @@
                 step2_desc: "This starts the local server, activates camera capture (5 lux threshold), and automatically opens http://localhost:8000.",
                 step3_title: "Step 3: Stop the application at any time:",
                 widget_tip_title: "💡 1-Click Home Screen Shortcut:",
-                widget_tip_desc: "Install the Termux:Widget app (from F-Droid). The AutoInsta_START and AutoInsta_STOP shortcuts are created automatically to control the app with a single tap from your Android home screen!"
+                widget_tip_desc: "Install the Termux:Widget app (from F-Droid). The AutoInsta_START and AutoInsta_STOP shortcuts are created automatically to control the app with a single tap from your Android home screen!",
+                toast_cam_mobile_hint: "Tap the green 'Mobile Snap' button to capture directly with your phone camera",
+                toast_cam_denied: "Camera access denied: please allow webcam permissions in your browser"
             }
         };
 
@@ -2280,7 +2473,7 @@
         }
 
         function applyUILanguage(lang) {
-            const dict = I18N[lang] || I18N.fr;
+            const dict = I18N[lang] || I18N.en;
             const frEl = document.getElementById('uiLangFR');
             const enEl = document.getElementById('uiLangEN');
             if (frEl && enEl) {
@@ -2293,10 +2486,19 @@
                 }
             }
 
+            // Update document title
+            if (dict.app_title) {
+                document.title = dict.app_title;
+            }
+
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (dict[key]) {
-                    el.textContent = dict[key];
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.placeholder = dict[key];
+                    } else {
+                        el.textContent = dict[key];
+                    }
                 }
             });
 
@@ -2304,6 +2506,25 @@
             const valLabel = document.getElementById('validationToggleLabel');
             if (valLabel) {
                 valLabel.textContent = isManualMode ? dict.val_manual : dict.val_auto;
+            }
+
+            // Update storage count units
+            const capCountEl = document.getElementById('storageCapturesCount');
+            if (capCountEl) {
+                const cnt = capCountEl.getAttribute('data-count') || '0';
+                const mb = capCountEl.getAttribute('data-mb') || '0';
+                capCountEl.innerHTML = `${cnt} ${dict.unit_files} &bull; ${mb} ${dict.unit_mb}`;
+            }
+            const expCountEl = document.getElementById('storageExportCount');
+            if (expCountEl) {
+                const cnt = expCountEl.getAttribute('data-count') || '0';
+                const mb = expCountEl.getAttribute('data-mb') || '0';
+                expCountEl.innerHTML = `${cnt} ${dict.unit_files} &bull; ${mb} ${dict.unit_mb}`;
+            }
+
+            // Re-render gallery cards to match selected language immediately
+            if (window.latestCapturesList && window.latestCapturesList.length > 0) {
+                renderAllGalleryCards(window.latestCapturesList);
             }
         }
 
@@ -2318,6 +2539,7 @@
                 localStorage.setItem('autoinsta_ui_lang', queryLang);
             }
             applyUILanguage(currentUILang);
+            refreshCapturesData();
 
             const queryTab = urlParams.get('tab');
             if (queryTab === 'settings' || queryTab === 'captures') {
