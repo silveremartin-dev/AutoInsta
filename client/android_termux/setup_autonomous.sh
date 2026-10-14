@@ -8,11 +8,12 @@ echo "=============================================="
 echo " Installation d'AutoInsta Autonome sur Android"
 echo "=============================================="
 
+export DEBIAN_FRONTEND=noninteractive
 echo "[1/4] Mise à jour des dépôts Termux..."
-pkg update -y
+pkg update -y -o Dpkg::Options::="--force-confold"
 
 echo "[2/4] Installation des paquets système requis..."
-pkg install -y python python-cryptography openssl termux-api jq git libjpeg-turbo clang
+pkg install -y -o Dpkg::Options::="--force-confold" python python-cryptography openssl termux-api jq git libjpeg-turbo clang
 
 # Dans Termux, pip est pré-installé avec python. 'pip install --upgrade pip' est interdit par Termux.
 # On active le flag global pour autoriser l'installation sans venv :
