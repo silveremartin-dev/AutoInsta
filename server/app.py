@@ -86,14 +86,14 @@ def process_capture_pipeline(capture_id: int, image_path: Path, sensor_metadata:
 
 def get_hardware_capabilities() -> dict:
     """Detects physically available sensors on this host."""
-    import psutil
     is_android = "com.termux" in os.environ.get("PREFIX", "") or os.path.exists("/data/data/com.termux")
     has_battery = False
     try:
+        import psutil
         batt = psutil.sensors_battery()
         has_battery = batt is not None
     except Exception:
-        has_battery = False
+        has_battery = is_android
 
     return {
         "camera": True,
