@@ -20,7 +20,7 @@ DEFAULT_SERVER_URL = os.getenv("AUTOINSTA_SERVER", "http://192.168.1.38:8000/api
 DEFAULT_API_KEY = os.getenv("AUTOINSTA_KEY", "autoinsta_device_secret_token_123")
 DEFAULT_INTERVAL_SECONDS = int(os.getenv("AUTOINSTA_INTERVAL", "30"))
 DEFAULT_CAMERA_ID = os.getenv("AUTOINSTA_CAMERA", "0") # 0 = Back, 1 = Front
-DEFAULT_MIN_LUX = float(os.getenv("AUTOINSTA_MIN_LUX", "0.0")) # 0.0 = disabled by default for testing
+DEFAULT_MIN_LUX = float(os.getenv("AUTOINSTA_MIN_LUX", "5.0")) # 5.0 lux anti-poche restored
 
 ENABLE_GPS = os.getenv("AUTOINSTA_ENABLE_GPS", "1") == "1"
 ENABLE_HEART_RATE = os.getenv("AUTOINSTA_ENABLE_HR", "0") == "1"
