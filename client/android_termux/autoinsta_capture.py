@@ -13,12 +13,14 @@ import time
 import subprocess
 import requests
 import json
+import argparse
 
-SERVER_URL = os.getenv("AUTOINSTA_SERVER", "http://192.168.1.50:8000/api/capture/upload")
-API_KEY = os.getenv("AUTOINSTA_KEY", "autoinsta_device_secret_token_123")
-INTERVAL_SECONDS = int(os.getenv("AUTOINSTA_INTERVAL", "30"))
-CAMERA_ID = os.getenv("AUTOINSTA_CAMERA", "0") # 0 = Back, 1 = Front
-MIN_LUX = float(os.getenv("AUTOINSTA_MIN_LUX", "5.0"))
+# Default configurations (can be overridden via CLI args or environment variables)
+DEFAULT_SERVER_URL = os.getenv("AUTOINSTA_SERVER", "http://192.168.1.38:8000/api/capture/upload")
+DEFAULT_API_KEY = os.getenv("AUTOINSTA_KEY", "autoinsta_device_secret_token_123")
+DEFAULT_INTERVAL_SECONDS = int(os.getenv("AUTOINSTA_INTERVAL", "30"))
+DEFAULT_CAMERA_ID = os.getenv("AUTOINSTA_CAMERA", "0") # 0 = Back, 1 = Front
+DEFAULT_MIN_LUX = float(os.getenv("AUTOINSTA_MIN_LUX", "0.0")) # 0.0 = disabled by default for testing
 
 ENABLE_GPS = os.getenv("AUTOINSTA_ENABLE_GPS", "1") == "1"
 ENABLE_HEART_RATE = os.getenv("AUTOINSTA_ENABLE_HR", "0") == "1"
@@ -71,12 +73,12 @@ def check_heart_rate_and_alert(bpm: int, location_info: dict):
         except Exception as e:
             print(f"[!] Échec de l'envoi du SMS d'urgence: {e}")
 
-def capture_photo(output_path="/data/data/com.termux/files/home/autoinsta_temp.jpg") -> str:
+def capture_photo(camera_id=0, output_path="/data/data/com.termux/files/home/autoinsta_temp.jpg") -> str:
     """Takes silent snapshot using Termux Camera API."""
     try:
         if os.path.exists(output_path):
             os.remove(output_path)
-        cmd = ["termux-camera-photo", "-c", str(CAMERA_ID), output_path]
+        cmd = ["termux-camera-photo", "-c", str(camera_id), output_path]
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=12)
         if proc.returncode != 0:
             if "android.permission.CAMERA" in proc.stderr:
@@ -93,9 +95,9 @@ def capture_photo(output_path="/data/data/com.termux/files/home/autoinsta_temp.j
         print(f"[!] Erreur capture caméra: {e}")
     return None
 
-def upload_capture(image_path: str, sensor_dict: dict):
+def upload_capture(server_url: str, api_key: str, image_path: str, sensor_dict: dict):
     """POSTs image and sensor metadata to AutoInsta server."""
-    headers = {"X-API-Key": API_KEY}
+    headers = {"X-API-Key": api_key}
     with open(image_path, "rb") as f:
         files = {"file": ("pov_android.jpg", f, "image/jpeg")}
         data = {
@@ -103,7 +105,7 @@ def upload_capture(image_path: str, sensor_dict: dict):
             "sensors": json.dumps(sensor_dict)
         }
         try:
-            r = requests.post(SERVER_URL, files=files, data=data, headers=headers, timeout=20)
+            r = requests.post(server_url, files=files, data=data, headers=headers, timeout=20)
             if r.status_code == 200:
                 print(f"[+] Cliché envoyé avec succès ! Capture ID: {r.json().get('capture_id')}")
             else:
@@ -112,22 +114,33 @@ def upload_capture(image_path: str, sensor_dict: dict):
             print(f"[!] Échec de l'envoi au serveur : {e}")
 
 def main():
+    parser = argparse.ArgumentParser(description="AutoInsta Android Multi-Sensor Rig")
+    parser.add_argument("--server", default=DEFAULT_SERVER_URL, help="URL d'upload AutoInsta")
+    parser.add_argument("--key", default=DEFAULT_API_KEY, help="Clé API secrète")
+    parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL_SECONDS, help="Intervalle entre photos (s)")
+    parser.add_argument("--camera", type=int, default=int(DEFAULT_CAMERA_ID), help="Caméra (0=Arrière, 1=Avant)")
+    parser.add_argument("--min-lux", type=float, default=DEFAULT_MIN_LUX, help="Seuil min de lux (0 = désactivé)")
+    args = parser.parse_args()
+
     print("==============================================")
     print("   AutoInsta Android Multi-Sensor Rig        ")
     print("==============================================")
-    print(f"Cible Serveur  : {SERVER_URL}")
-    print(f"Intervalle     : {INTERVAL_SECONDS}s")
+    print(f"Cible Serveur  : {args.server}")
+    print(f"Intervalle     : {args.interval}s")
+    print(f"Caméra ID      : {args.camera} ({'Arrière' if args.camera == 0 else 'Avant/Selfie'})")
+    print(f"Seuil Lux      : {args.min_lux} lux ({'Actif' if args.min_lux > 0 else 'Désactivé pour tests'})")
     print(f"GPS Actif      : {ENABLE_GPS}")
     print(f"Cardio Actif   : {ENABLE_HEART_RATE}")
     print("==============================================")
 
+    shot_count = 0
     while True:
         try:
-            # 1. Anti-poche : vérification de luminosité
+            # 1. Anti-poche : vérification de luminosité (uniquement si seuil > 0)
             lux = get_light_level()
-            if lux < MIN_LUX:
-                print(f"[-] Luminosité trop faible ({lux:.1f} lux) - Téléphone dans la poche. Pause.")
-                time.sleep(INTERVAL_SECONDS)
+            if args.min_lux > 0 and lux < args.min_lux:
+                print(f"[-] Luminosité trop faible ({lux:.1f} lux < {args.min_lux} lux) - Téléphone dans la poche ou posé à plat. Pause de {args.interval}s...")
+                time.sleep(args.interval)
                 continue
 
             # 2. Lecture GPS
@@ -143,12 +156,16 @@ def main():
             }
 
             # 4. Prise de vue
-            print("[*] Prise du cliché POV...")
-            img_path = capture_photo()
+            shot_count += 1
+            print(f"[*] Cliché #{shot_count} en cours de capture (lux: {lux:.1f})...")
+            img_path = capture_photo(camera_id=args.camera)
             if img_path:
-                upload_capture(img_path, sensor_payload)
+                upload_capture(args.server, args.key, img_path, sensor_payload)
+            else:
+                print(f"[!] Échec de prise de vue du cliché #{shot_count}")
 
-            time.sleep(INTERVAL_SECONDS)
+            print(f"[*] Prochain cliché dans {args.interval}s (Ctrl+C pour quitter)...")
+            time.sleep(args.interval)
         except KeyboardInterrupt:
             print("\n[*] Arrêt d'AutoInsta.")
             break

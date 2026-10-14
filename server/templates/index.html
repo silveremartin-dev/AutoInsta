@@ -47,32 +47,32 @@
                     <i class="fa-solid fa-glasses text-white text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg leading-none tracking-tight text-white flex items-center gap-2">
-                        AutoInsta <span class="text-xs px-2 py-0.5 rounded-full bg-fuchsia-950 text-fuchsia-400 border border-fuchsia-800/60 font-mono">POV Lifelogger</span>
+                    <h1 class="font-bold text-base sm:text-lg leading-none tracking-tight text-white flex items-center gap-1.5 sm:gap-2">
+                        AutoInsta <span class="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-fuchsia-950 text-fuchsia-400 border border-fuchsia-800/60 font-mono">POV Lifelogger</span>
                     </h1>
-                    <p class="text-xs text-gray-400">Agent autonome d'ingestion égocentrique</p>
+                    <p class="hidden sm:block text-xs text-gray-400">Agent autonome d'ingestion égocentrique</p>
                 </div>
             </div>
 
             <!-- Tab Selector & Validation Toggle -->
-            <div class="flex items-center space-x-2 sm:space-x-3">
+            <div class="flex items-center space-x-1.5 sm:space-x-3">
                 <!-- Two Main Tabs Selector -->
                 <div class="bg-gray-950 p-1 rounded-xl border border-gray-800 flex items-center">
-                    <button id="navTabCaptures" onclick="switchTab('captures')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-fuchsia-600 text-white shadow-md shadow-fuchsia-600/30">
+                    <button id="navTabCaptures" onclick="switchTab('captures')" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 sm:gap-1.5 bg-fuchsia-600 text-white shadow-md shadow-fuchsia-600/30">
                         <i class="fa-solid fa-camera"></i>
-                        <span>Photos & Historique</span>
+                        <span class="hidden sm:inline">Photos & </span><span>Historique</span>
                         <span id="badgeCaptureCount" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-black/40">{{ stats.total_captures }}</span>
                     </button>
-                    <button id="navTabSettings" onclick="switchTab('settings')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition flex items-center gap-1.5">
+                    <button id="navTabSettings" onclick="switchTab('settings')" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition flex items-center gap-1 sm:gap-1.5">
                         <i class="fa-solid fa-sliders"></i>
-                        <span>Options & Paramètres</span>
+                        <span class="hidden sm:inline">Options & </span><span>Paramètres</span>
                     </button>
                 </div>
 
                 <!-- Instant Mode Validation Toggle -->
-                <button id="validationToggleBtn" onclick="toggleValidationMode()" class="hidden sm:flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition {{ 'bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60' if settings.require_manual_confirmation else 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60' }}" title="Cliquer pour basculer instantanément entre approbation manuelle et publication automatique">
+                <button id="validationToggleBtn" onclick="toggleValidationMode()" class="flex items-center space-x-1.5 sm:space-x-2 text-[11px] sm:text-xs px-2.5 sm:px-3 py-1.5 rounded-lg border transition {{ 'bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60' if settings.require_manual_confirmation else 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60' }}" title="Cliquer pour basculer instantanément entre approbation manuelle et publication automatique">
                     <span id="validationDot" class="w-2 h-2 rounded-full {{ 'bg-amber-400' if settings.require_manual_confirmation else 'bg-emerald-400' }} animate-pulse"></span>
-                    <span>Validation : <strong id="validationToggleLabel">{{ 'Manuelle' if settings.require_manual_confirmation else 'Automatique' }}</strong></span>
+                    <span><span class="hidden md:inline">Validation : </span><strong id="validationToggleLabel">{{ 'Manuelle' if settings.require_manual_confirmation else 'Automatique' }}</strong></span>
                 </button>
             </div>
         </div>
@@ -1740,11 +1740,11 @@
             const label = document.getElementById('validationToggleLabel');
             if (btn && dot && label) {
                 if (isManual) {
-                    btn.className = 'hidden sm:flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60';
+                    btn.className = 'flex items-center space-x-1.5 sm:space-x-2 text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border transition bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60';
                     dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
                     label.textContent = 'Manuelle';
                 } else {
-                    btn.className = 'hidden sm:flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60';
+                    btn.className = 'flex items-center space-x-1.5 sm:space-x-2 text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border transition bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60';
                     dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
                     label.textContent = 'Automatique';
                 }
