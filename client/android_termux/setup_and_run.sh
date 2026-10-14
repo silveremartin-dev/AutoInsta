@@ -8,7 +8,7 @@ echo "[*] Installing Python & Termux-API tools..."
 pkg install -y python termux-api jq
 
 echo "[*] Installing Python requests..."
-pip install requests
+pip install --break-system-packages requests
 
 echo "[*] Starting AutoInsta Client..."
 # Change the IP to your PC / server IP on local network or Tailscale / public domain

@@ -50,7 +50,7 @@
                     <h1 class="font-bold text-base sm:text-lg leading-none tracking-tight text-white flex items-center gap-1.5 sm:gap-2">
                         AutoInsta <span class="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-fuchsia-950 text-fuchsia-400 border border-fuchsia-800/60 font-mono">POV Lifelogger</span>
                     </h1>
-                    <p class="hidden sm:block text-xs text-gray-400">Agent autonome d'ingestion égocentrique</p>
+                    <p class="hidden sm:block text-xs text-gray-400" data-i18n="header_subtitle">Agent autonome d'ingestion égocentrique</p>
                 </div>
             </div>
 
@@ -60,19 +60,25 @@
                 <div class="bg-gray-950 p-1 rounded-xl border border-gray-800 flex items-center">
                     <button id="navTabCaptures" onclick="switchTab('captures')" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 sm:gap-1.5 bg-fuchsia-600 text-white shadow-md shadow-fuchsia-600/30">
                         <i class="fa-solid fa-camera"></i>
-                        <span class="hidden sm:inline">Photos & </span><span>Historique</span>
+                        <span data-i18n="tab_captures">Photos & Historique</span>
                         <span id="badgeCaptureCount" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-black/40">{{ stats.total_captures }}</span>
                     </button>
                     <button id="navTabSettings" onclick="switchTab('settings')" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition flex items-center gap-1 sm:gap-1.5">
                         <i class="fa-solid fa-sliders"></i>
-                        <span class="hidden sm:inline">Options & </span><span>Paramètres</span>
+                        <span data-i18n="tab_settings">Options & Paramètres</span>
                     </button>
                 </div>
 
                 <!-- Instant Mode Validation Toggle -->
                 <button id="validationToggleBtn" onclick="toggleValidationMode()" class="flex items-center space-x-1.5 sm:space-x-2 text-[11px] sm:text-xs px-2.5 sm:px-3 py-1.5 rounded-lg border transition {{ 'bg-amber-950/60 text-amber-300 border-amber-800/80 hover:bg-amber-900/60' if settings.require_manual_confirmation else 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60' }}" title="Cliquer pour basculer instantanément entre approbation manuelle et publication automatique">
                     <span id="validationDot" class="w-2 h-2 rounded-full {{ 'bg-amber-400' if settings.require_manual_confirmation else 'bg-emerald-400' }} animate-pulse"></span>
-                    <span><span class="hidden md:inline">Validation : </span><strong id="validationToggleLabel">{{ 'Manuelle' if settings.require_manual_confirmation else 'Automatique' }}</strong></span>
+                    <span><span class="hidden md:inline" data-i18n="val_prefix">Validation : </span><strong id="validationToggleLabel">{{ 'Manuelle' if settings.require_manual_confirmation else 'Automatique' }}</strong></span>
+                </button>
+
+                <!-- UI Language Toggle (FR / EN) -->
+                <button id="uiLangToggleBtn" onclick="toggleUILanguage()" class="px-2 sm:px-2.5 py-1.5 rounded-lg border border-gray-800 bg-gray-950 text-gray-300 hover:text-white transition flex items-center gap-1.5 text-[11px] sm:text-xs" title="Changer la langue de l'interface / Switch UI language">
+                    <span id="uiLangFlag">🇬🇧</span>
+                    <span id="uiLangLabel" class="font-bold">EN</span>
                 </button>
             </div>
         </div>
@@ -122,10 +128,10 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-white text-sm flex items-center gap-2">
-                            <span>Flux Caméra POV</span>
+                            <span data-i18n="cam_title">Flux Caméra POV</span>
                             <span id="camStatusBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700">Initialisation...</span>
                         </h3>
-                        <p class="text-xs text-gray-400 mt-0.5">Captures automatiques périodiques sans interrompre la vidéo.</p>
+                        <p class="text-xs text-gray-400 mt-0.5" data-i18n="cam_subtitle">Captures automatiques périodiques sans interrompre la vidéo.</p>
                         <p id="camNextCountdown" class="text-xs text-fuchsia-400 font-mono mt-1 hidden">
                             <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Prochain cliché dans : <strong id="camSecLeft">30s</strong>
                         </p>
@@ -136,7 +142,7 @@
                 <div class="flex items-center gap-2 w-full md:w-auto justify-end flex-wrap">
                     <!-- Mobile Native Camera POV Trigger (Direct hardware camera, works 100% on HTTP on Android & iOS) -->
                     <label id="btnMobileSnap" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-600/20 transition flex items-center gap-1.5 cursor-pointer" title="Prendre une photo POV directement avec l'appareil photo du smartphone">
-                        <i class="fa-solid fa-mobile-screen-button"></i> Photo Smartphone
+                        <i class="fa-solid fa-mobile-screen-button"></i> <span data-i18n="btn_snap_mobile">Photo Smartphone</span>
                         <input type="file" id="mobileCameraInput" accept="image/*" capture="environment" onchange="handleMobileCameraCapture(event)" class="hidden">
                     </label>
 
@@ -145,10 +151,10 @@
                     </button>
 
                     <button id="btnSnapNow" onclick="snapWebcamNow()" class="px-4 py-2 rounded-xl text-xs font-bold bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-600/20 transition flex items-center gap-2" title="Prendre un cliché depuis le flux direct">
-                        <i class="fa-solid fa-camera-retro"></i> Déclencher
+                        <i class="fa-solid fa-camera-retro"></i> <span data-i18n="btn_snap">Déclencher</span>
                     </button>
                     <button id="btnToggleCam" onclick="toggleCameraManual()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-pause"></i> Pause
+                        <i class="fa-solid fa-pause"></i> <span id="btnToggleCamLabel" data-i18n="btn_pause">Pause</span>
                     </button>
                     <!-- Small discreet file upload fallback -->
                     <label class="px-3 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition flex items-center gap-1.5 cursor-pointer" title="Importer une image de test depuis votre PC">
@@ -162,7 +168,7 @@
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
                     <div>
-                        <p class="text-[11px] sm:text-xs text-gray-400 uppercase font-medium">Clichés Capturés</p>
+                        <p class="text-[11px] sm:text-xs text-gray-400 uppercase font-medium" data-i18n="stat_captures">Clichés Capturés</p>
                         <p id="statTotalCaptures" class="text-xl sm:text-2xl font-bold text-white mt-1">{{ stats.total_captures }}</p>
                     </div>
                     <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg sm:text-xl">
@@ -172,7 +178,7 @@
 
                 <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
                     <div>
-                        <p class="text-[11px] sm:text-xs text-amber-400 uppercase font-medium">À Publier / En Attente</p>
+                        <p class="text-[11px] sm:text-xs text-amber-400 uppercase font-medium" data-i18n="stat_pending">À Publier / En Attente</p>
                         <p id="statPendingApprovals" class="text-xl sm:text-2xl font-bold text-amber-300 mt-1">{{ stats.total_pending }}</p>
                     </div>
                     <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg sm:text-xl">
@@ -182,7 +188,7 @@
 
                 <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
                     <div>
-                        <p class="text-[11px] sm:text-xs text-emerald-400 uppercase font-medium">Publiés / Archivés</p>
+                        <p class="text-[11px] sm:text-xs text-emerald-400 uppercase font-medium" data-i18n="stat_published">Publiés / Archivés</p>
                         <p id="statTotalPublished" class="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">{{ stats.total_published }}</p>
                     </div>
                     <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg sm:text-xl">
@@ -192,7 +198,7 @@
 
                 <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/80 border border-gray-800 flex items-center justify-between">
                     <div>
-                        <p class="text-[11px] sm:text-xs text-rose-400 uppercase font-medium">Rejetés (Filtre / Manuel)</p>
+                        <p class="text-[11px] sm:text-xs text-rose-400 uppercase font-medium" data-i18n="stat_rejected">Rejetés (Filtre / Manuel)</p>
                         <p id="statTotalRejected" class="text-xl sm:text-2xl font-bold text-rose-400 mt-1">{{ stats.total_rejected }}</p>
                     </div>
                     <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-lg sm:text-xl">
@@ -206,17 +212,17 @@
                 <div class="flex items-center justify-between flex-wrap gap-3">
                     <div>
                         <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-images text-fuchsia-400"></i> Galerie & Historique des Captures
+                            <i class="fa-solid fa-images text-fuchsia-400"></i> <span data-i18n="gallery_title">Galerie & Historique des Captures</span>
                         </h2>
-                        <p class="text-xs text-gray-400">Toutes vos captures POV avec légendes éditables et publication en 1 clic</p>
+                        <p class="text-xs text-gray-400" data-i18n="gallery_sub">Toutes vos captures POV avec légendes éditables et publication en 1 clic</p>
                     </div>
 
                     <!-- Filter Buttons -->
                     <div class="flex items-center gap-1.5 text-xs bg-gray-900 border border-gray-800 p-1 rounded-xl">
-                        <button onclick="filterCaptures('all', this)" class="px-3 py-1 rounded-lg bg-gray-800 text-white font-medium filter-btn" data-filter="all">Tous</button>
-                        <button onclick="filterCaptures('UNPUBLISHED', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="UNPUBLISHED">À Publier</button>
-                        <button onclick="filterCaptures('PUBLISHED', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="PUBLISHED">Publiés</button>
-                        <button onclick="filterCaptures('REJECTED', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="REJECTED">Rejetés</button>
+                        <button onclick="filterCaptures('all', this)" class="px-3 py-1 rounded-lg bg-gray-800 text-white font-medium filter-btn" data-filter="all" data-i18n="filter_all">Tous</button>
+                        <button onclick="filterCaptures('UNPUBLISHED', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="UNPUBLISHED" data-i18n="filter_pending">À Publier</button>
+                        <button onclick="filterCaptures('PUBLISHED', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="PUBLISHED" data-i18n="filter_published">Publiés</button>
+                        <button onclick="filterCaptures('REJECTED', this)" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white filter-btn" data-filter="REJECTED" data-i18n="filter_rejected">Rejetés</button>
                     </div>
                 </div>
 
@@ -791,6 +797,84 @@
                     <button onclick="saveCredentials()" class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
                         <i class="fa-solid fa-floppy-disk"></i> Enregistrer les Clés & Identifiants en Sécurité
                     </button>
+            </div>
+
+            <!-- Section 7 : Guide Déploiement Mobile & Mode 100% Autonome Android (Termux) -->
+            <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-6 shadow-xl space-y-5">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-mobile-screen-button"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white" data-i18n="sec7_title">Guide Smartphone Android & Mode 100% Autonome</h3>
+                            <p class="text-xs text-gray-400" data-i18n="sec7_sub">Faites tourner AutoInsta en totale mobilité sans aucun PC</p>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-mono bg-purple-950 text-purple-300 border border-purple-800/60">Termux & Widget</span>
+                </div>
+
+                <div class="space-y-4 text-xs text-gray-300">
+                    <!-- Mode A vs Mode B explanation -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-2">
+                            <div class="flex items-center gap-2 text-sky-400 font-bold">
+                                <i class="fa-solid fa-network-wired"></i>
+                                <span data-i18n="mode_a_title">Mode A : Smartphone Client -> PC Serveur</span>
+                            </div>
+                            <p class="text-[11px] text-gray-400 leading-relaxed" data-i18n="mode_a_desc">
+                                Le PC héberge le serveur central. Le smartphone capture les photos et les transmet en Wi-Fi à l'adresse IP locale du PC (ex: <code>http://192.168.1.38:8000</code>).
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-gray-950 border border-fuchsia-900/40 space-y-2">
+                            <div class="flex items-center gap-2 text-fuchsia-400 font-bold">
+                                <i class="fa-solid fa-bolt"></i>
+                                <span data-i18n="mode_b_title">Mode B : 100% Autonome sur Smartphone (Zéro PC)</span>
+                            </div>
+                            <p class="text-[11px] text-gray-400 leading-relaxed" data-i18n="mode_b_desc">
+                                Tout tourne directement dans votre téléphone via Termux (serveur, IA, base SQLite et capture). Emportez votre téléphone en 4G/5G, aucun PC nécessaire !
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Steps for Autonomous mode -->
+                    <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-3">
+                        <h4 class="font-bold text-white flex items-center gap-2" data-i18n="autonomous_setup_title">
+                            <i class="fa-solid fa-terminal text-emerald-400"></i> Procédure d'installation & lancement autonome (Termux)
+                        </h4>
+                        
+                        <div class="space-y-2 font-mono text-[11px]">
+                            <div class="text-gray-400 font-sans text-xs" data-i18n="step1_title"><strong>Étape 1 :</strong> Installer les dépendances dans Termux (à faire une seule fois) :</div>
+                            <div class="p-2.5 rounded-xl bg-black border border-gray-800 text-emerald-400 select-all overflow-x-auto">
+                                cd ~/AutoInsta &amp;&amp; git pull &amp;&amp; bash client/android_termux/setup_autonomous.sh
+                            </div>
+                            <p class="text-[10px] text-gray-500 font-sans" data-i18n="step1_note">
+                                <em>Note :</em> Dans Termux, pip est géré par le système. Ne jamais taper <code>pip install --upgrade pip</code>. Le script configure automatiquement <code>--break-system-packages</code>.
+                            </p>
+                        </div>
+
+                        <div class="space-y-2 font-mono text-[11px] pt-2">
+                            <div class="text-gray-400 font-sans text-xs" data-i18n="step2_title"><strong>Étape 2 :</strong> Lancer AutoInsta en mode autonome :</div>
+                            <div class="p-2.5 rounded-xl bg-black border border-gray-800 text-cyan-300 select-all overflow-x-auto">
+                                bash client/android_termux/run_autonomous.sh
+                            </div>
+                            <p class="text-[10px] text-gray-400 font-sans" data-i18n="step2_desc">
+                                Cela démarre le serveur local, active la capture caméra (seuil 5 lux) et ouvre automatiquement l'application sur <code>http://localhost:8000</code>.
+                            </p>
+                        </div>
+
+                        <div class="space-y-2 font-mono text-[11px] pt-2">
+                            <div class="text-gray-400 font-sans text-xs" data-i18n="step3_title"><strong>Étape 3 :</strong> Arrêter l'application à tout moment :</div>
+                            <div class="p-2.5 rounded-xl bg-black border border-gray-800 text-rose-300 select-all overflow-x-auto">
+                                bash client/android_termux/widget_stop.sh
+                            </div>
+                        </div>
+
+                        <div class="mt-3 p-3 rounded-xl bg-fuchsia-950/40 border border-fuchsia-800/40 text-[11px] text-fuchsia-200 font-sans">
+                            <strong data-i18n="widget_tip_title">💡 Astuce 1-Clic sur l'écran d'accueil :</strong>
+                            <span data-i18n="widget_tip_desc"> Installez l'application <strong>Termux:Widget</strong> (depuis F-Droid). Les raccourcis <code>AutoInsta_START</code> et <code>AutoInsta_STOP</code> sont créés automatiquement pour piloter l'application d'une seule touche depuis votre bureau Android !</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -2037,9 +2121,138 @@
         }
 
         // ========================================================
-        // 8. INITIALISATION AUTOMATIQUE AU CHARGEMENT DE LA PAGE
+        // 8. INTERNATIONALISATION (i18n) BILINGUE (FR / EN)
+        // ========================================================
+        let currentUILang = localStorage.getItem('autoinsta_ui_lang') || 'fr';
+
+        const I18N = {
+            fr: {
+                header_subtitle: "Agent autonome d'ingestion égocentrique",
+                tab_captures: "Photos & Historique",
+                tab_settings: "Options & Paramètres",
+                val_prefix: "Validation : ",
+                val_manual: "Manuelle",
+                val_auto: "Automatique",
+                cam_title: "Flux Caméra POV",
+                cam_subtitle: "Captures automatiques périodiques sans interrompre la vidéo.",
+                btn_snap: "Déclencher",
+                btn_snap_mobile: "Photo Smartphone",
+                btn_pause: "Pause",
+                btn_resume: "Reprendre",
+                stat_captures: "Clichés Capturés",
+                stat_pending: "À Publier / En Attente",
+                stat_published: "Publiés / Archivés",
+                stat_rejected: "Rejetés (Filtre / Manuel)",
+                gallery_title: "Galerie & Historique des Captures",
+                gallery_sub: "Toutes vos captures POV avec légendes éditables et publication en 1 clic",
+                filter_all: "Tous",
+                filter_pending: "À Publier",
+                filter_published: "Publiés",
+                filter_rejected: "Rejetés",
+                sec1_title: "Emplacements de Sauvegarde & Stockage",
+                sec2_title: "Règles Générales & Fréquence de Publication",
+                sec3_title: "Capteurs & Détection Matérielle",
+                sec4_title: "Sécurité Cardiaque & Dispositif d'Urgence SOS",
+                sec5_title: "Persona & Directives de Rédaction IA",
+                sec6_title: "Coffre-fort des Clés & Identifiants (.env)",
+                sec7_title: "Guide Smartphone Android & Mode 100% Autonome",
+                sec7_sub: "Faites tourner AutoInsta en totale mobilité sans aucun PC",
+                mode_a_title: "Mode A : Smartphone Client -> PC Serveur",
+                mode_a_desc: "Le PC héberge le serveur central. Le smartphone capture les photos et les transmet en Wi-Fi à l'adresse IP locale du PC (ex: http://192.168.1.38:8000).",
+                mode_b_title: "Mode B : 100% Autonome sur Smartphone (Zéro PC)",
+                mode_b_desc: "Tout tourne directement dans votre téléphone via Termux (serveur, IA, base SQLite et capture). Emportez votre téléphone en 4G/5G, aucun PC nécessaire !",
+                autonomous_setup_title: "Procédure d'installation & lancement autonome (Termux)",
+                step1_title: "Étape 1 : Installer les dépendances dans Termux (à faire une seule fois) :",
+                step1_note: "Note : Dans Termux, pip est géré par le système. Ne jamais taper pip install --upgrade pip. Le script configure automatiquement --break-system-packages.",
+                step2_title: "Étape 2 : Lancer AutoInsta en mode autonome :",
+                step2_desc: "Cela démarre le serveur local, active la capture caméra (seuil 5 lux) et ouvre automatiquement l'application sur http://localhost:8000.",
+                step3_title: "Étape 3 : Arrêter l'application à tout moment :",
+                widget_tip_title: "💡 Astuce 1-Clic sur l'écran d'accueil :",
+                widget_tip_desc: "Installez l'application Termux:Widget (depuis F-Droid). Les raccourcis AutoInsta_START et AutoInsta_STOP sont créés automatiquement pour piloter l'application d'une seule touche depuis votre bureau Android !"
+            },
+            en: {
+                header_subtitle: "Autonomous Egocentric Lifelogging Agent",
+                tab_captures: "Photos & History",
+                tab_settings: "Settings & Options",
+                val_prefix: "Validation: ",
+                val_manual: "Manual",
+                val_auto: "Automatic",
+                cam_title: "POV Camera Feed",
+                cam_subtitle: "Periodic autonomous captures without interrupting video stream.",
+                btn_snap: "Snap Now",
+                btn_snap_mobile: "Mobile Snap",
+                btn_pause: "Pause",
+                btn_resume: "Resume",
+                stat_captures: "Captured Shots",
+                stat_pending: "To Publish / Pending",
+                stat_published: "Published / Archived",
+                stat_rejected: "Rejected (Filtered / Manual)",
+                gallery_title: "Captures Gallery & Lifelog Stream",
+                gallery_sub: "All POV captures with editable captions and 1-click publishing",
+                filter_all: "All",
+                filter_pending: "To Publish",
+                filter_published: "Published",
+                filter_rejected: "Rejected",
+                sec1_title: "Storage & Backup Folders",
+                sec2_title: "General Rules & Publishing Frequency",
+                sec3_title: "Sensors & Hardware Detection",
+                sec4_title: "Cardiac Safety & SOS Emergency Device",
+                sec5_title: "Persona & AI Writing Directives",
+                sec6_title: "Keys & Credentials Vault (.env)",
+                sec7_title: "Android Smartphone Guide & Autonomous Mode",
+                sec7_sub: "Run AutoInsta in complete mobility without any PC",
+                mode_a_title: "Mode A: Smartphone Client -> PC Server",
+                mode_a_desc: "The PC hosts the central server. The smartphone captures photos and streams them over Wi-Fi to the PC's local IP (e.g. http://192.168.1.38:8000).",
+                mode_b_title: "Mode B: 100% Autonomous on Smartphone (Zero PC)",
+                mode_b_desc: "Everything runs directly on your phone via Termux (server, AI, SQLite database, and capture). Take your phone anywhere on 4G/5G, no PC required!",
+                autonomous_setup_title: "Autonomous installation & launch procedure (Termux)",
+                step1_title: "Step 1: Install dependencies in Termux (one-time setup):",
+                step1_note: "Note: In Termux, pip is managed by the system. Never run pip install --upgrade pip. The script automatically configures --break-system-packages.",
+                step2_title: "Step 2: Launch AutoInsta in autonomous mode:",
+                step2_desc: "This starts the local server, activates camera capture (5 lux threshold), and automatically opens http://localhost:8000.",
+                step3_title: "Step 3: Stop the application at any time:",
+                widget_tip_title: "💡 1-Click Home Screen Shortcut:",
+                widget_tip_desc: "Install the Termux:Widget app (from F-Droid). The AutoInsta_START and AutoInsta_STOP shortcuts are created automatically to control the app with a single tap from your Android home screen!"
+            }
+        };
+
+        function toggleUILanguage() {
+            currentUILang = (currentUILang === 'fr') ? 'en' : 'fr';
+            localStorage.setItem('autoinsta_ui_lang', currentUILang);
+            applyUILanguage(currentUILang);
+            showToast(currentUILang === 'en' ? '✓ Language set to English' : '✓ Langue définie sur Français');
+        }
+
+        function applyUILanguage(lang) {
+            const dict = I18N[lang] || I18N.fr;
+            const flagEl = document.getElementById('uiLangFlag');
+            const labelEl = document.getElementById('uiLangLabel');
+            if (flagEl && labelEl) {
+                flagEl.textContent = (lang === 'fr') ? '🇬🇧' : '🇫🇷';
+                labelEl.textContent = (lang === 'fr') ? 'EN' : 'FR';
+            }
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) {
+                    el.textContent = dict[key];
+                }
+            });
+
+            // Update validation toggle button label
+            const valLabel = document.getElementById('validationToggleLabel');
+            if (valLabel) {
+                valLabel.textContent = isManualMode ? dict.val_manual : dict.val_auto;
+            }
+        }
+
+        // ========================================================
+        // 9. INITIALISATION AUTOMATIQUE AU CHARGEMENT DE LA PAGE
         // ========================================================
         window.addEventListener('DOMContentLoaded', () => {
+            // Apply language preference
+            applyUILanguage(currentUILang);
+
             const savedTab = localStorage.getItem('autoinsta_active_tab');
             if (savedTab === 'settings') {
                 switchTab('settings');

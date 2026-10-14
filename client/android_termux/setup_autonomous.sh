@@ -12,11 +12,14 @@ echo "[1/4] Mise à jour des dépôts Termux..."
 pkg update -y
 
 echo "[2/4] Installation des paquets système requis..."
-pkg install -y python python-pip termux-api jq git libjpeg-turbo
+pkg install -y python termux-api jq git libjpeg-turbo clang
+
+# Dans Termux, pip est pré-installé avec python. 'pip install --upgrade pip' est interdit par Termux.
+# On active le flag global pour autoriser l'installation sans venv :
+export PIP_BREAK_SYSTEM_PACKAGES=1
 
 echo "[3/4] Installation des librairies Python..."
-pip install --upgrade pip
-pip install fastapi uvicorn requests jinja2 python-multipart pydantic google-generativeai
+pip install --break-system-packages fastapi uvicorn requests jinja2 python-multipart pydantic google-generativeai
 
 echo "[4/4] Configuration des raccourcis Widget 1-clic..."
 mkdir -p "$HOME/.shortcuts"
