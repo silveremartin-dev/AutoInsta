@@ -80,10 +80,11 @@
                     <span><span class="hidden md:inline" data-i18n="val_prefix">Validation : </span><strong id="validationToggleLabel">{{ 'Manuelle' if settings.require_manual_confirmation else 'Automatique' }}</strong></span>
                 </button>
 
-                <!-- UI Language Toggle (FR / EN) -->
-                <button id="uiLangToggleBtn" onclick="toggleUILanguage()" class="px-2 sm:px-2.5 py-1.5 rounded-lg border border-gray-800 bg-gray-950 text-gray-300 hover:text-white transition flex items-center gap-1.5 text-[11px] sm:text-xs" title="Changer la langue de l'interface / Switch UI language">
-                    <span id="uiLangFlag">🇬🇧</span>
-                    <span id="uiLangLabel" class="font-bold">EN</span>
+                <!-- UI Language Selector (FR / EN) -->
+                <button id="uiLangToggleBtn" onclick="toggleUILanguage()" class="px-2.5 py-1.5 rounded-lg border border-gray-800 bg-gray-950 hover:border-gray-700 transition flex items-center gap-1.5 text-xs font-semibold" title="Changer la langue / Switch language">
+                    <span id="uiLangFR" class="text-emerald-400 font-bold transition">FR</span>
+                    <span class="text-gray-600 font-light">/</span>
+                    <span id="uiLangEN" class="text-gray-500 font-normal transition">EN</span>
                 </button>
             </div>
         </div>
@@ -418,12 +419,12 @@
                             <i class="fa-solid fa-folder-tree"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-white">Emplacements de Sauvegarde & Stockage</h3>
-                            <p class="text-xs text-gray-400">Gestion des dossiers locaux et synchronisation privée</p>
+                            <h3 class="text-base font-bold text-white" data-i18n="sec1_title">Emplacements de Sauvegarde & Stockage</h3>
+                            <p class="text-xs text-gray-400" data-i18n="sec1_sub">Gestion des dossiers locaux et synchronisation privée</p>
                         </div>
                     </div>
                     <button onclick="testStorageDiagnostic()" class="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-semibold flex items-center gap-1.5">
-                        <i class="fa-solid fa-vial-circle-check text-emerald-400"></i> Tester l'accès écriture
+                        <i class="fa-solid fa-vial-circle-check text-emerald-400"></i> <span data-i18n="sec1_btn_diag">Tester l'accès écriture</span>
                     </button>
                 </div>
 
@@ -433,20 +434,25 @@
                     <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-3">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold text-gray-200 flex items-center gap-2">
-                                <i class="fa-solid fa-camera text-fuchsia-400"></i> Dossier des Captures Brutes
+                                <i class="fa-solid fa-camera text-fuchsia-400"></i> <span data-i18n="sec1_raw_title">Dossier des Captures Brutes</span>
                             </span>
                             <span id="storageCapturesCount" class="text-[10px] font-mono text-gray-400">{{ storage.captures_count }} fichiers &bull; {{ storage.captures_size_mb }} Mo</span>
                         </div>
-                        <p class="text-[11px] text-gray-400">Emplacement où toutes les photos de la webcam sont enregistrées.</p>
+                        <p class="text-[11px] text-gray-400" data-i18n="sec1_raw_desc">Emplacement où toutes les photos de la webcam sont enregistrées.</p>
                         
                         <div class="space-y-2">
                             <input type="text" id="cfg_storage_dir" value="{{ storage.storage_dir }}" oninput="autoSaveStoragePath('captures')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-fuchsia-500">
-                            <div class="flex items-center justify-between gap-2 pt-1">
-                                <button onclick="openFolderInExplorer('captures')" class="px-3.5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold transition flex items-center gap-1.5 border border-gray-700">
-                                    <i class="fa-solid fa-folder-open text-amber-400"></i> Ouvrir dans l'Explorateur
-                                </button>
+                            <div class="flex items-center justify-between gap-2 pt-1 flex-wrap">
+                                <div class="flex items-center gap-2">
+                                    <button onclick="openFolderInExplorer('captures')" class="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold transition flex items-center gap-1.5 border border-gray-700">
+                                        <i class="fa-solid fa-folder-open text-amber-400"></i> <span data-i18n="sec1_btn_open">Ouvrir dans l'Explorateur</span>
+                                    </button>
+                                    <a href="/api/storage/browse/captures" target="_blank" class="px-2.5 py-2 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-300 text-xs font-medium border border-gray-800 transition flex items-center gap-1" title="Voir les fichiers dans le navigateur (Mobile & PC)">
+                                        <i class="fa-solid fa-globe text-cyan-400"></i> <span data-i18n="sec1_btn_web">Web</span>
+                                    </a>
+                                </div>
                                 <span id="save_storage_captures" class="text-[11px] text-emerald-400 font-medium transition-opacity opacity-0 flex items-center gap-1">
-                                    <i class="fa-solid fa-check text-[9px]"></i> Chemin enregistré
+                                    <i class="fa-solid fa-check text-[9px]"></i> <span data-i18n="sec1_path_saved">Chemin enregistré</span>
                                 </span>
                             </div>
                         </div>
@@ -456,20 +462,25 @@
                     <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-3">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold text-gray-200 flex items-center gap-2">
-                                <i class="fa-solid fa-vault text-emerald-400"></i> Dossier Coffre & Synchronisation Privée
+                                <i class="fa-solid fa-vault text-emerald-400"></i> <span data-i18n="sec1_export_title">Dossier Coffre & Synchronisation Privée</span>
                             </span>
                             <span id="storageExportCount" class="text-[10px] font-mono text-gray-400">{{ storage.export_count }} fichiers &bull; {{ storage.export_size_mb }} Mo</span>
                         </div>
-                        <p class="text-[11px] text-gray-400">Dossier export pour les photos publiées (Google Photos, Drive, Nextcloud).</p>
+                        <p class="text-[11px] text-gray-400" data-i18n="sec1_export_desc">Dossier export pour les photos publiées (Google Photos, Drive, Nextcloud).</p>
                         
                         <div class="space-y-2">
                             <input type="text" id="cfg_export_dir" value="{{ storage.export_dir }}" oninput="autoSaveStoragePath('export')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-500">
-                            <div class="flex items-center justify-between gap-2 pt-1">
-                                <button onclick="openFolderInExplorer('export')" class="px-3.5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold transition flex items-center gap-1.5 border border-gray-700">
-                                    <i class="fa-solid fa-folder-open text-amber-400"></i> Ouvrir dans l'Explorateur
-                                </button>
+                            <div class="flex items-center justify-between gap-2 pt-1 flex-wrap">
+                                <div class="flex items-center gap-2">
+                                    <button onclick="openFolderInExplorer('export')" class="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold transition flex items-center gap-1.5 border border-gray-700">
+                                        <i class="fa-solid fa-folder-open text-amber-400"></i> <span data-i18n="sec1_btn_open">Ouvrir dans l'Explorateur</span>
+                                    </button>
+                                    <a href="/api/storage/browse/export" target="_blank" class="px-2.5 py-2 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-300 text-xs font-medium border border-gray-800 transition flex items-center gap-1" title="Voir les fichiers dans le navigateur (Mobile & PC)">
+                                        <i class="fa-solid fa-globe text-cyan-400"></i> <span data-i18n="sec1_btn_web">Web</span>
+                                    </a>
+                                </div>
                                 <span id="save_storage_export" class="text-[11px] text-emerald-400 font-medium transition-opacity opacity-0 flex items-center gap-1">
-                                    <i class="fa-solid fa-check text-[9px]"></i> Chemin enregistré
+                                    <i class="fa-solid fa-check text-[9px]"></i> <span data-i18n="sec1_path_saved">Chemin enregistré</span>
                                 </span>
                             </div>
                         </div>
@@ -486,8 +497,8 @@
                             <i class="fa-solid fa-bolt"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-white">Mode de Validation & Diffusion</h3>
-                            <p class="text-xs text-gray-400">Contrôle autonome ou approbation manuelle instantanée</p>
+                            <h3 class="text-base font-bold text-white" data-i18n="sec2_title">Mode de Validation & Diffusion</h3>
+                            <p class="text-xs text-gray-400" data-i18n="sec2_sub">Contrôle autonome ou approbation manuelle instantanée</p>
                         </div>
                     </div>
                 </div>
@@ -496,15 +507,15 @@
                     <!-- Validation manuelle toggle card -->
                     <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 flex items-center justify-between">
                         <div>
-                            <span class="text-xs font-bold text-amber-300">Validation manuelle avant publication</span>
-                            <p class="text-[11px] text-gray-400 mt-0.5">Si activé, l'IA attend votre accord. Si désactivé, la publication est autonome dès que la note &gt;= 7.0.</p>
+                            <span class="text-xs font-bold text-amber-300" data-i18n="sec2_val_manual">Validation manuelle avant publication</span>
+                            <p class="text-[11px] text-gray-400 mt-0.5" data-i18n="sec2_val_desc">Si activé, l'IA attend votre accord. Si désactivé, la publication est autonome dès que la note &gt;= 7.0.</p>
                         </div>
                         <input type="checkbox" id="require_approval" onchange="autoSaveGeneralSettings()" class="accent-amber-500 w-5 h-5 cursor-pointer ml-3 shrink-0" {{ 'checked' if settings.require_manual_confirmation }}>
                     </div>
 
                     <!-- Mode de diffusion -->
                     <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-1.5">
-                        <label class="text-xs font-bold text-gray-200 block">Mode de Diffusion actif :</label>
+                        <label class="text-xs font-bold text-gray-200 block" data-i18n="sec2_mode_label">Mode de Diffusion actif :</label>
                         <select id="cred_mode" onchange="autoSaveGeneralSettings()" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-xs text-white">
                             <option value="local_only" {{ 'selected' if settings.publish_mode == 'local_only' }}>Coffre Privé Local (Archivage local, sans compte Instagram)</option>
                             <option value="google_photos" {{ 'selected' if settings.publish_mode == 'google_photos' }}>Synchronisation Privée (Copie dans le dossier export)</option>
@@ -518,16 +529,16 @@
                 <!-- Intervalles & Fréquence -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 text-xs">
                     <div>
-                        <label class="text-[11px] text-gray-400 block mb-1">Fréquence de capture webcam (secondes) :</label>
+                        <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec2_freq_cam">Fréquence de capture webcam (secondes) :</label>
                         <input type="number" id="cfg_cam_interval" onchange="updateCameraInterval(this.value)" min="5" max="3600" value="60" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
                         <span class="text-[9px] text-gray-500 mt-0.5 block">Ex: 60s (1 min), 300s (5 min)</span>
                     </div>
                     <div>
-                        <label class="text-[11px] text-gray-400 block mb-1">Délai minimum entre posts (minutes) :</label>
+                        <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec2_min_interval">Délai minimum entre posts (minutes) :</label>
                         <input type="number" id="cfg_min_interval" onchange="autoSaveGeneralSettings()" value="{{ settings.min_interval_minutes }}" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
                     </div>
                     <div>
-                        <label class="text-[11px] text-gray-400 block mb-1">Posts max par 24h :</label>
+                        <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec2_max_daily">Posts max par 24h :</label>
                         <input type="number" id="cfg_max_daily" onchange="autoSaveGeneralSettings()" value="{{ settings.max_daily_posts }}" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
                     </div>
                 </div>
@@ -541,12 +552,12 @@
                             <i class="fa-solid fa-microchip"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-white">Capteurs & Détection Matérielle</h3>
-                            <p class="text-xs text-gray-400">Les capteurs absents sur PC sont grisés et désactivés</p>
+                            <h3 class="text-base font-bold text-white" data-i18n="sec3_title">Capteurs & Détection Matérielle</h3>
+                            <p class="text-xs text-gray-400" data-i18n="sec3_sub">Les capteurs absents sur PC sont grisés et désactivés</p>
                         </div>
                     </div>
                     <button onclick="testGpsDiagnostic()" class="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-semibold flex items-center gap-1.5">
-                        <i class="fa-solid fa-location-crosshairs text-emerald-400"></i> Tester le GPS
+                        <i class="fa-solid fa-location-crosshairs text-emerald-400"></i> <span data-i18n="sec3_btn_gps">Tester le GPS</span>
                     </button>
                 </div>
 
@@ -639,19 +650,19 @@
                             <i class="fa-solid fa-heart-pulse"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-white">Sécurité Cardiaque & Dispositif d'Urgence SOS</h3>
-                            <p class="text-xs text-gray-400">Détection d'anomalies de rythme cardiaque et procédure de secours automatique</p>
+                            <h3 class="text-base font-bold text-white" data-i18n="sec4_title">Sécurité Cardiaque & Dispositif d'Urgence SOS</h3>
+                            <p class="text-xs text-gray-400" data-i18n="sec4_sub">Détection d'anomalies de rythme cardiaque et procédure de secours automatique</p>
                         </div>
                     </div>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <span class="text-xs text-gray-300">Activer le monitoring :</span>
+                        <span class="text-xs text-gray-300" data-i18n="sec4_enable_label">Activer le monitoring :</span>
                         <input type="checkbox" id="sensor_hr" onchange="autoSaveSensorConfig()" class="accent-rose-500 w-4 h-4" {{ 'checked' if settings.enable_heart_rate }}>
                     </label>
                 </div>
 
                 <div class="p-4 rounded-2xl bg-gray-950 border border-gray-800 space-y-4">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs text-rose-300 font-bold">Alerte automatique si BPM anormal (Tachycardie / Bradycardie)</span>
+                        <span class="text-xs text-rose-300 font-bold" data-i18n="sec4_alert_label">Alerte automatique si BPM anormal (Tachycardie / Bradycardie)</span>
                         <input type="checkbox" id="hr_alert_active" onchange="autoSaveSensorConfig()" class="accent-rose-500 w-4 h-4" {{ 'checked' if settings.hr_alert_enabled }}>
                     </div>
 
@@ -677,7 +688,7 @@
 
                     <div class="pt-2">
                         <button onclick="testEmergencyAlert()" class="px-4 py-2 rounded-xl bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-bold transition flex items-center gap-2">
-                            <i class="fa-solid fa-triangle-exclamation"></i> Tester l'Alerte d'Urgence SOS (10s)
+                            <i class="fa-solid fa-triangle-exclamation"></i> <span data-i18n="sec4_btn_test">Tester l'Alerte d'Urgence SOS (10s)</span>
                         </button>
                     </div>
                 </div>
@@ -691,18 +702,18 @@
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-white">IA Multimodale & Personas de Rédaction</h3>
-                            <p class="text-xs text-gray-400">Modèle Gemini 1.5 Flash & Calibrage stylistique</p>
+                            <h3 class="text-base font-bold text-white" data-i18n="sec5_title">IA Multimodale & Personas de Rédaction</h3>
+                            <p class="text-xs text-gray-400" data-i18n="sec5_sub">Modèle Gemini 1.5 Flash & Calibrage stylistique</p>
                         </div>
                     </div>
                     <button onclick="testGeminiDiagnostic()" class="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-semibold flex items-center gap-1.5">
-                        <i class="fa-solid fa-key text-fuchsia-400"></i> Tester la clé Gemini
+                        <i class="fa-solid fa-key text-fuchsia-400"></i> <span data-i18n="sec5_btn_test">Tester la clé Gemini</span>
                     </button>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                     <div>
-                        <label class="text-[11px] text-gray-400 block mb-1">Style de Persona :</label>
+                        <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec5_persona_label">Style de Persona :</label>
                         <select id="cfg_persona" onchange="autoSaveGeneralSettings()" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
                             <option value="spontaneous_chic" {{ 'selected' if settings.persona == 'spontaneous_chic' }}>Spontaneous Chic (Effortless, café, ville)</option>
                             <option value="witty_minimalist" {{ 'selected' if settings.persona == 'witty_minimalist' }}>Witty Minimalist (Punchy, 1-liner, concis)</option>
@@ -713,12 +724,12 @@
                     </div>
 
                     <div>
-                        <label class="text-[11px] text-gray-400 block mb-1">Seuil Social Minimum (/10) :</label>
+                        <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec5_min_score">Seuil Social Minimum (/10) :</label>
                         <input type="number" step="0.1" id="cfg_min_score" onchange="autoSaveGeneralSettings()" value="{{ settings.min_social_score }}" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
                     </div>
 
                     <div>
-                        <label class="text-[11px] text-gray-400 block mb-1">Langue des Légendes :</label>
+                        <label class="text-[11px] text-gray-400 block mb-1" data-i18n="sec5_lang_label">Langue des Légendes :</label>
                         <select id="cfg_language" onchange="autoSaveGeneralSettings()" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-white">
                             <option value="fr" {{ 'selected' if settings.language == 'fr' }}>Français</option>
                             <option value="en" {{ 'selected' if settings.language == 'en' }}>Anglais</option>
@@ -741,8 +752,8 @@
                             <i class="fa-solid fa-lock"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-white">Coffre-fort des Clés & Identifiants (.env)</h3>
-                            <p class="text-xs text-gray-400">Stockage 100% sécurisé et local sur votre machine</p>
+                            <h3 class="text-base font-bold text-white" data-i18n="sec6_title">Coffre-fort des Clés & Identifiants (.env)</h3>
+                            <p class="text-xs text-gray-400" data-i18n="sec6_sub">Stockage 100% sécurisé et local sur votre machine</p>
                         </div>
                     </div>
                 </div>
@@ -2155,11 +2166,31 @@
                 filter_published: "Publiés",
                 filter_rejected: "Rejetés",
                 sec1_title: "Emplacements de Sauvegarde & Stockage",
-                sec2_title: "Règles Générales & Fréquence de Publication",
+                sec1_sub: "Gestion des dossiers locaux et synchronisation privée",
+                sec1_btn_diag: "Tester l'accès écriture",
+                sec1_raw_title: "Dossier des Captures Brutes",
+                sec1_raw_desc: "Emplacement où toutes les photos de la webcam sont enregistrées.",
+                sec1_btn_open: "Ouvrir dans l'Explorateur",
+                sec1_btn_web: "Web",
+                sec1_path_saved: "Chemin enregistré",
+                sec1_export_title: "Dossier Coffre & Synchronisation Privée",
+                sec1_export_desc: "Dossier export pour les photos publiées (Google Photos, Drive, Nextcloud).",
+                sec2_title: "Mode de Validation & Diffusion",
+                sec2_sub: "Contrôle autonome ou approbation manuelle instantanée",
+                sec2_val_manual: "Validation manuelle avant publication",
+                sec2_val_desc: "Si activé, l'IA attend votre accord. Si désactivé, la publication est autonome dès que la note >= 7.0.",
+                sec2_mode_label: "Mode de Diffusion actif :",
+                sec2_freq_cam: "Fréquence de capture webcam (secondes) :",
+                sec2_min_interval: "Délai minimum entre posts (minutes) :",
+                sec2_max_daily: "Posts max par 24h :",
                 sec3_title: "Capteurs & Détection Matérielle",
+                sec3_sub: "Les capteurs absents sur PC sont grisés et désactivés",
                 sec4_title: "Sécurité Cardiaque & Dispositif d'Urgence SOS",
-                sec5_title: "Persona & Directives de Rédaction IA",
+                sec4_sub: "Détection d'anomalies de rythme cardiaque et procédure de secours automatique",
+                sec5_title: "IA Multimodale & Personas de Rédaction",
+                sec5_sub: "Modèle Gemini 1.5 Flash & Calibrage stylistique",
                 sec6_title: "Coffre-fort des Clés & Identifiants (.env)",
+                sec6_sub: "Stockage 100% sécurisé et local sur votre machine",
                 sec7_title: "Guide Smartphone Android & Mode 100% Autonome",
                 sec7_sub: "Faites tourner AutoInsta en totale mobilité sans aucun PC",
                 mode_a_title: "Mode A : Smartphone Client -> PC Serveur",
@@ -2199,11 +2230,31 @@
                 filter_published: "Published",
                 filter_rejected: "Rejected",
                 sec1_title: "Storage & Backup Folders",
-                sec2_title: "General Rules & Publishing Frequency",
-                sec3_title: "Sensors & Hardware Detection",
+                sec1_sub: "Local directories management and private synchronization",
+                sec1_btn_diag: "Test Write Access",
+                sec1_raw_title: "Raw Captures Folder",
+                sec1_raw_desc: "Directory where all POV camera snapshots are saved.",
+                sec1_btn_open: "Open in File Explorer",
+                sec1_btn_web: "Web",
+                sec1_path_saved: "Path saved",
+                sec1_export_title: "Vault & Private Sync Folder",
+                sec1_export_desc: "Export folder for published photos (Google Photos, Drive, Nextcloud).",
+                sec2_title: "Validation & Publishing Workflow",
+                sec2_sub: "Autonomous gating or instant manual approval",
+                sec2_val_manual: "Manual validation before publishing",
+                sec2_val_desc: "If enabled, AI waits for your consent. If disabled, publishing is autonomous once score >= 7.0.",
+                sec2_mode_label: "Active Publishing Mode:",
+                sec2_freq_cam: "Webcam capture interval (seconds):",
+                sec2_min_interval: "Minimum cooldown between posts (minutes):",
+                sec2_max_daily: "Maximum posts per 24h:",
+                sec3_title: "Hardware Sensors & Detection",
+                sec3_sub: "Sensors absent on PC are greyed out and disabled",
                 sec4_title: "Cardiac Safety & SOS Emergency Device",
-                sec5_title: "Persona & AI Writing Directives",
+                sec4_sub: "Heart rate anomaly detection and automated emergency procedure",
+                sec5_title: "Multimodal AI & Persona Profiles",
+                sec5_sub: "Gemini 1.5 Flash Vision Model & Stylistic tuning",
                 sec6_title: "Keys & Credentials Vault (.env)",
+                sec6_sub: "100% secure local storage on your device",
                 sec7_title: "Android Smartphone Guide & Autonomous Mode",
                 sec7_sub: "Run AutoInsta in complete mobility without any PC",
                 mode_a_title: "Mode A: Smartphone Client -> PC Server",
@@ -2230,11 +2281,16 @@
 
         function applyUILanguage(lang) {
             const dict = I18N[lang] || I18N.fr;
-            const flagEl = document.getElementById('uiLangFlag');
-            const labelEl = document.getElementById('uiLangLabel');
-            if (flagEl && labelEl) {
-                flagEl.textContent = (lang === 'fr') ? '🇬🇧' : '🇫🇷';
-                labelEl.textContent = (lang === 'fr') ? 'EN' : 'FR';
+            const frEl = document.getElementById('uiLangFR');
+            const enEl = document.getElementById('uiLangEN');
+            if (frEl && enEl) {
+                if (lang === 'fr') {
+                    frEl.className = 'text-emerald-400 font-bold transition';
+                    enEl.className = 'text-gray-500 font-normal transition';
+                } else {
+                    frEl.className = 'text-gray-500 font-normal transition';
+                    enEl.className = 'text-emerald-400 font-bold transition';
+                }
             }
 
             document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -2255,12 +2311,22 @@
         // 9. INITIALISATION AUTOMATIQUE AU CHARGEMENT DE LA PAGE
         // ========================================================
         window.addEventListener('DOMContentLoaded', () => {
-            // Apply language preference
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryLang = urlParams.get('lang');
+            if (queryLang === 'en' || queryLang === 'fr') {
+                currentUILang = queryLang;
+                localStorage.setItem('autoinsta_ui_lang', queryLang);
+            }
             applyUILanguage(currentUILang);
 
-            const savedTab = localStorage.getItem('autoinsta_active_tab');
-            if (savedTab === 'settings') {
-                switchTab('settings');
+            const queryTab = urlParams.get('tab');
+            if (queryTab === 'settings' || queryTab === 'captures') {
+                switchTab(queryTab);
+            } else {
+                const savedTab = localStorage.getItem('autoinsta_active_tab');
+                if (savedTab === 'settings') {
+                    switchTab('settings');
+                }
             }
 
             const camIntervalInput = document.getElementById('cfg_cam_interval');

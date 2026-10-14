@@ -418,6 +418,57 @@ async def get_storage_info_api():
     """Returns absolute paths and stats for captures and export directories."""
     return get_storage_details()
 
+@app.get("/api/storage/browse/{folder_type}")
+async def browse_storage_folder(folder_type: str):
+    """HTML Web Directory Browser for viewing and downloading snapshots on any mobile or desktop device."""
+    target = settings.storage_dir if folder_type == "captures" else settings.export_directory
+    target.mkdir(parents=True, exist_ok=True)
+    files = sorted([f for f in target.glob("*") if f.is_file()], key=lambda x: x.stat().st_mtime, reverse=True)
+    
+    file_items = ""
+    for f in files:
+        size_kb = round(f.stat().st_size / 1024, 1)
+        mtime = datetime.datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        is_img = f.suffix.lower() in [".jpg", ".jpeg", ".png", ".webp"]
+        preview = f'<img src="/captures/{f.name}" class="w-16 h-16 object-cover rounded-lg border border-gray-800">' if is_img else '<div class="w-16 h-16 bg-gray-900 rounded-lg flex items-center justify-center text-gray-500 font-mono text-xs">FILE</div>'
+        file_items += f"""
+        <div class="flex items-center justify-between p-3 bg-gray-900 border border-gray-800 rounded-xl hover:border-gray-700 transition">
+            <div class="flex items-center gap-3">
+                {preview}
+                <div>
+                    <a href="/captures/{f.name}" target="_blank" class="text-sm font-semibold text-emerald-400 hover:underline">{f.name}</a>
+                    <div class="text-xs text-gray-400 font-mono">{size_kb} Ko &bull; {mtime}</div>
+                </div>
+            </div>
+            <a href="/captures/{f.name}" download="{f.name}" class="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-gray-200">Télécharger</a>
+        </div>
+        """
+
+    if not files:
+        file_items = '<div class="p-8 text-center text-gray-500 text-sm">Ce dossier est actuellement vide.</div>'
+
+    html = f"""<!DOCTYPE html>
+    <html class="dark">
+    <head>
+        <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AutoInsta - Explorateur Web : {folder_type.upper()}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-950 text-white min-h-screen p-4 sm:p-8 font-sans">
+        <div class="max-w-3xl mx-auto space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                <div>
+                    <h1 class="text-xl font-bold text-white flex items-center gap-2">📁 Explorateur Web : {folder_type.upper()}</h1>
+                    <p class="text-xs text-gray-400 font-mono">{str(target.resolve())}</p>
+                </div>
+                <a href="/" class="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-gray-200">&larr; Retour au tableau de bord</a>
+            </div>
+            <div class="space-y-2">{file_items}</div>
+        </div>
+    </body>
+    </html>"""
+    return HTMLResponse(content=html)
+
 @app.post("/api/storage/open-folder")
 async def open_storage_folder(req: OpenFolderRequest):
     """Opens directory in default OS file explorer (Windows Explorer, macOS Finder, Linux)."""
@@ -459,9 +510,12 @@ async def open_storage_folder(req: OpenFolderRequest):
         elif sys_plat == "windows":
             os_name = "Windows"
             try:
-                os.startfile(target_abs)
+                subprocess.Popen(f'explorer.exe "{target_abs}"', shell=True)
             except Exception:
-                subprocess.Popen(["explorer.exe", target_abs])
+                try:
+                    os.startfile(target_abs)
+                except Exception as e:
+                    return {"success": False, "error": str(e), "path": target_abs}
 
         elif sys_plat == "darwin":
             os_name = "macOS Finder"

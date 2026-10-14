@@ -58,6 +58,18 @@ In evolutionary sociology, **Zahavi's Costly Signaling Theory** posits that auth
 
 ---
 
+## 📸 Interface & Live Dashboard
+
+AutoInsta features a modern responsive UI (desktop and mobile PWA) with live multi-language switching (**FR / EN**):
+
+| Live Captures & Approval Queue | Granular Configuration & Personas |
+| :---: | :---: |
+| ![Live Captures Dashboard](docs/screenshots/dashboard_captures_en.png) | ![Settings & Personas](docs/screenshots/dashboard_settings_en.png) |
+
+> 📁 **Integrated Storage Explorer**: Access and review raw captured photos and debug archives directly from any browser or smartphone via `http://<IP>:8000/api/storage/browse/captures` without needing root or shell commands.
+
+---
+
 ## ✨ Features & Capabilities
 
 - 🔒 **Zero-Tolerance Privacy & Safety Gate**:
@@ -164,10 +176,32 @@ python scripts/autostart/manage_autostart.py --disable
 
 ---
 
-## 📱 Android Client Setup (Termux + Home Screen Widget)
+## 📱 Mobile Experience: PWA & Android Options
 
-Turn your Android phone into an autonomous POV camera with 2 home screen icons:
+AutoInsta provides flexible ways to capture and control the agent from your mobile device:
 
+### 1. Instant Mobile App (PWA - Recommended for Zero Setup)
+No installation from an app store or command line needed:
+- Open `http://<IP_DU_PC>:8000` (or `https://...`) in Chrome or Safari on your phone.
+- Tap **"Add to Home Screen"** / **"Install App"**.
+- AutoInsta runs in full screen as a standalone web application with instant camera snapshot upload and push notifications.
+
+### 2. Autonomous Background Lifelogger (Android Options)
+
+| Deployment Method | Setup Complexity | Background POV Capture | Sensor Access | Play Store Compatible? |
+| :--- | :--- | :--- | :--- | :--- |
+| **Progressive Web App (PWA)** | Zero (1-click in browser) | Active tab or manual snapshot | GPS, Motion, Orientation | Yes (Standard Web API) |
+| **Native APK (Sideloaded / F-Droid)** | Low (install single `.apk`) | **Full Background ForegroundService** | Camera, GPS, Accelerometer, Light | **No** (Play Store bans background cameras) |
+| **Termux + Termux:API** | Medium (CLI + F-Droid packages) | **Full Background daemon** | Camera, GPS, Light, Battery, SMS | N/A (Geek / Developer setup) |
+
+#### Option A: Native Android APK (Roadmap / Architecture)
+To bypass Termux entirely for everyday users, an independent APK can be built using:
+- **Language & Stack**: Kotlin + Jetpack Compose + CameraX.
+- **Background Execution**: Android `ForegroundService` with a persistent notification (e.g. *"AutoInsta is capturing your journey"*).
+- **Distribution Notice**: Due to strict Google Play Store privacy policies (*Google Play User Data & Background Camera restrictions*), lifelogging apps cannot be published on the official Play Store. They are distributed as direct `.apk` downloads (GitHub Releases) or via community repositories like **F-Droid**.
+
+#### Option B: Termux + Home Screen Widget
+For users who already use Termux:
 1. Install **Termux**, **Termux:API**, and **Termux:Widget** from [F-Droid](https://f-droid.org/).
 2. Grant Camera, Location, and Sensor permissions in Android Settings.
 3. Open Termux on your phone and run:
@@ -186,8 +220,26 @@ cp client/android_termux/widget_start.sh ~/.shortcuts/AutoInsta_ON
 cp client/android_termux/widget_stop.sh ~/.shortcuts/AutoInsta_OFF
 chmod +x ~/.shortcuts/*
 ```
+4. Add the **Termux:Widget** to your home screen with **AutoInsta_ON** and **AutoInsta_OFF**.
 
-4. Long-press on your phone's home screen, add the **Termux:Widget**, and select **AutoInsta_ON** and **AutoInsta_OFF**. You now have one-touch activation directly on your home screen!
+---
+
+## 🔒 Security & HTTPS Hardening
+
+AutoInsta includes robust privacy and network protections:
+
+1. **Self-Signed TLS / HTTPS**:
+   - Generate secure self-signed SSL/TLS certificates with SAN (Subject Alternative Names) for your local IP and hostname:
+     ```bash
+     python scripts/generate_ssl_certs.py
+     ```
+   - Launch the server with SSL encryption enabled:
+     ```bash
+     python scripts/server_launcher.py --ssl
+     ```
+2. **Immediate Purge for Private Content**: Any frame rejected by Gemini for privacy or intimacy is deleted from disk immediately.
+3. **API Token Authentication**: Uploads and administrative API endpoints are protected via `X-API-Key` headers or secure token query parameters.
+4. **Timing-Attack Proof**: Master PIN and security tokens are compared using constant-time algorithms (`hmac.compare_digest`).
 
 ---
 
