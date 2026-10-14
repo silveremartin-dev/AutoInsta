@@ -25,7 +25,7 @@ echo "[*] Installation de la roue pré-compilée pydantic-core pour Android..."
 pip install --break-system-packages pydantic-core --extra-index-url https://eutalix.github.io/android-pydantic-core/ --extra-index-url https://termux-user-repository.github.io/pypi/ || true
 
 # Installation des paquets complets avec l'index TUR
-pip install --break-system-packages --extra-index-url https://eutalix.github.io/android-pydantic-core/ --extra-index-url https://termux-user-repository.github.io/pypi/ fastapi uvicorn requests jinja2 python-multipart pydantic google-generativeai
+pip install --break-system-packages --extra-index-url https://eutalix.github.io/android-pydantic-core/ --extra-index-url https://termux-user-repository.github.io/pypi/ fastapi uvicorn requests jinja2 python-multipart pydantic google-generativeai pyyaml python-dotenv
 
 echo "[4/4] Configuration des raccourcis Widget 1-clic..."
 mkdir -p "$HOME/.shortcuts"

@@ -13,14 +13,24 @@ pkill -f "autoinsta_capture.py" 2>/dev/null
 pkill -f "uvicorn server.app:app" 2>/dev/null
 sleep 1
 
-# 2. Démarrage du serveur local AutoInsta sur localhost:8000
+# 2. Démarrage du serveur local AutoInsta sur 0.0.0.0:8000
 echo "[*] Démarrage du serveur local AutoInsta (FastAPI + SQLite)..."
-python -m uvicorn server.app:app --host 127.0.0.1 --port 8000 > "$HOME/autoinsta_server.log" 2>&1 &
+python -m uvicorn server.app:app --host 0.0.0.0 --port 8000 > "$HOME/autoinsta_server.log" 2>&1 &
 SERVER_PID=$!
 echo $SERVER_PID > "$HOME/autoinsta_server.pid"
 
 # Attente brève pour l'initialisation du serveur
 sleep 2
+
+# Vérification que le serveur tourne bien
+if ! kill -0 $SERVER_PID 2>/dev/null; then
+    echo "[!] ERREUR : Le serveur n'a pas pu démarrer !"
+    echo "--- Journal d'erreur ($HOME/autoinsta_server.log) ---"
+    cat "$HOME/autoinsta_server.log"
+    echo "----------------------------------------------------"
+    exit 1
+fi
+echo "[+] Serveur web opérationnel sur http://localhost:8000"
 
 # 3. Démarrage du rig de capture (min-lux=5.0 anti-poche restauré)
 echo "[*] Démarrage de la capture caméra & capteurs..."

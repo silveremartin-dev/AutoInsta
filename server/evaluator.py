@@ -3,7 +3,12 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, Any, Optional
-from PIL import Image
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
+
 from server.config import settings
 
 logger = logging.getLogger("autoinsta.evaluator")
@@ -263,13 +268,19 @@ Important:
             return self._mock_evaluation(image_path, sensor_metadata)
 
         try:
-            pil_image = Image.open(image_path)
+            if Image is not None:
+                try:
+                    image_input = Image.open(image_path)
+                except Exception:
+                    image_input = {"mime_type": "image/jpeg", "data": image_path.read_bytes()}
+            else:
+                image_input = {"mime_type": "image/jpeg", "data": image_path.read_bytes()}
             
             # Use google-genai SDK
             if hasattr(self, "sdk_type") and self.sdk_type == "google-genai" and self.client:
                 response = self.client.models.generate_content(
                     model=self.model_name,
-                    contents=[pil_image, system_instruction + "\n\n" + prompt_text],
+                    contents=[image_input, system_instruction + "\n\n" + prompt_text],
                     config={
                         "response_mime_type": "application/json",
                         "temperature": settings.temperature,
@@ -278,7 +289,7 @@ Important:
                 raw_text = response.text
             elif hasattr(self, "sdk_type") and self.sdk_type == "google-generativeai":
                 response = self.legacy_model.generate_content(
-                    [system_instruction + "\n\n" + prompt_text, pil_image],
+                    [system_instruction + "\n\n" + prompt_text, image_input],
                     generation_config={"temperature": settings.temperature}
                 )
                 raw_text = response.text
