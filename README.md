@@ -194,11 +194,17 @@ No installation from an app store or command line needed:
 | **Native APK (Sideloaded / F-Droid)** | Low (install single `.apk`) | **Full Background ForegroundService** | Camera, GPS, Accelerometer, Light | **No** (Play Store bans background cameras) |
 | **Termux + Termux:API** | Medium (CLI + F-Droid packages) | **Full Background daemon** | Camera, GPS, Light, Battery, SMS | N/A (Geek / Developer setup) |
 
-#### Option A: Native Android APK (Roadmap / Architecture)
-To bypass Termux entirely for everyday users, an independent APK can be built using:
-- **Language & Stack**: Kotlin + Jetpack Compose + CameraX.
-- **Background Execution**: Android `ForegroundService` with a persistent notification (e.g. *"AutoInsta is capturing your journey"*).
-- **Distribution Notice**: Due to strict Google Play Store privacy policies (*Google Play User Data & Background Camera restrictions*), lifelogging apps cannot be published on the official Play Store. They are distributed as direct `.apk` downloads (GitHub Releases) or via community repositories like **F-Droid**.
+#### Option A: Native Android APK (Prompt-to-App via Google AI Studio & Roadmap)
+To bypass Termux entirely for everyday users, an independent native Android APK can be generated and maintained:
+- **Language & Stack**: Kotlin + Jetpack Compose + CameraX (`client/android/`).
+- **Rapid Prototyping via Google AI Studio (Build Mode)**:
+  - Generate the entire Kotlin/Compose Gradle project directly from natural language prompts.
+  - **1-Click Testing Deployment**: Deploy instantly to your connected phone via **WebUSB** (*"Install on Device"*) or push to **Google Play Console Internal Testing** (up to 100 invitees).
+  - **GitHub Hosting**: Export the project as a standard Gradle project to commit and version in [`client/android/`](client/android/).
+- **Two Architectural Modes**:
+  1. **Companion Client Mode (Current / Zero-Rewrite)**: The APK acts solely as a low-power `ForegroundService` sensor reader (CameraX, motion, light), uploading captures to your local AutoInsta FastAPI server (`POST /api/capture/upload`).
+  2. **Standalone Edge Agent (Roadmap Exploration)**: Full on-device rewrite using the official Google Generative AI Android SDK (`gemini-1.5-flash`). Evaluates frames locally via Google AI Studio's free tier (up to 1,500 daily requests) and triggers Instagram publishing via Android `Intent.ACTION_SEND` (zero server, zero ban risk).
+- **Distribution Notice**: Due to strict Google Play Store background camera policies (`FOREGROUND_SERVICE_CAMERA`), public store publication is restricted. Distribution is intended for personal use, internal test groups, or direct APK sideloading via GitHub Releases and F-Droid.
 
 #### Option B: Termux + Home Screen Widget
 For users who already use Termux:
